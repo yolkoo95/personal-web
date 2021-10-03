@@ -11,8 +11,10 @@ category=$1
 topic=$2
 
 relURL='/codehome/static/codehome/src/'${category}'/'${topic}'.md'
-webAppURL='/Users/MinzhiQu/Documents/webApp/webApp'
+webAppURL=$(pwd)
 mdURL=${webAppURL}${relURL}
+
+echo ${mdURL}
 
 # save raw text into tmp.txt and get rid of ##### or more and Table of Contents
 grep '^##\{1,3\}' ${mdURL} | grep -v '^##\{4,6\}' | grep -v 'Table of Contents'> /tmp/raw.txt

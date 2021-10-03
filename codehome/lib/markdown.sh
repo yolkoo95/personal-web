@@ -13,7 +13,7 @@ export PATH
 category=$1 # to specify the location where the file will be saved
 noteName=$2
 
-web=/Users/minzhiqu/Documents/webApp/webApp
+web=$(pwd)
 workingDirURL=${web}/codehome/templates/codehome/code/${category}/${noteName}
 mv ~/Desktop/${noteName}.html ${workingDirURL}'/'${noteName}'.html'
 touch ${workingDirURL}'/'${noteName}'-table.html'

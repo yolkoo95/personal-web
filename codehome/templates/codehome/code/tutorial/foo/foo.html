@@ -1,0 +1,35 @@
+{% load static %}
+
+<h1 id="thisisatestfile">This is a test file</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#title1">Title 1</a></li>
+<li><a href="#title2">Title 2</a><br/>
+<TableEndMark></li>
+</ul>
+
+<section	id="title1">
+<h2>Title 1</h2>
+
+<p>blablabla</p>
+
+</section>
+<section	id="title2">
+<h2>Title 2</h2>
+
+<p>wlawlawla</p>
+
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'tutorial' 'ftpserver' %}" class="button primary icon solid fa-backward">Back: 2. FTPServer</a></li> 
+                     <li><span class="button">3. Foo</span></li> 
+                 </ul> 
+             </div> 
+         </div>
