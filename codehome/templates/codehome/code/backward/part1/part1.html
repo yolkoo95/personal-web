@@ -1,0 +1,921 @@
+{% load static %}
+
+<h1 id="baseregisterandassemblylanguage">Base, Register and Assembly Language</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#base">Base</a></li>
+<li><a href="#datasize">Data Size</a>
+
+<ul>
+<li><a href="#signedandunsignednumbers">Signed and Unsigned Numbers</a></li>
+</ul></li>
+<li><a href="#logicoperation">Logic Operation</a>
+
+<ul>
+<li><a href="#howdoesacomputerdocalculation">How does a computer do calculation</a></li>
+</ul></li>
+<li><a href="#win32registers">Win32 Registers</a>
+
+<ul>
+<li><a href="#basiccommand">Basic Command</a></li>
+</ul></li>
+<li><a href="#memory">Memory</a>
+
+<ul>
+<li><a href="#stack-basedmemoryallocation">Stack-based Memory Allocation</a></li>
+<li><a href="#pushandpop">PUSH and POP</a></li>
+</ul></li>
+<li><a href="#eflagsregisters">EFLAGS Registers</a>
+
+<ul>
+<li><a href="#relatedcommand">Related Command</a></li>
+</ul></li>
+<li><a href="#controlflow">Control Flow</a></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="base">
+<h2>Base</h2>
+
+<p>A base is the available numbers in a numbering system. Forexample, the most commonly known base is a base&#8211;10 numbering system or decimal numbers, which are 0,1,2,3,4,5,6,7,8, and 9. Another common base when dealing with computers is the binary base&#8211;2, which only has the numbers 0 and 1.</p>
+
+<ul>
+<li><code>Binary</code>: is a base&#8211;2 number system invented by Gottfried Leibniz that is made up of only two numbers: 0 and 1. This number system is the basis for all binary code, which is used to write data such as the computer processor instructions used every day.</li>
+<li><code>Octal</code>: Octal is a base&#8211;8 number system commonly used to represent binary numbers and other numbers in a shorter form. Below is a basic chart of how a binary number is converted to an octal number.</li>
+<li><code>Hex</code>: Alternatively referred to as base&#8211;16 or hex, the hexadecimal numbering system uses combinations of 16 character digits to represent numbers. Hexadecimal uses all ten numbers in the decimal system (0, 1, 2, 3, 4, 5, 6, 7, 8, and 9) and letters A through F. For example, &#8220;computer hope&#8221; in hexadecimal becomes &#8220;636f6d707574657220686f7065&#8221;.</li>
+</ul>
+
+<p>For programmers, something should be remembered,</p>
+<pre><code class="bash">0     1     2     3     4     5     6     7     8     9    
+0000  0001  0010  0011  0100  0101  0110  0111  1000  1001
+A     B     C     D     E     F
+1010  1011  1100  1101  1110  1111</code></pre>
+
+<p>By the way, an important idea of base is that people could define their own base, a new defination of decimal system could be (2, 1, 3, 7, 8, 6, 5, 0, 9, 4) for example, where <code>100</code> we are used to use should be <code>122</code>, therefore, <em>the best way to be familiar with base is to write addition table and multiplication table under different base system</em>. Take 7-base system for example,</p>
+<pre><code class="shell">Addition Table
+1+1=2					
+1+2=3	2+2=4				
+1+3=4	2+3=5	3+3=6			
+1+4=5	2+4=6	3+4=10	4+4=11		
+1+5=6	2+5=10	3+5=11	4+5=12	5+5=13	
+1+6=10	2+6=11	3+6=12	4+6=13	5+6=14	6+6=15
+
+Multiplication Table
+1*1=1					
+1*2=2	2*2=4				
+1*3=3	2*3=6	3*3=12			
+1*4=4	2*4=11	3*4=15	4*4=22		
+1*5=5	2*5=13	3*5=21	4*5=26	5*5=34	
+1*6=6	2*6=15	3*6=24	4*6=33	5*6=42	6*6=51</code></pre>
+
+<p>We need to keep one thing in heart that, the essense of operation in any numbering system is to <em>check tables</em>.</p>
+
+</section>
+<section	id="datasize">
+<h2>Data Size</h2>
+
+<p>Data size refers to the number of bits of data that can be manufactured within the CPU at one given time.</p>
+
+<ul>
+<li><p>the data width of a computer is also called its word size.</p></li>
+<li><p>computers have data wide ranging from 8 bit to 64 bit.</p></li>
+</ul>
+
+<p>1 byte = 8 bits, 1 word = 2 bytes(in 32bits architecture), 1 dword = 4 bytes = 32 bits(int 32bits architecture).</p>
+
+<section	id="signedandunsignednumbers">
+<h3>Signed and Unsigned Numbers</h3>
+
+<section	id="unsignednumbers">
+<h4>Unsigned Numbers</h4>
+
+<p>Unsigned numbers don’t have any sign, these can contain only magnitude of the number. So, representation of unsigned binary numbers are all positive numbers only. For example, representation of positive decimal numbers are positive by default. We always assume that there is a positive sign symbol in front of every number.</p>
+
+<p>So for a 8 bits system, the range is <code>0x00 ~ 0xFF</code>, which is from <code>0</code> to <code>255</code>.</p>
+
+</section>
+<section	id="signednumbers">
+<h4>Signed Numbers</h4>
+
+<p>There are three types of representations for signed binary numbers. Because of extra signed bit, binary number zero has two representation, either positive (0) or negative (1), so ambiguous representation. But 2’s complementation representation is unambiguous representation because of there is no double representation of number 0. These are: Sign-Magnitude form, 1’s complement form, and 2’s complement form which are explained as following below.</p>
+
+<ul>
+<li>Sign-Magnitude Form</li>
+</ul>
+
+<p>For n bit binary number, 1 bit is reserved for sign symbol. If the value of sign bit is 0, then the given number will be positive, else if the value of sign bit is 1, then the given number will be negative. Remaining <code>(n-1)</code> bits represent magnitude of the number.</p>
+
+<p>CONS: Since magnitude of number zero (0) is always 0, so there can be two representation of number zero (0), positive (+0) and negative (&#8211;0), which depends on value of sign bit. Hence these representations are ambiguous generally because of two representation of number zero (0).</p>
+
+<p>For example, range of 8 bit sign-magnitude form binary number is from <code>-(2^7 - 1)</code> to <code>(2^7 - 1)</code>, which is from <code>-127</code> to <code>+127</code>, including <code>+0</code> and <code>-0</code>.</p>
+
+<ul>
+<li>1’s Complement Form</li>
+</ul>
+
+<p>Since, 1’s complement of a number is obtained by inverting each bit of given number. So, we represent positive numbers in binary form and negative numbers in 1’s complement form. There is extra bit for sign representation.If value of sign bit is 0, then number is positive and you can directly represent it in simple binary form, but if value of sign bit 1, then number is negative and you have to take 1’s complement of given binary number. You can get negative number by 1’s complement of a positive number and positive number by using 1’s complement of a negative number.</p>
+
+<p>CONS: Therefore, in this representation, zero (0) can have two representation, that’s why 1’s complement form is also ambiguous form. The range of 1’s complement form is from <code>-(2^(n-1) - 1)</code> to <code>(2^(n-1) - 1)</code> .</p>
+
+<p>Take 8-bit number for example, the maximum number is <code>01111111</code>, which is <code>127</code>, and the minimum number is <code>10000000</code>, which is <code>-127</code>. Also there are two zeros, <code>00000000</code> and <code>11111111</code> respectively.</p>
+
+<ul>
+<li>2’s Complement Form</li>
+</ul>
+
+<p>Since, 2’s complement of a number is obtained by inverting each bit of given number plus 1 to least significant bit (LSB). So, we represent positive numbers in binary form and negative numbers in 2’s complement form. There is extra bit for sign representation.You can get negative number by 2’s complement of a positive number and positive number by directly using simple binary representation. </p>
+
+<p>For an 8-bits number <code>00000111</code>, which is <code>7</code>, its 2&#8217;s complement form is <code>11111000 + 1</code>, which is <code>11111001</code>.</p>
+
+<p>Conclusion: for 8-bits number system, in hex form, the positive range is from <code>0x00</code> to <code>0x7F</code>, and the negtive range is from <code>0x80</code> to <code>0xFF</code>, noting that zero is included in positive range.</p>
+
+</section>
+</section>
+</section>
+<section	id="logicoperation">
+<h2>Logic Operation</h2>
+
+<p>There are four basic operations in computer &#8211; <code>OR</code>, <code>AND</code>, <code>XOR</code> and <code>NOT</code>.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">A</th>
+	<th style="text-align:center;">B</th>
+	<th style="text-align:center;">A AND B</th>
+	<th style="text-align:center;">A OR B</th>
+	<th style="text-align:center;">A XOR B</th>
+	<th style="text-align:left;">!A</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:left;">0</td>
+</tr>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:left;">1</td>
+</tr>
+<tr>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:left;">0</td>
+</tr>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:left;">1</td>
+</tr>
+</tbody>
+</table>
+
+<section	id="howdoesacomputerdocalculation">
+<h3>How does a computer do calculation</h3>
+
+<p>Let&#8217;s think as a CPU, taking addition for example. The operation hidden behind the scene is <code>AND</code> and <code>XOR</code>.</p>
+<pre><code class="bash"># how does CPU compute `2 + 3`?
+# let&apos;s take x = 0010, y = 0011
+
+      0010            0010
+XOR   0011      AND   0011
+----------      ----------
+      0001            0010      0010 &lt;&lt; 1 = 0100
+
+# as 0100 != 0000, calculation continues,
+# take x = 0001, y = 0100
+
+      0001            0001
+XOR   0100      AND   0100
+----------      ----------
+      0101            0000      0000 &lt;&lt; 1 = 0000
+# as 0000 == 0000, calculation ends,
+# and the result is 0101, which is 5</code></pre>
+
+</section>
+</section>
+<section	id="win32registers">
+<h2>Win32 Registers</h2>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Register</th>
+	<th style="text-align:center;">Function</th>
+	<th style="text-align:center;">Code</th>
+	<th style="text-align:center;">Range</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">EAX</td>
+	<td style="text-align:center;">Accumulator</td>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">ECX</td>
+	<td style="text-align:center;">Counter</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">EDX</td>
+	<td style="text-align:center;">I/O Pointer</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">EBX</td>
+	<td style="text-align:center;">DS Data Pointer</td>
+	<td style="text-align:center;">3</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">ESP</td>
+	<td style="text-align:center;">Stack Top Pointer</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">EBP</td>
+	<td style="text-align:center;">Stack Bottom Pointer</td>
+	<td style="text-align:center;">5</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">ESI</td>
+	<td style="text-align:center;">System Pointer</td>
+	<td style="text-align:center;">6</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+<tr>
+	<td style="text-align:center;">EDI</td>
+	<td style="text-align:center;">ES Data Pointer</td>
+	<td style="text-align:center;">7</td>
+	<td style="text-align:center;">0 - 0xFFFFFFFF</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash"># the structure of EAX
+
+0000 0000 0000 0000 0000 0000 0000 0000
+| &lt;----------    EAX     -----------&gt; |
+                    | &lt;---  AX  ---&gt;  |
+		    | &lt;-AH-&gt;| |&lt;-AL-&gt; |
+
+# ECX, EDX, EBX have the same structure as EAX</code></pre>
+
+<section	id="basiccommand">
+<h3>Basic Command</h3>
+
+<ul>
+<li><code>MOV [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash"># r: register, m: memory, imm: immediate, num: data size
+# there are lots of MOV command for moving different data from one place to another, noting that we CANNOT move data FROM MEMORY TO MEMORY!
+
+MOV r/m8, r8
+# MOV AL, BL
+# MOV AH, AL
+# MOV BYTE PTR DST:[0x00FF238D], AL
+
+MOV r/m16, r16
+# MOV AX, BX
+# MOV WORD PTR DST:[0X00FE2D3C], BX
+
+MOV r/m32, r32
+# MOV EAX, EBX
+# MOV DWORD PTR DST:[0X00FD2EE3], EAX 
+
+MOV r8, m8
+MOV r16, m16
+MOV r32, m32
+
+MOV r8, imm8
+MOV r16, imm16
+MOV r32, imm32</code></pre>
+
+<ul>
+<li><code>ADD [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash">ADD r/m8, r8
+ADD r/m16, r16
+ADD r/m32, r32
+
+ADD r/m8, imm8
+# ADD BYTE PTR DST:[0X00EF789C], 0xFE
+ADD r/m16, imm16
+ADD r/m32, imm32
+
+ADD r8, m8
+ADD r16, m16
+# ADD AX, WORD PTR DST:[0X0009EF8C]
+ADD r32, m32</code></pre>
+
+<ul>
+<li><code>SUB [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash">SUB r/m8, r8
+SUB r/m16, r16
+SUB r/m32, r32
+
+SUB r/m8, imm8
+# SUB BYTE PTR DST:[0X00DD719C], 0xFE
+SUB r/m16, imm16
+SUB r/m32, imm32
+
+SUB r8, m8
+SUB r16, m16
+# SUB AX, WORD PTR DST:[0X0009AC8C]
+SUB r32, m32</code></pre>
+
+<ul>
+<li><code>AND [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash">AND r/m8, r8
+AND r/m16, r16
+AND r/m32, r32
+
+AND r/m8, imm8
+# AND BYTE PTR DST:[0X01DE719C], 0xFF
+AND r/m16, imm16
+AND r/m32, imm32
+
+AND r8, m8
+AND r16, m16
+# AND AX, WORD PTR DST:[0X0109FC8C]
+AND r32, m32</code></pre>
+
+<ul>
+<li><code>OR [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash">OR r/m8, r8
+OR r/m16, r16
+OR r/m32, r32
+
+OR r/m8, imm8
+# OR BYTE PTR DST:[0X01DE719C], 0xFF
+OR r/m16, imm16
+OR r/m32, imm32
+
+OR r8, m8
+OR r16, m16
+# OR AX, WORD PTR DST:[0X0109FC8C]
+OR r32, m32</code></pre>
+
+<ul>
+<li><code>XOR [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash">XOR r/m8, r8
+XOR r/m16, r16
+XOR r/m32, r32
+
+XOR r/m8, imm8
+# OR BYTE PTR DST:[0X01DE719C], 0xFF
+XOR r/m16, imm16
+XOR r/m32, imm32
+
+XOR r8, m8
+XOR r16, m16
+# XOR AX, WORD PTR DST:[0X0109FC8C]
+XOR r32, m32</code></pre>
+
+<ul>
+<li><code>NOT [DST]</code></li>
+</ul>
+<pre><code class="bash">NOT r/m8
+NOT r/m16
+NOT r/m32</code></pre>
+
+</section>
+</section>
+<section	id="memory">
+<h2>Memory</h2>
+
+<p>Memory refers to the processes that are used to acquire, store, retain, and later retrieve information. There are three major processes involved in memory: encoding, storage, and retrieval.</p>
+
+<p>In computing, memory refers to a device that is used to store information for immediate use in a computer or related computer hardware device. It typically refers to semiconductor memory, specifically metal–oxide–semiconductor (MOS) memory, where data is stored within MOS memory cells on a silicon integrated circuit chip. Computer memory operates at a high speed, for example random-access memory (RAM), as a distinction from storage that provides slow-to-access information but offers higher capacities. </p>
+<pre><code class="bash"># memory architecture of a 32-bits computer
+Address:        Value(Byte)
+0x00000000      0xFF
+0x00000001      0xCC
+0x00000002      0xDE
+...
+...
+...
+...
+0xFFFFFFFE      0xCC
+0xFFFFFFFF      0xCC</code></pre>
+
+<p>Thus, the maximum range of memory is from <code>0x0</code> to <code>0xFFFFFFFF</code> in a 32-bits machine. So, we can store <code>FFFFFFFF + 1</code> bytes information, which is <code>4G</code>, which explains that there are 4G physical memory in a 32-bits computer at most.</p>
+
+<ul>
+<li><code>LEA [DST], [ORI]</code></li>
+</ul>
+<pre><code class="bash"># LEA command is used for getting address of a block of memory.
+MOV EAX, 0x0014F2DC
+LEA EAX, DWORD PTR DS:[EAX+4]</code></pre>
+
+<section	id="stack-basedmemoryallocation">
+<h3>Stack-based Memory Allocation</h3>
+
+<p>Stacks in computing architectures are regions of memory where data is added or removed in a last-in-first-out (LIFO) manner.</p>
+
+<p>In most modern computer systems, each thread has a reserved region of memory referred to as its stack. When a function executes, it may add some of its local state data to the top of the stack; when the function exits it is responsible for removing that data from the stack.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/stack.png' %}" alt="stack" />
+<figcaption>stack</figcaption>
+</figure>
+
+</section>
+<section	id="pushandpop">
+<h3>PUSH and POP</h3>
+
+<ul>
+<li><code>PUSH</code> command</li>
+</ul>
+<pre><code class="bash"># PUSH command is used to push data into memory stack.
+PUSH r32
+PUSH r16
+PUSH m16
+PUSH m32
+PUSH imm8/imm16/imm32
+
+# also the combination of some other commands could have the same function as PUSH
+# say EBX serves as the bottom of a stack, and EDX as the top of a stack
+# way 1:
+MOV DWORD PTR DS:[EDX-4], 0xFFFFFFFF
+SUB EDX, 4
+
+# way 2:
+SUB EDX, 4
+MOV DWORD PTR DS:[EDX], 0xFFFFFFFF
+
+# way 3:
+MOV DWORD PTR DS:[EDX-4], 0xFFFFFFFF
+LEA EDX, DWORD PTR DS:[EDX-4] # which is same as `SUB EDX, 4`
+
+# way 4:
+LEA EDX, DWORD PTR DS:[EDX-4]
+MOV DWORD PTR DS:[EDX], 0xFFFFFFFF</code></pre>
+
+<ul>
+<li><code>POP</code> command</li>
+</ul>
+<pre><code class="bash"># POP command is used to pop data out of memory stack.
+POP r32
+POP r16
+POP m16
+POP m32
+POP imm8/imm16/imm32
+
+# again, the combination of other commands have the same function as POP
+MOV ECX, DWORD PTR DS:[EDX]
+LEA EDX, DWORD PTR DS:[EDX-4]
+
+# we can access data stored in the memory stack by top pointer or bottom one.
+# access the first data put in the stack from bottom pointer
+MOV EAX, DWORD PTR DS:[EBX-4]
+
+# access the first data put in the stack from top pointer, assuming 4 data in the stack currently
+MOV EAX, DWORD PTR DS:[EDX+C]</code></pre>
+
+<ul>
+<li><code>PUSHAD</code> and <code>POPAD</code></li>
+</ul>
+
+<p><code>PUSHAD</code> and <code>POPAD</code> are used to push/pop all registers into/out of stack.</p>
+
+</section>
+</section>
+<section	id="eflagsregisters">
+<h2>EFLAGS Registers</h2>
+
+<p>The FLAGS register is the status register in Intel x86 microprocessors that contains the current state of the processor. This register is 16 bits wide. Its successors, the EFLAGS and RFLAGS registers, are 32 bits and 64 bits wide, respectively. The wider registers retain compatibility with their smaller predecessors.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Bit#</th>
+	<th style="text-align:center;">MASK</th>
+	<th style="text-align:center;">Abbreviation</th>
+	<th style="text-align:center;">Description</th>
+	<th style="text-align:center;">Category</th>
+	<th style="text-align:center;">=1</th>
+	<th style="text-align:center;">=0</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">0x0001</td>
+	<td style="text-align:center;">CF</td>
+	<td style="text-align:center;">Carry Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Carry</td>
+	<td style="text-align:center;">No Carry</td>
+</tr>
+<tr>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">0x0002</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;">Reserved always 1</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">0x0004</td>
+	<td style="text-align:center;">PF</td>
+	<td style="text-align:center;">Parity Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Parity Even</td>
+	<td style="text-align:center;">Parity Odd</td>
+</tr>
+<tr>
+	<td style="text-align:center;">3</td>
+	<td style="text-align:center;">0x0008</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;">Reserved 0</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">0x0010</td>
+	<td style="text-align:center;">AF</td>
+	<td style="text-align:center;">Adjust Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Auxiliary Carry</td>
+	<td style="text-align:center;">No Auxiliary Carry</td>
+</tr>
+<tr>
+	<td style="text-align:center;">5</td>
+	<td style="text-align:center;">0x0020</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;">Reserved 0</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">6</td>
+	<td style="text-align:center;">0x0040</td>
+	<td style="text-align:center;">ZF</td>
+	<td style="text-align:center;">Zero Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Zero</td>
+	<td style="text-align:center;">Not Zero</td>
+</tr>
+<tr>
+	<td style="text-align:center;">7</td>
+	<td style="text-align:center;">0x0080</td>
+	<td style="text-align:center;">SF</td>
+	<td style="text-align:center;">Sign Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Negative</td>
+	<td style="text-align:center;">Positive</td>
+</tr>
+<tr>
+	<td style="text-align:center;">8</td>
+	<td style="text-align:center;">0x0100</td>
+	<td style="text-align:center;">TF</td>
+	<td style="text-align:center;">Trap Flag</td>
+	<td style="text-align:center;">Control</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">9</td>
+	<td style="text-align:center;">0x0200</td>
+	<td style="text-align:center;">IF</td>
+	<td style="text-align:center;">Interrupt Flag</td>
+	<td style="text-align:center;">Control</td>
+	<td style="text-align:center;">Enable</td>
+	<td style="text-align:center;">Disable</td>
+</tr>
+<tr>
+	<td style="text-align:center;">10</td>
+	<td style="text-align:center;">0x0400</td>
+	<td style="text-align:center;">DF</td>
+	<td style="text-align:center;">Direction Flag</td>
+	<td style="text-align:center;">Control</td>
+	<td style="text-align:center;">&#8211;4</td>
+	<td style="text-align:center;">+4</td>
+</tr>
+<tr>
+	<td style="text-align:center;">11</td>
+	<td style="text-align:center;">0x0800</td>
+	<td style="text-align:center;">OF</td>
+	<td style="text-align:center;">Overflow Flag</td>
+	<td style="text-align:center;">Status</td>
+	<td style="text-align:center;">Overflow</td>
+	<td style="text-align:center;">Not Overflow</td>
+</tr>
+<tr>
+	<td style="text-align:center;">12&#8211;13</td>
+	<td style="text-align:center;">0x3000</td>
+	<td style="text-align:center;">IOPL</td>
+	<td style="text-align:center;">I/O privilege level alwasy 1 in 8086 or 186</td>
+	<td style="text-align:center;">System</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">14</td>
+	<td style="text-align:center;">0x4000</td>
+	<td style="text-align:center;">NT</td>
+	<td style="text-align:center;">Nested task flag alwasy 1 in 8086 or 186</td>
+	<td style="text-align:center;">System</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">15</td>
+	<td style="text-align:center;">0x8000</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;">Reserved, always 1 on 8086 and 186</td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+	<td style="text-align:center;"></td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li><p>CF and OF: when the data is unsigned number, we only check CF, when signed number, we only check OF.</p></li>
+<li><p>OF: Overflow occurs ONLY when positive plus positive, or negative plus negative. The key is that programmers have to remind of the maximum of positive number and minimum of negative number. For 8-bits system, maximum number is <code>0x7F</code> and minimum number is <code>0x80</code>.</p></li>
+</ul>
+<pre><code class="bash"># for 8-bits system, OF occurs when 0x7F -&gt; 0x80, CF occurs when 0xFF -&gt; 0x00
+
+# CF = 0, OF = 0
+MOV AL, 0x8
+ADD AL, 0x8
+
+# CF = 1, OF = 0
+MOV AL, 0xFF
+ADD AL, 0x2
+
+# CF = 0, OF = 1
+MOV AL, 0x7F
+ADD AL, 0x2
+
+# CF = 1, OF = 1
+MOV AL, 0xFE
+ADD AL, 0x80
+# or
+MOV AL, 0xBF
+ADD AL, 0xBF</code></pre>
+
+<section	id="relatedcommand">
+<h3>Related Command</h3>
+
+<ul>
+<li><code>ADC</code>: Add with Carry, <code>ADC BYTE PTR DS:[0x00FFDC18], 0x2</code></li>
+<li><code>SBB</code>: Sub with Borrow, <code>SBB AL, CL</code></li>
+<li><code>XCHG</code>: Exchange, <code>XCHG DWORD PTR DS:[0x00FFEC28], EAX</code></li>
+<li><code>MOVS</code>: Move from Memory to Memory, <code>MOVS DWORD PTR DS:[0X00FCEE19], DWORD PTR DS:[0X00FDDE22]</code>, abbreviated as <code>MOVSD</code></li>
+<li><code>STOS</code>: Move AL/AX/EAX to Memory[Addr:EDI], <code>STOS DWORD PTR ES:[EDI]</code>, abbreviated as <code>STOSD</code></li>
+<li><code>REP</code>: Repeat operation for [ECX] times, <code>REP STOS DWORD PTR ES:[EDI]</code></li>
+</ul>
+
+<p><em>Noting that in <code>MOVS</code> and <code>STOS</code>, EDI will +4 when DF = 0, will &#8211;4 when DF = 1.</em></p>
+
+</section>
+</section>
+<section	id="controlflow">
+<h2>Control Flow</h2>
+
+<ul>
+<li>JMP command</li>
+</ul>
+
+<p><code>JMP</code> is used to modify EIP (Instruction Pointer).</p>
+
+<ul>
+<li>CALL command</li>
+</ul>
+
+<p><code>Call</code> serves to call a function, which is same to these instructions,</p>
+<pre><code class="bash">PUSH [Addr of Next Instruction]
+MOV EIP, [Addr/Register]</code></pre>
+
+<ul>
+<li>RETN command</li>
+</ul>
+
+<p><code>RETN</code> is used to go back to the location where the function is called, which is same to following insturctions,</p>
+<pre><code class="bash">POP ESP
+
+# or
+
+LEA ESP, [ESP+4]
+MOV EIP, [ESP-4]</code></pre>
+
+<ul>
+<li>CMP R/M, R/M/IMM</li>
+</ul>
+
+<p><code>CMP</code> is accomplished by <code>SUB</code> command, but a little different, which will save the result into a register or memory. Instead, <code>CMP</code> only changes flag bits.</p>
+<pre><code class="bash"># check ZF bit
+MOV EAX, 100
+MOV ECX, 100
+CMP EAX, ECX
+
+# check SF bit
+MOV EAX, 100
+MOV ECX, 200
+CMP EAX, ECX</code></pre>
+
+<ul>
+<li>JCC commands</li>
+</ul>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Command</th>
+	<th style="text-align:center;">Description</th>
+	<th style="text-align:center;">EFLAG</th>
+	<th style="text-align:center;">Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">JE/JZ</td>
+	<td style="text-align:center;">Jump if Equal/Zero</td>
+	<td style="text-align:center;">ZF = 1</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNE/JNZ</td>
+	<td style="text-align:center;">Jump if NOT Equal/Zero</td>
+	<td style="text-align:center;">ZF = 0</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JS</td>
+	<td style="text-align:center;">Jump if Negative</td>
+	<td style="text-align:center;">SF = 1</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNS</td>
+	<td style="text-align:center;">Jump if Positive</td>
+	<td style="text-align:center;">SF = 0</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JP/JPE</td>
+	<td style="text-align:center;">Jump if # of 1 is Even</td>
+	<td style="text-align:center;">PF = 1</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNP,JPO</td>
+	<td style="text-align:center;">Jump if # of 1 is Odd</td>
+	<td style="text-align:center;">PF = 0</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JO</td>
+	<td style="text-align:center;">Jump if Overflow</td>
+	<td style="text-align:center;">OF = 1</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNO</td>
+	<td style="text-align:center;">Jump if NOT Overflow</td>
+	<td style="text-align:center;">OF = 0</td>
+	<td style="text-align:center;"></td>
+</tr>
+<tr>
+	<td style="text-align:center;">JB/JNAE</td>
+	<td style="text-align:center;">Jump if Below</td>
+	<td style="text-align:center;">CF = 1</td>
+	<td style="text-align:center;">Unsigned</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNB/JAE</td>
+	<td style="text-align:center;">Jump if NOT Below</td>
+	<td style="text-align:center;">CF = 0</td>
+	<td style="text-align:center;">Unsigned</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JBE</td>
+	<td style="text-align:center;">Jump if Below or Equal</td>
+	<td style="text-align:center;">CF = 1 or ZF = 0</td>
+	<td style="text-align:center;">Unsigned</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNBE/JA</td>
+	<td style="text-align:center;">Jump if Above</td>
+	<td style="text-align:center;">CF = 0 and ZF = 0</td>
+	<td style="text-align:center;">Unsigned</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JL/JNGE</td>
+	<td style="text-align:center;">Jump if Less</td>
+	<td style="text-align:center;">SF != OF</td>
+	<td style="text-align:center;">Signed</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNL/JGE</td>
+	<td style="text-align:center;">Jump if Greater or Equal</td>
+	<td style="text-align:center;">SF = OF</td>
+	<td style="text-align:center;">Signed</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JLE/JNG</td>
+	<td style="text-align:center;">Jump if Less or Equal</td>
+	<td style="text-align:center;">ZF = 1 or SF != OF</td>
+	<td style="text-align:center;">Signed</td>
+</tr>
+<tr>
+	<td style="text-align:center;">JNLE/JG</td>
+	<td style="text-align:center;">Jump if greater</td>
+	<td style="text-align:center;">ZF = 0 and SF = OF</td>
+	<td style="text-align:center;">Signed</td>
+</tr>
+</tbody>
+</table>
+<!--  
+## C Programming
+
+## Hard Coding
+
+## C++ Programming
+
+## Win32 API
+
+## PE Structure -->
+
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><span class="button">1. Foundation</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part2' %}" class="button primary icon solid fa-forward">Next: 2. Stack Analysis</a></li> 
+                 </ul> 
+             </div> 
+         </div>

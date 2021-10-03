@@ -1,0 +1,1007 @@
+{% load static %}
+
+<h1 id="shellscript">Shell Script</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#preview">Preview</a></li>
+<li><a href="#basics">Basics</a>
+
+<ul>
+<li><a href="#thefirstscript">The First Script</a></li>
+<li><a href="#variablesandinteraction">Variables and Interaction</a></li>
+<li><a href="#scriptexecution">Script Execution</a></li>
+</ul></li>
+<li><a href="#controlflow">Control Flow</a>
+
+<ul>
+<li><a href="#testcommand">Test Command</a></li>
+<li><a href="#defaultvariables">Default Variables</a></li>
+<li><a href="#if-thenclause">If-Then Clause</a></li>
+<li><a href="#case-esacclause">Case-Esac Clause</a></li>
+</ul></li>
+<li><a href="#function">Function</a></li>
+<li><a href="#loop">Loop</a>
+
+<ul>
+<li><a href="#whileloop">While Loop</a>
+
+<ul>
+<li><a href="#while-do-done">While-Do-Done</a></li>
+<li><a href="#until-do-done">Until-Do-Done</a></li>
+</ul></li>
+<li><a href="#forloop">For Loop</a>
+
+<ul>
+<li><a href="#for-do-done">For-Do-Done</a></li>
+<li><a href="#c-likefor-loop">C-like For-Loop</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#debug">Debug</a></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="preview">
+<h2>Preview</h2>
+
+<p>This tutorial is written to help people understand some of the basics of shell script programming (aka shell scripting), and hopefully to introduce some of the possibilities of simple but powerful programming available under the Bourne shell.</p>
+
+<blockquote>
+<p>No programming language is perfect. There is not even a single best language; there are only languages well suited or perhaps poorly suited for particular purposes.<br/>
+- Herbert Mayer</p>
+</blockquote>
+
+<p>Writing shell scripts is not hard to learn, since the scripts can be built in bite-sized sections and there is only a fairly small set of shell-specific operators and options to learn. The syntax is simple and straightforward, similar to that of invoking and chaining together utilities at the command line, and there are only a few &#8220;rules&#8221; to learn. Most short scripts work right the first time, and debugging even the longer ones is straightforward.</p>
+
+<p>Shell scripting hearkens back to the classic UNIX philosophy of breaking complex projects into simpler subtasks, of chaining together components and utilities. Many consider this a better, or at least more esthetically pleasing approach to problem solving than using one of the new generation of high powered all-in-one languages, such as Perl, which attempt to be all things to all people, but at the cost of forcing you to alter your thinking processes to fit the tool.</p>
+
+</section>
+<section	id="basics">
+<h2>Basics</h2>
+
+<section	id="thefirstscript">
+<h3>The First Script</h3>
+
+<p>Let&#8217;s introduce shell script with <code>helloWorld.sh</code>, the first program of all computer languages.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This is a bash version of &quot;Hello World&quot;
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo -e &quot;Hello World! \n&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] touch helloWorld.sh
+# note that to make a file executable, you must set the eXecutable bit, and for a shell script, the Readable bit must also be set:
+[root@localhost ~] chmod +x helloWorld.sh
+[root@localhost ~] bash ./helloWorld.sh
+Hello World!
+</code></pre>
+
+<p>The first line <code>#!/bin/bash</code> tells system the user should use bash to execute this script, which is super IMPORTANT. Some comments following are also significant for programmer to maintain their scripts. In the last line, <code>exit 0</code>, <code>exit</code> will return a flag value to tell the system that the status of execution, 0 for &#8220;Okay, no problem&#8221; and others for &#8220;Alas, something wrong goes with it&#8221;.</p>
+
+<p>There are a number of factors which can go into good, clean, quick, shell scripts.</p>
+
+<ul>
+<li>Formatting: the most important criteria for any code must be a clear, readable layout. This is true for all languages, but again where the major languages are supported by extensive IDEs, many shell scripts are written in far less forgiving editors, so the onus is on the scripter to ensure that code is well presented. Badly formatted code is so much harder to maintain than well-formatted code.</li>
+<li>Efficiency: A clear layout makes the difference between a shell script appearing as &#8220;black magic&#8221; and one which is easily maintained and understood. You may be forgiven for thinking that with a simple script, this is not too significant a problem, but two things here are worth bearing in mind.
+
+<ul>
+<li>Feature Creep: a simple script will - more often than anticipated - grow into a large, complex one.</li>
+<li>Maintainability: if nobody else can understand how it works, you may be stuck with maintaining it yourself for the rest of your life!</li>
+</ul></li>
+</ul>
+
+</section>
+<section	id="variablesandinteraction">
+<h3>Variables and Interaction</h3>
+
+<p><code>read</code> allows user to pass a value to a variable by keyboard.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This is test script for interaction.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Please input your favorite animal: &quot; animal
+echo -e &quot;\nYour favorite is ${animal}&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] bash ./animal.sh
+Please input your favorite animal: cat   
+
+Your favorite is cat</code></pre>
+
+<p>Now let&#8217;s use variable to do more powerful things.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Program creates three files, which named by user&apos;s input.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo -e &quot;This script will use &apos;touch&apos; to create 3 files with consistent dates.&quot;
+read -p &quot;Please input your filename: &quot; filename
+
+filename=${filename:-&quot;defaultName&quot;}
+
+file1=${filename}$(date --date=&apos;2 days ago&apos; +%Y%m%d)
+file2=${filename}$(date --date=&apos;1 days ago&apos; +%Y%m%d)
+file3=${filename}$(date +%Y%m%d)
+
+touch &quot;$file1&quot;
+touch &quot;$file2&quot;
+touch &quot;$file3&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] bash ./file.sh
+This script will use &apos;touch&apos; to create 3 files with consistent dates.
+Please input your filename: hello
+[root@localhost ~] ll hello*
+-rw-r--r-- 1 root root   0 Dec  7 10:37 hello20201205
+-rw-r--r-- 1 root root   0 Dec  7 10:37 hello20201206
+-rw-r--r-- 1 root root   0 Dec  7 10:37 hello20201207</code></pre>
+
+<p>Also, we can do calculation in script with variables.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Program will calculate the sum of two values from users.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Input the first number: &quot; num1
+read -p &quot;Input the second number: &quot; num2
+
+declare -i sum=${num1}+${num2}
+echo -e &quot;The sum of two number is ${sum}.&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sum.sh
+Input the first number: 1
+Input the second number: 2
+The sum of two number is 3.</code></pre>
+
+</section>
+<section	id="scriptexecution">
+<h3>Script Execution</h3>
+
+<p>There are two ways to execute a script &#8211; <code>bash</code> or <code>source</code>.</p>
+
+<p>The distinction is that <code>bash</code> will execute the script in a new process, while <code>source</code> will in current process, meaning system will be unable to capture the variable in the script when executing with <code>bash</code>.</p>
+<pre><code class="bash"># the difference between bash and source
+
+___Father Process___        Bash         |-----&gt;
+                   |                     |
+                   |____Child Process____|
+
+
+___Father Process_________Source_________-----&gt;
+</code></pre>
+
+</section>
+</section>
+<section	id="controlflow">
+<h2>Control Flow</h2>
+
+<section	id="testcommand">
+<h3>Test Command</h3>
+
+<ul>
+<li><code>test</code><br/>
+<code>test</code> is a super useful and significant command in shell programming, which is used to check file types and compare values.</li>
+</ul>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for File</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>-e</code></td>
+	<td style="text-align:center;">check if filename exists</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-f</code></td>
+	<td style="text-align:center;">check if filename exists and if it is a file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-d</code></td>
+	<td style="text-align:center;">check if filename exists and if it is a directory</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-b</code></td>
+	<td style="text-align:center;">check if filename exists and if it is a block device</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-c</code></td>
+	<td style="text-align:center;">check if filename exists and if it is a character device</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-S</code></td>
+	<td style="text-align:center;">check if filename exists and if it is a Socket file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-p</code></td>
+	<td style="text-align:center;">check if filename exists and a FIFO(pipe) file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-L</code></td>
+	<td style="text-align:center;">check if filename exists and a link file</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for Permission</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>-r</code></td>
+	<td style="text-align:center;">check if filename exists and is readable</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-w</code></td>
+	<td style="text-align:center;">check if filename exists and is writeable</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-x</code></td>
+	<td style="text-align:center;">check if filename exists and is executable</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-u</code></td>
+	<td style="text-align:center;">check if filename exists and has SUID attribute</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-g</code></td>
+	<td style="text-align:center;">check if filename exists and has SGID attribute</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-k</code></td>
+	<td style="text-align:center;">check if filename exists and has Sticky Bit attribute</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-s</code></td>
+	<td style="text-align:center;">check if filename exists and is a non-blank file</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for File Comparison</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>-nt</code></td>
+	<td style="text-align:center;">if file1 is newer than file2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-ot</code></td>
+	<td style="text-align:center;">if file1 is older than file2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-ef</code></td>
+	<td style="text-align:center;">if file1 is same as file2, judged by inode</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for Integer Comparison</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>-eq</code></td>
+	<td style="text-align:center;">if x equals y</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-ne</code></td>
+	<td style="text-align:center;">if x is not equal to y</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-gt</code></td>
+	<td style="text-align:center;">if x is greater than y</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-lt</code></td>
+	<td style="text-align:center;">if x is less than y</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-ge</code></td>
+	<td style="text-align:center;">if x is greater than or equal to y</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-le</code></td>
+	<td style="text-align:center;">if x is less than or equal to y</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for String Comparison</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>test -z  string</code></td>
+	<td style="text-align:center;">true if string is zero</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>test -n  string</code></td>
+	<td style="text-align:center;">true if string is not zero</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>test str1 == str2</code></td>
+	<td style="text-align:center;">true if str1 is equal to str2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>test str1 != str2</code></td>
+	<td style="text-align:center;">true if str1 is not equal to str2</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Test Flag for Logic Expression</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>-a</code></td>
+	<td style="text-align:center;">if condition1 and condition2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>-o</code></td>
+	<td style="text-align:center;">if condition1 or condition2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>!</code></td>
+	<td style="text-align:center;">if not condition</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   User input a filename, the program will check following:
+#   1.) exist?  2.) file/directory  3.) file permissions
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo -e &quot;Please input a filename, I will check the file type and permission.\n&quot;
+read -p &quot;Input a filename: &quot; filename
+
+# test if getting input from user properly
+test -z ${filename} &amp;&amp; echo &quot;You must input a legal filename.&quot; &amp;&amp; exit 0
+
+# check file type
+test ! -e ${filename} &amp;&amp; echo &quot;The file does not exist!&quot; &amp;&amp; exit 0
+test -f ${filename} &amp;&amp; echo filetype=&quot;file&quot; 
+test -d ${filename} &amp;&amp; echo filetype=&quot;directory&quot;
+
+# check permission
+test -r ${filename} &amp;&amp; perm=&quot;readable&quot;
+test -w ${filename} &amp;&amp; perm=&quot;${perm} writeable&quot;
+test -x ${filename} &amp;&amp; perm=&quot;${perm} executable&quot;
+
+echo -e &quot;The filename: ${filename} is a ${filetype}.&quot;
+echo -e &quot;And the permissions are: ${perm}.&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] ./fileChecker.sh
+Please input a filename, I will check the file type and permission.
+
+Input a filename: sh02.sh
+The filename: sh02.sh is a file.
+And the permissions are: readable writeable executable.</code></pre>
+
+<p><code>test</code> has a symbolic form, <code>[]</code>.</p>
+<pre><code class="bash">[root@localhost ~] [ -z &quot;$HOME&quot; ] ; echo $?</code></pre>
+
+<ul>
+<li>there is a blank space on inner side of each square bracket.</li>
+<li>all variables within square brackets should be included by double quotes, and all constants by single quotes so that it will be interpreted properly.</li>
+<li>in equal judgement, we could use <code>=</code> or <code>==</code>, but the latter is suggested.</li>
+</ul>
+
+<p>There is a negative example here,</p>
+<pre><code class="bash">[root@localhost ~] name=&quot;Russo Lee&quot;
+[root@localhost ~] [ $name == &quot;dog&quot; ]
+bash: [: too many arguments
+
+# &apos;cause it will be interpreted as [ Russo Lee == &quot;dog&quot; ]</code></pre>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This program will shows the user&apos;s choice.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Please input (Y/N)&quot; yn
+[ &quot;${yn}&quot; == &quot;Y&quot; -o &quot;${yn}&quot; == &quot;y&quot; ] &amp;&amp; echo &quot;OK, continue&quot; &amp;&amp; exit 0
+[ &quot;${yn}&quot; == &quot;N&quot; -o &quot;${yn}&quot; == &quot;n&quot; ] &amp;&amp; echo &quot;No, interrupt&quot; &amp;&amp; exit 0
+
+
+echo &quot;Sorry, i don&apos;t know what you mean.&quot; &amp;&amp; exit 0</code></pre>
+
+</section>
+<section	id="defaultvariables">
+<h3>Default Variables</h3>
+
+<p>Bash script has some builtin variables.</p>
+
+<ul>
+<li><code>$#</code>: the number of arguments.</li>
+<li><code>$@</code>: means <code>$1</code>, <code>$2</code>, <code>$3</code> and so on, each of which is independent.</li>
+<li><code>$*</code>: means <code>&quot;$1 $2 $3 $4&quot; ...</code>, each argument is separated by blank space by default.</li>
+</ul>
+<pre><code class="bash">/path/to/script  opt1 opt2 opt3 ...
+    ^ $0          ^$1  ^$2  ^$3 ...</code></pre>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This script will show how to use default variables.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo &quot;The script name is $0&quot;
+echo &quot;Total parameter number is $#&quot;
+
+[ &quot;$#&quot; -lt 2 ] &amp;&amp; echo &quot;The number of parameter is less than 2. Stop here.&quot; &amp;&amp; exit 0
+
+echo &quot;Your whole parameter is: $*&quot; # $@ or $*
+echo &quot;The 1st parameter is: $1&quot;
+echo &quot;The 2nd parameter is: $2&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] ./defaultPara.sh 1 2 3
+The script name is ./sh07.sh
+Total parameter number is 3
+Your whole parameter is: 1 2 3
+The 1st parameter is: 1
+The 2nd parameter is: 2</code></pre>
+
+<ul>
+<li><code>shift</code><br/>
+<code>shift</code> is used to shift parameters in a command. Let&#8217;s explain it with an example.</li>
+</ul>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This script will show how shift works.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo &quot;Total parameter number is ===&gt; $#&quot;
+echo &quot;Your whole parameter is &apos;$@&apos;&quot;
+
+shift
+echo &quot;Total parameter number is ===&gt; $#&quot;
+echo &quot;Your whole parameter is &apos;$@&apos;&quot;
+
+shift 3
+echo &quot;Total parameter number is ===&gt; $#&quot;
+echo &quot;Your whole parameter is &apos;$@&apos;&quot;
+
+exit 0</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh08.sh 1 2 3 4 5 6 7 8
+Total parameter number is ===&gt; 8
+Your whole parameter is &apos;1 2 3 4 5 6 7 8&apos;
+Total parameter number is ===&gt; 7
+Your whole parameter is &apos;2 3 4 5 6 7 8&apos;
+Total parameter number is ===&gt; 4
+Your whole parameter is &apos;5 6 7 8&apos;</code></pre>
+
+</section>
+<section	id="if-thenclause">
+<h3>If-Then Clause</h3>
+<pre><code class="shell">if [ condition ]; then
+    ...
+fi
+
+# there are two ways for more then one conditions
+
+if [ condition1 -o condition2 -a ... ]; then
+    ...
+fi
+
+# or 
+
+if [ condition1 ] || [ condition2 ] &amp;&amp; ...; then
+    ...
+fi
+
+# multi-layer if-then clause
+
+if [ condition ]; then
+    ...
+elif [ condition ]; then
+    ...
+else
+    ...
+fi</code></pre>
+
+<p>Let&#8217;s change the example in <code>test</code> part.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   This program will shows the user&apos;s choice.
+# History:
+#   2020/12/07 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Please input (Y/N)&quot; yn
+if [ &quot;${yn}&quot; == &quot;Y&quot;] || [ &quot;${yn}&quot; == &quot;y&quot; ]; then 
+    echo &quot;OK, continue&quot;
+elif [ &quot;${yn}&quot; == &quot;N&quot;] || [ &quot;${yn}&quot; == &quot;n&quot; ]; then
+    echo &quot;No, interrupt&quot;
+else
+    echo &quot;Sorry, i don&apos;t know what you mean.&quot;
+fi
+</code></pre>
+
+<p>Now let&#8217;s try to do something about host network management. <code>netstat -tuln</code> is used to check service ports of a linux host, where <code>Local Address</code> is an important record. <code>0.0.0.0</code> means open to all users on the internet whereas <code>127.0.0.1</code> only open for this host. 80 port is for www, 22 for ssh, 21 for ftp, 25 for mail, 111 for RPC(remote procedure call).</p>
+<pre><code class="bash">[root@localhost ~] netstat -tuln
+Proto Recv-Q Send-Q Local Address     Foreign Address     State
+tcp        0      0 0.0.0.0:80        0.0.0.0:*           LISTEN
+tcp        0      0 0.0.0.0:21        0.0.0.0:*           LISTEN 
+tcp        0      0 0.0.0.0:22        0.0.0.0:*           LISTEN
+udp        0      0 127.0.0.1:323     0.0.0.0:* 
+udp        0      0 0.0.0.0:68        0.0.0.0:* 
+udp6       0      0 ::1:323           :::* </code></pre>
+
+<p>Given knowledge above, we will write a script to check opened services on the host.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Using netstat and grep to detect WWW, SSH, FTP and Mail services.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+echo &quot;Now, I will detect services on your linux server.&quot;
+echo -e &quot;The www, ftp, ssh, and mail will be detected! \n&quot;
+
+checkItem=$(netstat -tuln | grep &quot;:80&quot;)
+if [ &quot;${checkItem}&quot; != &quot;&quot; ]; then
+    echo &quot;WWW is running on your host.&quot;
+fi
+
+checkItem=$(netstat -tuln | grep &quot;:22&quot;)
+if [ &quot;${checkItem}&quot; != &quot;&quot; ]; then
+    echo &quot;SSH is running on your host.&quot;
+fi
+
+checkItem=$(netstat -tuln | grep &quot;:21&quot;)
+if [ &quot;${checkItem}&quot; != &quot;&quot; ]; then
+    echo &quot;FTP is running on your host.&quot;
+fi
+
+checkItem=$(netstat -tuln | grep &quot;:25&quot;)
+if [ &quot;${checkItem}&quot; != &quot;&quot; ]; then
+    echo &quot;Mail service is running on your host.&quot;
+fi
+</code></pre>
+
+</section>
+<section	id="case-esacclause">
+<h3>Case-Esac Clause</h3>
+<pre><code class="shell">case ${var} in
+    &quot;key1&quot;)
+        ...
+        ;;
+    &quot;key2&quot;)
+        ...
+        ;;
+    *)
+        ...
+        exit 1
+        ;;
+esac</code></pre>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Show &quot;Hello&quot; from $1 by using case-esac clause.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+case $1 in
+    &quot;hello&quot;)
+        echo &quot;Hello world!&quot;
+        ;;
+    &quot;&quot;)
+        echo &quot;You MUST input parameters, ex&gt; {$0 word}&quot;
+        ;;
+    *)
+        echo &quot;Usage $0 {hello}&quot;
+        ;;
+esac</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh09.sh
+You MUST input parameters, ex&gt; {./sh09.sh word}
+[root@localhost ~] ./sh09.sh hello
+Hello world!</code></pre>
+
+<p>A lot of scripts of system services are written in this way. Look at <code>/etc/init.d/syslog</code>. If we want to restart syslog service, just key in <code>/etc/init.d/syslog restart</code>, then the script will check <code>$1</code> and do some tasks in that condition.</p>
+
+</section>
+</section>
+<section	id="function">
+<h2>Function</h2>
+
+<p>Function in shell script is similar to C, which is designed for users to utilize a code segmentation conveniently.</p>
+<pre><code class="shell">function fname() {
+    ...
+}</code></pre>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Use function to print information.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+function printNum() {
+    echo &quot;Your choice is $1&quot;
+}
+
+echo &quot;This program will print your selection.&quot;
+
+case $1 in
+    &quot;one&quot;)
+        printNum 1
+    ;;
+    &quot;two&quot;)
+        printNum 2
+    ;;
+    &quot;three&quot;)
+        printNum 3
+    ;;
+    *)
+        echo &quot;Usage $0 {one|two|three}&quot;
+    ;;
+esac</code></pre>
+
+<p>The example above shows how to transfer arguments to function. It is pretty straightforward, since you can just see a function as a sub-script.</p>
+
+</section>
+<section	id="loop">
+<h2>Loop</h2>
+
+<section	id="whileloop">
+<h3>While Loop</h3>
+
+<section	id="while-do-done">
+<h4>While-Do-Done</h4>
+
+<p>Similar to C syntax, <code>while-do-done</code> in shell script is a conditional loop. When condition is true, the codes within <code>do-done</code> will be executed.</p>
+<pre><code class="shell">while [ condition ]
+do
+    ...
+done</code></pre>
+
+</section>
+<section	id="until-do-done">
+<h4>Until-Do-Done</h4>
+
+<p>Different from <code>while-do-done</code>, <code>until-do-done</code> will execute the codes in the body when the condition is false.</p>
+<pre><code class="shell">until [ condition ]
+do
+    ...
+done</code></pre>
+
+<p>Let&#8217;s do a calculation from 1 to N by function.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Use function to calculate the sum from 1 to N.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+function calc() {
+    declare -i n=$1
+    declare -i i=1
+
+    while [ ${i} -le ${n} ]  # &lt;&lt;== integer comparison
+    do
+        sum=${sum}+${i}
+        i=${i}+1
+    done
+
+    # until [ ${i} -gt ${n} ]
+    # do
+    #     sum=${sum}+${i}
+    #     i=${i}+1
+    # done
+}
+
+if [ &quot;$#&quot; -lt &quot;1&quot; ]; then    # &lt;&lt;== string comparison
+    echo &quot;Please input a number, ex&gt; $0 {100}&quot;
+    exit 127
+fi
+
+# var sum is responsible for taking the result back from function
+declare -i sum
+calc $1
+echo &quot;The sum from 1 to $1 is ${sum}.&quot;</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh10.sh
+Please input a number, ex&gt; ./sh10.sh {100}
+[root@localhost ~] echo $? 
+127
+[root@localhost ~] ./sh10.sh 100
+The sum from 1 to 100 is 5050.</code></pre>
+
+</section>
+</section>
+<section	id="forloop">
+<h3>For Loop</h3>
+
+<section	id="for-do-done">
+<h4>For-Do-Done</h4>
+
+<p><code>for-do-done</code> loop has its C version of <code>for-in</code>, whose syntax looks like this.</p>
+<pre><code class="shell">for var in con1 con2 con3 ...
+do
+    ...
+done</code></pre>
+
+<p>There are tree useful script examples, the first is to record detailed information of host accounts in a file called <code>users.info</code>.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Use id, finger command to check system account&apos;s information 
+#   and backup into users.info file.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+touch users.info
+
+users=$(cut -d &apos;:&apos; -f1 /etc/passwd)
+for username in ${users}
+do
+    id ${username} &gt;&gt; users.info
+    finger ${username} &gt;&gt; users.info
+    echo &quot;&quot; &gt;&gt; users.info
+done</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh11.sh
+[root@localhost ~] cat users.info
+uid=0(root) gid=0(root) groups=0(root)
+Login: root               Name: root
+Directory: /root          Shell: /bin/zsh
+On since Tue Dec  8 10:08 (CST) on pts/0 from 1.80.149.39
+   5 seconds idle
+No mail.
+No Plan.
+
+uid=1(bin) gid=1(bin) groups=1(bin)
+Login: bin                Name: bin
+Directory: /bin           Shell: /sbin/nologin
+Never logged 
+...</code></pre>
+
+<p>Another example is to check whether hosts in a cluster are online or not.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Check if hosts are online by ping command.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+network_pref=&quot;192.168.1&quot;
+for host in $(seq 1 100)  # &lt;&lt;== use &apos;seq&apos; to get a sequence of numbers
+do
+    ping -c 1 -w 1 ${network_pref}.${host} &amp;&gt; /dev/null &amp;&amp; returnFlag=0 || returnFlag=1
+    if [ &quot;${returnFlag}&quot; == 0 ]; then
+        echo &quot;Server ${network_pref}.${host} is online.&quot;
+    else
+        echo &quot;Server ${network_pref}.${host} is offline.&quot;
+    fi
+done</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh12.sh
+Server 192.168.1.1 is offline.                   
+Server 192.168.1.2 is offline.
+Server 192.168.1.3 is offline.
+Server 192.168.1.4 is offline.
+Server 192.168.1.5 is offline.
+Server 192.168.1.6 is offline.
+...</code></pre>
+
+<p>The final one is to check the permission of files in a directory.</p>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   Check out the permission of files in a directory.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Please input a directory name: &quot; dir
+
+if [ &quot;${dir}&quot; == &quot;&quot; ] || [ ! -d &quot;${dir}&quot; ]; then
+    echo &quot;Error: the ${dir} is NOT a legal directory in your system. Please check if it exists!&quot;
+    exit 1
+fi
+
+filelist=$(ls $dir)
+for file in ${filelist}
+do
+    perm=&quot;&quot;
+    test -r &quot;${dir}/${file}&quot; &amp;&amp; perm=&quot;${perm}readable&quot;
+    test -w &quot;${dir}/${file}&quot; &amp;&amp; perm=&quot;${perm} writable&quot;
+    test -x &quot;${dir}/${file}&quot; &amp;&amp; perm=&quot;${perm} executable&quot;
+
+    echo &quot;The file ${dir}/${file} permission is: ${perm}&quot;
+done</code></pre>
+<pre><code class="bash">[root@localhost ~] ./sh13.sh
+Please input a directory name: /root/shell
+The file /root/shell/sh02.sh permission is: readable writable executable
+The file /root/shell/sh03.sh permission is: readable writable executable
+The file /root/shell/sh07.sh permission is: readable writable executable
+The file /root/shell/sh08.sh permission is: readable writable executable</code></pre>
+
+</section>
+<section	id="c-likefor-loop">
+<h4>C-like For-Loop</h4>
+<pre><code class="shell">for ( ( initialVal; condition; step ) )
+do
+
+done</code></pre>
+<pre><code class="shell">#!/bin/bash
+# Program:
+#   The program will count the sum from 1 to # from users.
+# History:
+#   2020/12/08 Minzhi First Release
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+read -p &quot;Please input a number, I will count for 1+2+3+...+N: &quot; num
+
+declare -i sum=0
+for (( i=1; i&lt;=${num}; i=i+1 )) # &lt;&lt;== (( ... )) is a symbol for numerical operation
+do
+    sum=${sum}+${i}
+done
+
+echo &quot;The sum of 1 from ${num} equals ${sum}.&quot;</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="debug">
+<h2>Debug</h2>
+
+<p><code>sh</code> provide some tools for syntax check for shell script.</p>
+<pre><code class="bash">sh -[nvx] script.sh
+# where,
+# -n: do NOT execute script, and only check syntax.
+# -v: before executing script, output the script code first.
+# -x: display the process of execution.
+
+[root@localhost ~] sh -x sh14.sh
++ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin
++ export PATH
++ read -p &apos;Please input a number, I will count for 1+2+3+...+N: &apos; num
+Please input a number, I will count for 1+2+3+...+N: 10
++ declare -i sum=0
++ (( i=1 ))
++ (( i&lt;=10 ))
++ sum=0+1
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=1+2
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=3+3
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=6+4
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=10+5
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=15+6
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=21+7
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=28+8
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=36+9
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ sum=45+10
++ (( i=i+1  ))
++ (( i&lt;=10 ))
++ echo &apos;The sum of 1 from 10 equals 55.&apos;
+The sum of 1 from 10 equals 55.</code></pre>
+
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'regular-expression' %}" class="button primary icon solid fa-backward">Back: 6. Regular Expression</a></li> 
+                     <li><span class="button">7. Shell Script</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'account-management' %}" class="button primary icon solid fa-forward">Next: 8. Account-management</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

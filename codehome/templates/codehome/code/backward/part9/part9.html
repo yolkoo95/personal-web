@@ -1,0 +1,877 @@
+{% load static %}
+
+<h1 id="peseg.1">PE Seg.1</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#5045pe">5045 PE</a>
+
+<ul>
+<li><a href="#intuition">Intuition</a></li>
+<li><a href="#stretch">Stretch</a></li>
+</ul></li>
+<li><a href="#generalconcepts">General Concepts</a></li>
+<li><a href="#fileheaders">File Headers</a>
+
+<ul>
+<li><a href="#dosheader">DOS Header</a></li>
+<li><a href="#pestdheader">PE STD Header</a></li>
+<li><a href="#optionalheader">Optional Header</a></li>
+<li><a href="#peparser">PE Parser</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="5045pe">
+<h2>5045 PE</h2>
+
+<p>What is PE? The Portable Executable (PE) format is a file format for executables, object code, DLLs and others used in 32-bit and 64-bit versions of Windows operating systems. The PE format is a data structure that encapsulates the information necessary for the Windows OS loader to manage the wrapped executable code. This includes dynamic library references for linking, API export and import tables, resource management data and thread-local storage (TLS) data. On NT operating systems, the PE format is used for EXE, DLL, SYS (device driver), and other file types. The Extensible Firmware Interface (EFI) specification states that PE is the standard executable format in EFI environments. </p>
+
+<p>BTW <code>0x50 0x45</code> is annotated as <code>PE</code> in ASCII, therefore PE gets its name from there more or less.</p>
+
+<section	id="intuition">
+<h3>Intuition</h3>
+
+<p>Before we explore PE, let&#8217;s compare two binary files &#8211; builtin .exe file <code>notepad</code> in hard disk and in memory.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/notepad-hard.png' %}" alt="notepad in hard disk" />
+<figcaption>notepad in hard disk</figcaption>
+</figure>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/notepad-memory.png' %}" alt="notepad in memory" />
+<figcaption>notepad in memory</figcaption>
+</figure>
+
+<p>Two differences are easy to find,</p>
+
+<ul>
+<li>file size: of hard disk is smaller than that of memory although the code of these two files are same.</li>
+<li>address: the address starts at 0 in hard disk, but at <code>00100000</code> in memory.</li>
+</ul>
+
+</section>
+<section	id="stretch">
+<h3>Stretch</h3>
+
+<p>Why does file in memory is larger? There are two reasons for it.</p>
+
+<ol>
+<li>Save Storage of Hard Disk: for history reason, hard disk in the past was small, and thereby scientists had to use it carefully.</li>
+<li>Memory Alignment to Improve Access Speed: the idea here is similar to word alignment.</li>
+</ol>
+<pre><code class="bash">#  hard disk alignment, padding 0
+     _____________       _  
+    |  section1   |       |--&gt; 200h bytes
+    |_________0000|      _|
+    |  section2   |
+    |_______000000|
+    |  section3   |
+    |___________00|
+    |             |
+
+#  memory alignment, padding 0
+     _____________       _  
+    |  0x28       |       |
+    |      0x96   |       |--&gt; 1000h bytes
+    |____000000000|      _|
+    |             |
+    |  0xf1       |
+    |__________000|
+    |             |
+    |  section3   |
+    |_______000000|
+    |             |</code></pre>
+
+</section>
+</section>
+<section	id="generalconcepts">
+<h2>General Concepts</h2>
+
+<p>Certain concepts that appear throughout notebooks are described in the following table:</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Name</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">attribute certificate</td>
+	<td style="text-align:center;">A certificate that is used to associate verifiable statements with an image. A number of different verifiable statements can be associated with a file; one of the most useful ones is a statement by a software manufacturer that indicates what the message digest of the image is expected to be. A message digest is similar to a checksum except that it is extremely difficult to forge. Therefore, it is very difficult to modify a file to have the same message digest as the original file.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">date/time stamp</td>
+	<td style="text-align:center;">A stamp that is used for different purposes in several places in a PE or COFF file. In most cases, the format of each stamp is the same as that used by the time functions in the C run-time library.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">file pointer</td>
+	<td style="text-align:center;">The location of an item within the file itself, before being processed by the linker (in the case of object files) or the loader (in the case of image files). In other words, this is a position within the file as stored on disk.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">linker</td>
+	<td style="text-align:center;">A reference to the linker that is provided with Microsoft Visual Studio.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">object file</td>
+	<td style="text-align:center;">A file that is given as input to the linker. The linker produces an image file, which in turn is used as input by the loader. The term &#8220;object file&#8221; does not necessarily imply any connection to object-oriented programming.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">reserved, must be 0</td>
+	<td style="text-align:center;">A description of a field that indicates that the value of the field must be zero for generators and consumers must ignore the field.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">Relative virtual address (RVA)</td>
+	<td style="text-align:center;">In an image file, this is the address of an item after it is loaded into memory, with the base address of the image file subtracted from it. The RVA of an item almost always differs from its position within the file on disk (file pointer). In an object file, an RVA is less meaningful because memory locations are not assigned. In this case, an RVA would be an address within a section (described later in this table), to which a relocation is later applied during linking. For simplicity, a compiler should just set the first RVA in each section to zero.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">section</td>
+	<td style="text-align:center;">The basic unit of code or data within a PE or COFF file. For example, all code in an object file can be combined within a single section or (depending on compiler behavior) each function can occupy its own section. With more sections, there is more file overhead, but the linker is able to link in code more selectively. A section is similar to a segment in Intel 8086 architecture. All the raw data in a section must be loaded contiguously.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">Virtual Address (VA)</td>
+	<td style="text-align:center;">Same as RVA, except that the base address of the image file is not subtracted. The address is called a VA because <em>Windows creates a distinct VA space for each process</em>, independent of physical memory. For almost all purposes, a VA should be considered just an address. A VA is not as predictable as an RVA because the loader might not load the image at its preferred location.</td>
+</tr>
+</tbody>
+</table>
+
+<p>BTW, in 32-bit system, virtual memory takes 4G (0x00000000<sub>0xFFFFFFFF</sub>).</p>
+<pre><code class="bash"># layout of PE
+     ______________  _____    
+    |  DOS Header  |     |
+    |______________|     |
+    |  NT Headers  |---| |
+    |______________|   | |
+    |  File Header |&lt;--| |  # &lt;-- or std PE header 
+    |______________|   | |
+    |   Optional   |   | |--&gt; SizeOfHeaders
+    |    Header    |&lt;--| |
+    |______________|     | 
+    |   Table of   |     |
+    |   Sections   | ____|
+    |     ....     |
+    |______________|
+    |   Section1   |
+    |    (.text)   |
+    |______________|
+    |   Section2   |
+    |    (data)    |
+    |______________|
+    |   Section3   |
+    |  (resources) |
+    |______________|
+    |              |
+    |     ....     |
+    |______________|
+    |              |
+    |   Section N  |
+    |______________|</code></pre>
+
+</section>
+<section	id="fileheaders">
+<h2>File Headers</h2>
+
+<section	id="dosheader">
+<h3>DOS Header</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">e_magic</td>
+	<td style="text-align:center;">used for judge if an executable file</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">e_cblp</td>
+	<td style="text-align:center;">reserved, zero by default (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&#8230;</td>
+	<td style="text-align:center;">&#8230;</td>
+	<td style="text-align:center;">&#8230;</td>
+	<td style="text-align:center;">&#8230;</td>
+</tr>
+<tr>
+	<td style="text-align:center;">60</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">e_lfanew</td>
+	<td style="text-align:center;">offset of PE flag to the origin of file</td>
+</tr>
+</tbody>
+</table>
+
+<p>Notice that <code>e_lfanew</code> points to <code>0x50 0x45 0x00 0x00</code> which takes 4 bytes, after which the standard PE Header begins.</p>
+
+</section>
+<section	id="pestdheader">
+<h3>PE STD Header</h3>
+
+<p>At the beginning of an object file, or immediately after the signature of an image file, is a standard PE file header in the following format. Note that the Windows loader limits the number of sections to 96.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Machine</td>
+	<td style="text-align:center;">The number that identifies the type of target machine.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">NumberOfSections</td>
+	<td style="text-align:center;">The number of sections. This indicates the size of the section table, which immediately follows the headers.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">TimeDateStamp</td>
+	<td style="text-align:center;">The low 32 bits of the number of seconds since 00:00 January 1, 1970 (a C run-time time_t value), which indicates when the file was created.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">8</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">PointerToSymbolTable</td>
+	<td style="text-align:center;">The file offset of the COFF symbol table, or zero if no COFF symbol table is present. This value should be zero for an image because COFF debugging information is deprecated. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">12</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">NumberOfSymbols</td>
+	<td style="text-align:center;">The number of entries in the symbol table. This data can be used to locate the string table, which immediately follows the symbol table. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">16</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">SizeOfOptionalHeader</td>
+	<td style="text-align:center;">The size of the optional header, which is required for executable files but not for object files. This value should be zero for an object file.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">18</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Characteristics</td>
+	<td style="text-align:center;">The flags that indicate the attributes of the file.</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>Machine: as showing above, machine identifies the type of target machine. <code>0x0</code> for any machine type, <code>0x01c0</code> for ARM little endian machine, and <code>0x014c</code> for Intel 386 or later processors and compatible processors.</li>
+<li>TimeDateStamp: for notepad in hard disk, the time date stamp is <code>0x41107cc3</code>, which is 34 years. hence the time when the file was created is <code>2004 = 1970 + 34</code>.</li>
+<li>SizeOfOptionalHeader: the size of optional header is various. By default the size is e0h in x86 machine, while f0h in x86_64 machine.</li>
+</ul>
+
+</section>
+<section	id="optionalheader">
+<h3>Optional Header</h3>
+
+<p>Every image file has an optional header that provides information to the loader. This header is optional in the sense that some files (specifically, object files) do not have it. For image files, this header is required. An object file can have an optional header, but generally this header has no function in an object file except to increase its size.</p>
+
+<p>Note that the size of the optional header is not fixed.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Magic</td>
+	<td style="text-align:center;">The unsigned integer that identifies the state of the image file. The most common number is 0x10B, which identifies it as a normal executable file. 0x107 identifies it as a ROM image, and 0x20B identifies it as a PE32+ executable.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">MajorLinkerVersion</td>
+	<td style="text-align:center;">The linker major version number. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">3</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">MinorLinkerVersion</td>
+	<td style="text-align:center;">The linker minor version number. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfCode</td>
+	<td style="text-align:center;">The size of the code (text) section, or the sum of all code sections if there are multiple sections. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">8</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfInitializedData</td>
+	<td style="text-align:center;">The size of the initialized data section, or the sum of all such sections if there are multiple data sections. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">12</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfUninitializedData</td>
+	<td style="text-align:center;">The size of the uninitialized data section (BSS), or the sum of all such sections if there are multiple BSS sections. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">16</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">AddressOfEntryPoint</td>
+	<td style="text-align:center;">The address of the entry point <strong>relative to the image base</strong> when the executable file is loaded into memory. For program images, this is the starting address. For device drivers, this is the address of the initialization function. An entry point is optional for DLLs. When no entry point is present, this field must be zero.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">20</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">BaseOfCode</td>
+	<td style="text-align:center;">The address that is relative to the image base of the beginning-of-code section when it is loaded into memory. (IGNORE)</td>
+</tr>
+</tbody>
+</table>
+
+<p>PE32 contains this additional field, which is absent in PE32+, following BaseOfCode.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">24</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">BaseOfData</td>
+	<td style="text-align:center;">The address that is relative to the image base of the beginning-of-data section when it is loaded into memory. (IGNORE)</td>
+</tr>
+</tbody>
+</table>
+
+<p>The next 21 fields are an extension to the COFF optional header format. They contain additional information that is required by the linker and loader in Windows.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">28</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">ImageBase</td>
+	<td style="text-align:center;">The preferred address of the first byte of image when loaded into memory; must be a multiple of 64 K. The default for DLLs is 0x10000000. The default for Windows CE EXEs is 0x00010000. The default for Windows NT, Windows 2000, Windows XP, Windows 95, Windows 98, and Windows Me is 0x00400000.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">32</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SectionAlignment</td>
+	<td style="text-align:center;">The alignment (in bytes) of sections when they are loaded into memory. It must be greater than or equal to FileAlignment. The default is the page size for the architecture.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">36</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">FileAlignment</td>
+	<td style="text-align:center;">The alignment factor (in bytes) that is used to align the raw data of sections in the image file. The value should be a power of 2 between 512 and 64 K, inclusive. The default is 512.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">40</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MajorOperatingSystemVersion</td>
+	<td style="text-align:center;">The major version number of the required operating system. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">42</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MinorOperatingSystemVersion</td>
+	<td style="text-align:center;">The minor version number of the required operating system. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">44</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MajorImageVersion</td>
+	<td style="text-align:center;">The major version number of the image. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">46</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MinorImageVersion</td>
+	<td style="text-align:center;">The minor version number of the image. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">48</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MajorSubsystemVersion</td>
+	<td style="text-align:center;">The major version number of the subsystem. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">50</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">MinorSubsystemVersion</td>
+	<td style="text-align:center;">The minor version number of the subsystem. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">52</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Win32VersionValue</td>
+	<td style="text-align:center;">Reserved, must be zero. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">56</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfImage</td>
+	<td style="text-align:center;">The size (in bytes) of the image, including all headers, as the image is loaded in memory. <strong>It must be a multiple of SectionAlignment</strong>.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">60</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfHeaders</td>
+	<td style="text-align:center;">The combined size of an MS-DOS stub, PE header, and section headers <strong>rounded up to a multiple of FileAlignment</strong>.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">64</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">CheckSum</td>
+	<td style="text-align:center;">The image file checksum. The algorithm for computing the checksum is incorporated into IMAGHELP.DLL.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">68</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Subsystem</td>
+	<td style="text-align:center;">The subsystem that is required to run this image. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">70</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">DllCharacteristics</td>
+	<td style="text-align:center;">For more information, see DLL Characteristics later. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">72</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfStackReserve</td>
+	<td style="text-align:center;">The size of the stack to reserve. Only SizeOfStackCommit is committed; the rest is made available one page at a time until the reserve size is reached.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">76</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfStackCommit</td>
+	<td style="text-align:center;">The size of the stack to commit.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">80</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfHeapReserve</td>
+	<td style="text-align:center;">The size of the local heap space to reserve. Only SizeOfHeapCommit is committed; the rest is made available one page at a time until the reserve size is reached.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">84</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">SizeOfHeapCommit</td>
+	<td style="text-align:center;">The size of the local heap space to commit.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">88</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">LoaderFlags</td>
+	<td style="text-align:center;">Reserved, must be zero. (IGNORE)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">92</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">NumberOfRvaAndSizes</td>
+	<td style="text-align:center;">The number of data-directory entries in the remainder of the optional header. Each describes a location and size.</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>SizeOfCode: must be the multiple of FileAlignment.</li>
+<li>SizeOfInitializedData: must be the multiple of FileAlignment.</li>
+<li>SizeOfUninitializedData: must be the multiple of FileAlignment.</li>
+<li>SectionAlignment: for old version machine, 200h, and for new machine, 1000h, which is same as FileAlignment</li>
+<li>FileAlignment: 1000h by default.</li>
+<li>AddressOfEntryPoint: The address of entry point in memory (<code>ImageBase + AddressOfEntryPoint</code>) has nothing to do with the beginning of program. In general, the beginning of program is in the address of entry point, which is in the code (<code>.text</code>) section.</li>
+</ul>
+
+<h5 id="physicalmemoryandvirtualmemory">Physical Memory and Virtual Memory</h5>
+
+<p>The OS will allocate a virtual memory for each process(or running program), which has 4G memory. It is virtual address(VA) that indexes this virtual memory. It can be summarized as <code>virtual address = relative virtual address + image base</code>. </p>
+
+<p>Yet the actual address of physical memory is allocated by process loader, which will assign memory according to which physical memory blocks are used or available. In general, it will shift VA linearly in physical memory.</p>
+<pre><code class="bash">#  hard disk alignment, padding 0
+     _____________       _     &lt;-- RVA 0x00000000
+    |  section1   |       |--&gt; 200h bytes
+    |_________0000|      _|
+    |  section2   |
+    |_______000000|
+    |  section3   |
+    |___________00|
+    |             |
+         
+      File Buffer
+
+
+#  after stretching in virtual memory, memory alignment, padding 0
+     _____________   _   _     &lt;-- VA 0x00400000
+    |  0x28       |   |   |
+    |      0x96   |   |   |--&gt; 1000h bytes
+    |____000000000|   |  _|
+    |             |   |
+    |  0xf1       |   |---&gt; SizeOfImage
+    |__________000|   |
+    |             |   |
+    |  section3   |   |
+    |_______000000|   |
+    |             |  _|
+
+      Image Buffer
+
+#  physical memory, shift linearly + 0x00200000 for example
+     _____________       _     &lt;-- VA 0x00600000
+    |  0x28       |       |
+    |      0x96   |       |--&gt; 1000h bytes
+    |____000000000|      _|
+    |             |
+    |  0xf1       |
+    |__________000|
+    |             |
+    |  section3   |
+    |_______000000|
+    |             |</code></pre>
+
+</section>
+<section	id="peparser">
+<h3>PE Parser</h3>
+
+<p>Now let&#8217;s write a parser to help us parse fields of PE instead of doing it manually.</p>
+<pre><code class="c">// PEReader.h
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#define nullptr NULL
+#define BYTE unsigned char
+void readPEFile(BYTE* filename);
+
+// PELoader.c
+// read file into file buffer and return the base address of file buffer
+void readPEFile(BYTE* filename) {
+	FILE *stream;
+	size_t filesize = 0;
+	size_t i;
+	BYTE* fileBuffer = nullptr;
+	int ch;
+	
+	if ((stream = fopen(filename, &quot;r&quot;)) != NULL) {
+		// get file size
+		fseek(stream, 0L, SEEK_END);
+		filesize = ftell(stream);
+		// reset stream pointer
+		fseek(stream, 0L, SEEK_SET);
+
+		// memory allocation and initialization
+		fileBuffer = (BYTE*)malloc(sizeof(BYTE) * filesize);
+		if (fileBuffer == nullptr) {
+			printf(&quot;Memory allocate failed.\n&quot;);
+			fclose(stream);
+			exit(-1);
+		}
+		memset(fileBuffer, 0, sizeof(BYTE) * filesize);
+
+		// read stream to file buffer
+		ch = fgetc(stream);
+		for (i = 0; i &lt; filesize; i++) {
+			fileBuffer[i] = (BYTE)ch;
+			ch = fgetc(stream);
+		}
+		
+		baseAddr = fileBuffer;
+		fclose(stream);
+		
+		if (DEBUG) {
+			printf(&quot;Filesize: %d\n&quot;, filesize);
+			printf(&quot;Buffersize: %d\n&quot;, i);
+			printf(&quot;BaseAddr: %x\n&quot;, baseAddr);
+			printf(&quot;\n&quot;);
+		}
+	}
+	else {
+		printf(&quot;ERROR: The file was not opened properly.\n&quot;);
+		exit(-1);
+	}
+}</code></pre>
+<pre><code class="c">// Program: PE Parser
+// This program is going to read PE file from disk to file buffer
+// in virtual memory, and then parses fields of the PE file.
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+#include &quot;PEReader.h&quot;
+
+#define BYTE unsigned char
+#define WORD unsigned short
+#define DWORD unsigned int
+#define size_t unsigned int
+#define PIMAGE_HEADER unsigned char*
+#define nullptr NULL
+#define DEBUG 0
+
+typedef struct imageElement {
+	size_t offset;
+	size_t length;
+	BYTE* val;
+	DWORD dword;
+} ImageElement;
+
+struct {
+	ImageElement e_magic;
+	ImageElement e_lfanew;
+} DOSHeader; 
+
+struct {
+	ImageElement Machine;
+	ImageElement NumberOfSections;
+	ImageElement TimeDateStamp;
+	ImageElement PointerToSymbolTable;
+	ImageElement NumberOfSymbols;
+	ImageElement SizeOfOptionalHeader;
+	ImageElement Characteristics;
+} FileHeader; 
+
+struct {
+	ImageElement Magic;
+	ImageElement SizeOfCode;
+	ImageElement AddressOfEntryPoint;
+	ImageElement ImageBase;
+	ImageElement SectionAlignment;
+	ImageElement FileAlignment;
+	ImageElement SizeOfImage;
+	ImageElement SizeOfHeaders;
+	ImageElement CheckSum;
+	ImageElement SizeOfStackReserve;
+	ImageElement SizeOfStackCommit;
+	ImageElement SizeOfHeapReserve;
+	ImageElement SizeOfHeapCommit;
+	ImageElement NumberOfRvaAndSizes;
+} OptionalHeader;
+
+PIMAGE_HEADER baseAddr = nullptr;
+
+void initImageElement(ImageElement* pEle, size_t offset, size_t length) {
+	BYTE* buffer = nullptr;
+
+	pEle-&gt;offset = offset;
+	pEle-&gt;length = length;
+	
+	// read as pointer
+	buffer = (BYTE*)malloc(sizeof(BYTE) * sizeof(DWORD));
+	memset(buffer, 0, sizeof(BYTE) * sizeof(DWORD));
+	memcpy(buffer, baseAddr + pEle-&gt;offset, pEle-&gt;length);
+	
+	pEle-&gt;val = buffer;
+	
+	// read as DWORD
+	memcpy(&amp;pEle-&gt;dword, buffer, sizeof(BYTE) * sizeof(DWORD));
+	
+	buffer = nullptr;
+}
+
+void printElement(char* prompt, ImageElement* pEle) {
+	size_t i;
+	printf(prompt);
+	
+	for (i = 0; i &lt; pEle-&gt;length; i++) {
+		printf(&quot;%02x &quot;, pEle-&gt;val[i]);
+	}
+	printf(&quot;\n&quot;);
+	
+	if (DEBUG) {
+		printf(&quot;%04x\n&quot;, pEle-&gt;dword);
+	}
+}
+
+void InitializeParserTable() {
+	size_t file_header_offset = 0;
+
+	// DOS Header
+	initImageElement(&amp;DOSHeader.e_magic, 0, 2);
+	initImageElement(&amp;DOSHeader.e_lfanew, 60, 4);
+	
+	// offset of PE Flag to DOS Header
+	// sizeof PE flag is 4 bytes, which is &apos;50 45 00 00&apos;
+	file_header_offset = DOSHeader.e_lfanew.dword + 4;
+	baseAddr += file_header_offset;
+
+	// PE STD Header
+	initImageElement(&amp;FileHeader.Machine, 0, 2);
+	initImageElement(&amp;FileHeader.NumberOfSections, 2, 2);
+	initImageElement(&amp;FileHeader.TimeDateStamp, 4, 4);
+	initImageElement(&amp;FileHeader.PointerToSymbolTable, 8, 4);
+	initImageElement(&amp;FileHeader.NumberOfSymbols, 12, 4);
+	initImageElement(&amp;FileHeader.SizeOfOptionalHeader, 16, 2);
+	initImageElement(&amp;FileHeader.Characteristics, 18, 2);
+
+	// change baseAddr to Optional Header, the size of File Header is 20 bytes
+	baseAddr += 20;
+
+	// PE Optional Header
+	initImageElement(&amp;OptionalHeader.Magic, 0, 2);
+	initImageElement(&amp;OptionalHeader.SizeOfCode, 4, 4);
+	initImageElement(&amp;OptionalHeader.AddressOfEntryPoint, 16, 4);
+	initImageElement(&amp;OptionalHeader.ImageBase, 28, 4);
+	initImageElement(&amp;OptionalHeader.SectionAlignment, 32, 4);
+	initImageElement(&amp;OptionalHeader.FileAlignment, 36, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfImage, 56, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfHeaders, 60, 4);
+	initImageElement(&amp;OptionalHeader.CheckSum, 64, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfStackReserve, 72, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfStackCommit, 76, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfHeapReserve, 80, 4);
+	initImageElement(&amp;OptionalHeader.SizeOfHeapCommit, 84, 4);
+	initImageElement(&amp;OptionalHeader.NumberOfRvaAndSizes, 92, 4);
+
+}
+
+void printHeaders() {
+	printf(&quot;======DOS HEADER======\n&quot;);
+	printElement(&quot;e_magic: &quot;, &amp;DOSHeader.e_magic);
+	printElement(&quot;e_lfanew: &quot;, &amp;DOSHeader.e_lfanew);
+	printf(&quot;\n&quot;);
+
+	printf(&quot;======File HEADER======\n&quot;);
+	printElement(&quot;Machine: &quot;, &amp;FileHeader.Machine);
+	printElement(&quot;NumberOfSections: &quot;, &amp;FileHeader.NumberOfSections);
+	printElement(&quot;TimeDateStamp: &quot;, &amp;FileHeader.TimeDateStamp);
+	printElement(&quot;PointerToSymbolTable: &quot;, &amp;FileHeader.PointerToSymbolTable);
+	printElement(&quot;NumberOfSymbols: &quot;, &amp;FileHeader.NumberOfSymbols);
+	printElement(&quot;SizeOfOptionalHeader: &quot;, &amp;FileHeader.SizeOfOptionalHeader);
+	printElement(&quot;Characteristics: &quot;, &amp;FileHeader.Characteristics);
+	printf(&quot;\n&quot;);
+
+	printf(&quot;======Optional HEADER======\n&quot;);
+	printElement(&quot;Magic: &quot;, &amp;OptionalHeader.Magic);
+	printElement(&quot;SizeOfCode: &quot;, &amp;OptionalHeader.SizeOfCode);
+	printElement(&quot;AddressOfEntryPoint: &quot;, &amp;OptionalHeader.AddressOfEntryPoint);
+	printElement(&quot;ImageBase: &quot;, &amp;OptionalHeader.ImageBase);
+	printElement(&quot;SectionAlignment: &quot;, &amp;OptionalHeader.SectionAlignment);
+	printElement(&quot;FileAlignment: &quot;, &amp;OptionalHeader.FileAlignment);
+	printElement(&quot;SizeOfImage: &quot;, &amp;OptionalHeader.SizeOfImage);
+	printElement(&quot;SizeOfHeaders: &quot;, &amp;OptionalHeader.SizeOfHeaders);
+	printElement(&quot;CheckSum: &quot;, &amp;OptionalHeader.CheckSum);
+	printElement(&quot;SizeOfStackReserve: &quot;, &amp;OptionalHeader.SizeOfStackReserve);
+	printElement(&quot;SizeOfStackCommit: &quot;, &amp;OptionalHeader.SizeOfStackCommit);
+	printElement(&quot;SizeOfHeapReserve: &quot;, &amp;OptionalHeader.SizeOfHeapReserve);
+	printElement(&quot;SizeOfHeapCommit: &quot;, &amp;OptionalHeader.SizeOfHeapCommit);
+	printElement(&quot;NumberOfRvaAndSizes: &quot;, &amp;OptionalHeader.NumberOfRvaAndSizes);
+}
+
+void PEParser() {
+	InitializeParserTable();
+	printHeaders();
+}
+
+int main(int argc, char* argv[]) {
+	readPEFile(&quot;notepad.exe&quot;);
+     PEParser();
+
+     return 0;
+}</code></pre>
+
+<p>Compared with notepad opened by DTDebug, the code in file buffer will prove something we discussed above.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/output.png' %}" alt="Output Comparison" />
+<figcaption>Output Comparison</figcaption>
+</figure>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part8' %}" class="button primary icon solid fa-backward">Back: 8. Memory Management</a></li> 
+                     <li><span class="button">9. PE Seg.1</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part10' %}" class="button primary icon solid fa-forward">Next: 10. PE Seg.2</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

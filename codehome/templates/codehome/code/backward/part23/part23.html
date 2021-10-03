@@ -1,0 +1,587 @@
+{% load static %}
+
+<h1 id="win32seg.2">Win32 Seg.2</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#reverse">Reverse</a>
+
+<ul>
+<li><a href="#winmain">WinMain</a></li>
+<li><a href="#espaddressing">ESP Addressing</a></li>
+<li><a href="#debugrecallfunction">Debug Recall Function</a></li>
+</ul></li>
+<li><a href="#childwindow">Child Window</a>
+
+<ul>
+<li><a href="#button">Button</a></li>
+<li><a href="#wm_command">WM_COMMAND</a></li>
+</ul></li>
+<li><a href="#resources">Resources</a>
+
+<ul>
+<li><a href="#createresourcefile">Create Resource File</a></li>
+<li><a href="#createabutton">Create a Button</a></li>
+<li><a href="#logindemo">Login Demo</a></li>
+<li><a href="#assemblyanalysis">Assembly Analysis</a>
+
+<ul>
+<li><a href="#messagebreakpoint">Message Breakpoint</a></li>
+<li><a href="#memoryaccessbreakpoint">Memory Access Breakpoint</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="reverse">
+<h2>Reverse</h2>
+
+<section	id="winmain">
+<h3>WinMain</h3>
+
+<p>As we talked before, <code>WinMain</code> has the same function as <code>main</code>. It has following structure,</p>
+<pre><code class="cpp">int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow);
+
+// this is an empty WinMain
+INT WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    PSTR lpCmdLine, INT nCmdShow)
+{
+    return 0;
+}</code></pre>
+
+<p>Now it&#8217;s time to explore it from the point of reversing programming.</p>
+
+<p>Look at the calling stack, we will find <code>WinMain</code> is not the entry point of the program at the level of assembly language, but a function called <code>WinMainCRTStartUp</code>.</p>
+<pre><code class="cpp">WinMain(HINSTANCE__ * 0x00400000, HINSTANCE__ * 0x00000000, char * 0x00141f28, int 0x00000001) line 12
+WinMainCRTStartup() line 198 + 54 bytes
+KERNEL32! 7c816d4f()</code></pre>
+
+<p>Let&#8217;s track back to <code>WinMainCRTStartUp</code> function to see what its assembly language looks like.</p>
+<pre><code class="cpp">...
+004016A4   mov         dword ptr [ebp-6Ch],0Ah
+004016AB   mov         ecx,dword ptr [ebp-6Ch]
+004016AE   push        ecx
+004016AF   mov         edx,dword ptr [lpszCommandLine]
+004016B2   push        edx
+004016B3   push        0
+004016B5   push        0
+004016B7   call        dword ptr [__imp__GetModuleHandleA@4 (0042a1e4)]
+004016BD   push        eax
+004016BE   call        @ILT+10(_WinMain@16) (0040100f)
+004016C3   mov         dword ptr [mainret],eax
+...</code></pre>
+
+<p>Notice that WinMain is a function following <code>__stdcall</code>, so it has two main features:</p>
+
+<ul>
+<li>push arguments from right to left</li>
+<li>inner balance, <code>00401175   ret   10h</code></li>
+</ul>
+
+<p>Therefore, when reversing codes, we have to know some characteristics of the function, such as the number of parameters, calling conventions (the order of pushing arguments).</p>
+
+<p>BTW, <code>GetModuleHandleA</code> is a non-input function.</p>
+
+</section>
+<section	id="espaddressing">
+<h3>ESP Addressing</h3>
+
+<p>When we compile a program in debug version, it will take a method called EBP Addressing. However, in release version, the assembler will take ESP Addressing.</p>
+<pre><code class="cpp">int plus(int a, int b) {
+	return a + b;
+}
+
+int main(int argc, char* argv[])
+{
+	plus((int)1, (int)2);
+	return 0;
+}</code></pre>
+<pre><code class="cpp">// debug version:
+// caller:
+0040D708   push        2
+0040D70A   push        1
+0040D70C   call        @ILT+5(plus) (0040100a)
+0040D711   add         esp,8
+// callee:
+00401010   push        ebp
+00401011   mov         ebp,esp
+00401013   sub         esp,40h
+00401016   push        ebx
+00401017   push        esi
+00401018   push        edi
+00401019   lea         edi,[ebp-40h]
+0040101C   mov         ecx,10h
+00401021   mov         eax,0CCCCCCCCh
+00401026   rep stos    dword ptr [edi]
+00401028   mov         eax,dword ptr [ebp+8]
+0040102B   add         eax,dword ptr [ebp+0Ch]
+0040102E   pop         edi
+0040102F   pop         esi
+00401030   pop         ebx
+00401031   mov         esp,ebp
+00401033   pop         ebp
+00401034   ret</code></pre>
+
+<p>EBP Addressing:<br/>
+PRO: stable address in each segment, since <code>ebp</code> is fixed.<br/>
+CON: relatively complicated operation, for example elevate stack.</p>
+<pre><code class="cpp">// release version:
+// caller:
+00401010  6A 02         PUSH 2
+00401012  6A 01         PUSH 1
+00401014  E8 E7FFFFFF   CALL zzzz.00401000
+00401019  83C4 08       ADD ESP,8
+0040101C  33C0          XOR EAX,EAX
+0040101E  C3            RETN
+// callee:
+00401000  8B4424 08     MOV EAX,DWORD PTR SS:[ESP+8]
+00401004  8B4C24 04     MOV ECX,DWORD PTR SS:[ESP+4]
+00401008  03C1          ADD EAX,ECX
+0040100A  C3            RETN
+
+// memory:
+0012FF78   00401019  // ESP: RETURN to zzzz.00401019 from zzzz.00401000
+0012FF7C   00000001
+0012FF80   00000002</code></pre>
+
+<p>ESP Addressing:<br/>
+PRO: simplified operation.<br/>
+CON: addresses are various with <code>esp</code>.</p>
+
+<p>Often, functions with <code>esp addressing</code> start with <code>sub esp, n</code>. If we are in the first instruction of a child function, then <code>esp</code> points to the recall address, <code>esp + 4n</code> points to the <em>n</em>th parameter of the function.</p>
+
+</section>
+<section	id="debugrecallfunction">
+<h3>Debug Recall Function</h3>
+
+<p>Recall function here refers to <code>WindowProc()</code>.</p>
+<pre><code class="cpp">LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);</code></pre>
+
+<p>Now the question is how we are able to locate recall function? There is only one clue &#8211; <code>WindowProc()</code> is called by <code>DispatchMessage()</code>.</p>
+
+<p>The key is the structure of <code>WNDCLASS</code> and conditional breakpoint.</p>
+<pre><code class="cpp">typedef struct _WNDCLASS { 
+    UINT       style; 
+    WNDPROC    lpfnWndProc; 
+    int        cbClsExtra; 
+    int        cbWndExtra; 
+    HINSTANCE  hInstance; 
+    HICON      hIcon; 
+    HCURSOR    hCursor; 
+    HBRUSH     hbrBackground; 
+    LPCTSTR    lpszMenuName; 
+    LPCTSTR    lpszClassName; 
+} WNDCLASS, *PWNDCLASS; </code></pre>
+
+<p>We are able to find the address of <code>WindowProc()</code> in the second member of <code>WNDCLASS</code>, which is <code>lpfnWndProc</code>. Given that the parameter of <code>RegisterClass()</code> is a pointer to a WNDCLASS struct, so this is the crux.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/winapp-01.png' %}" alt="RegisterClass" />
+<figcaption>RegisterClass</figcaption>
+</figure>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/winapp-02.png' %}" alt="Pointer to WndProc" />
+<figcaption>Pointer to WndProc</figcaption>
+</figure>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/winapp-03.png' %}" alt="Conditional Breakpoint" />
+<figcaption>Conditional Breakpoint</figcaption>
+</figure>
+
+<p>Notice that <code>esp + 8</code> must be <code>uMsg</code>, since it&#8217;s the second parameter of <code>WindowProc()</code>.</p>
+
+<p>There is a ascii table to refer in the </p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/ascii-web.png' %}" alt="ASCII" />
+<figcaption>ASCII</figcaption>
+</figure>
+
+</section>
+</section>
+<section	id="childwindow">
+<h2>Child Window</h2>
+
+<p>Despite init window, there are many windows attached with init window, such as button, checkbox, and so on.</p>
+
+<section	id="button">
+<h3>Button</h3>
+
+<p>We will take button as example.</p>
+<pre><code class="cpp">// the normal steps for creating a window
+// as shown in previous example.
+1. Customize Window Class.
+2. Register Class.
+3. Create Window.
+4. Message Loop.
+5. Customize Message Process Function.</code></pre>
+
+<p>However, <code>BUTTON CLASS</code> is a builtin class of windows. Therefore, we do NOT have to customize class, register class and write message loop.</p>
+<pre><code class="cpp">HINSTANCE hAppInstance;  // app handle, often used
+
+void CreateButton(HWND hwnd) {
+    HWND hwndPushButton = CreateWindow ( 	
+	TEXT(&quot;button&quot;),  
+	TEXT(&quot;normal button&quot;),
+	//WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_DEFPUSHBUTTON,
+	WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_DEFPUSHBUTTON,
+	10, 10,
+	80, 20,
+	hwnd,       // handle of parent
+	(HMENU)1001,    // unique id of child window
+	hAppInstance, 
+	NULL);
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+                     int       nCmdShow)
+{
+	hAppInstance = hInstance; // get app handle
+    ...
+
+    if (hwnd == NULL)
+	{
+		return 0;
+	}
+
+	CreateButton(hwnd);
+
+	ShowWindow(hwnd, nCmdShow);
+    ...</code></pre>
+
+<p>The output of program is as follows,</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/button-01.png' %}" alt="Create Button" />
+<figcaption>Create Button</figcaption>
+</figure>
+
+</section>
+<section	id="wm_command">
+<h3>WM_COMMAND</h3>
+
+<p>After creating a button, now it&#8217;s time to configure <code>WindowProc()</code>.</p>
+
+<p>What&#8217;s the relationship between process functions of child and parent.</p>
+<pre><code class="cpp">Button ----&gt; WinProc() // system 
+ // button msg
+       ----&gt; WinProc() // parent
+ // WM_COMMAND</code></pre>
+
+<p>Notice that the system will call process function of system first, and then, at some time, it will call process function of parent, which includes process of child function in <code>WM_COMMAND</code> case.</p>
+
+<p>In order to locate parent <code>WinProc()</code>, we have to index system <code>WinProc()</code>. To find the address of <code>WinProc()</code>, we must know the structure of <code>button</code>, a builtin class.</p>
+<pre><code class="cpp">// two useful api for querying class info
+TCHAR szBuffer[0x20];				
+GetClassName(hwndPushButton, szBuffer, 0x20);	
+
+WNDCLASS bt;					
+GetClassInfo(hAppInstance, szBuffer, &amp;bt);					
+OutputDebugStringF(&quot;--&gt;%s\n&quot;, bt.lpszClassName);					
+OutputDebugStringF(&quot;--&gt;%x\n&quot;, bt.lpfnWndProc);					</code></pre>
+<pre><code class="cpp">case WM_COMMAND:	
+{	
+	switch(LOWORD(wParam))
+	{
+        case 1001: 
+            MessageBox(hwnd, &quot;Hello Button&quot;, &quot;Demo&quot;, MB_OK);
+	
+	
+	}
+	return DefWindowProc(hwnd,uMsg,wParam,lParam);
+}	</code></pre>
+
+<p>When click button,</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/button-02.png' %}" alt="Button Demo" />
+<figcaption>Button Demo</figcaption>
+</figure>
+
+</section>
+</section>
+<section	id="resources">
+<h2>Resources</h2>
+
+<section	id="createresourcefile">
+<h3>Create Resource File</h3>
+
+<p>Create a resource file with following steps in vc++6.0:</p>
+
+<ol>
+<li>click file, and new file.</li>
+<li>choose resource script.</li>
+<li>include <code>resource.h</code> to the project.</li>
+</ol>
+
+</section>
+<section	id="createabutton">
+<h3>Create a Button</h3>
+
+<p>Creating a button with resource file is sort of like with MFC.</p>
+
+<ol>
+<li>open resource file.</li>
+<li>insert components.</li>
+<li>configure components.</li>
+</ol>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/button-03.png' %}" alt="Button Demo2" />
+<figcaption>Button Demo2</figcaption>
+</figure>
+
+<p>After building program, we will find resource script help us with configuring setting of app components.</p>
+<pre><code class="cpp">// resource.h
+// Microsoft Developer Studio generated include file.
+// Used by src.rc
+//
+#define IDD_MAIN_DIALOGUE               101
+#define IDC_BUTTON_YES                  1000</code></pre>
+<pre><code class="cpp">// the normal steps for creating a window
+// as shown in previous example.
+1. Customize Window Class.
+2. Register Class.
+3. Create Window.
+4. Message Loop.
+5. Customize Message Process Function.</code></pre>
+
+<p>Yet with resource script, we only have to create window and set message process function, since other steps are managed by script.</p>
+
+<p>We are able to create dialog box with builtin api <code>DialogBox()</code>.</p>
+<pre><code class="cpp">INT_PTR DialogBox(
+  HINSTANCE hInstance,  // handle to module
+  LPCTSTR lpTemplate,   // dialog box template
+  HWND hWndParent,      // handle to owner window
+  DLGPROC lpDialogFunc  // dialog box procedure
+);</code></pre>
+
+<p>For the second member of DialogBox, it can be a name or component id, which is sort of like import directory whose function can be indexed by function name or ordinal. </p>
+
+<p>TIP: if locating component by id, we have to transfer id (say a integer value) from <code>int</code> to a string as explained in MSDN with macro <code>MAKEINTRESOURCE</code>.</p>
+<pre><code class="cpp">BOOL CALLBACK DialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+                     int       nCmdShow)
+{
+ 	// TODO: Place code here.
+	DialogBox(hInstance, MAKEINTRESOURCE(IDD_MAIN_DIALOGUE), NULL, DialogProc);
+
+	return 0;
+}
+
+BOOL CALLBACK DialogProc(HWND hwndDlg,
+						 UINT uMsg,
+						 WPARAM wParam,
+						 LPARAM lParam)
+{
+	return TRUE;
+}</code></pre>
+
+<p>One thing worth noticing is that in <code>DialogProc()</code>, if the message has been handled then return TRUE, if not, return FALSE, which is slight different from previous windows.</p>
+
+</section>
+<section	id="logindemo">
+<h3>Login Demo</h3>
+
+<p>Now we are able to make a simple login dialog with resource script.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/demo-01.png' %}" alt="Login Demo" />
+<figcaption>Login Demo</figcaption>
+</figure>
+<pre><code class="cpp">// process function:
+BOOL CALLBACK DialogProc(HWND hwndDlg,
+						 UINT uMsg,
+						 WPARAM wParam,
+						 LPARAM lParam)
+{
+	switch(uMsg) 
+	{				
+
+	case WM_INITDIALOG:						
+	//	MessageBox(NULL,TEXT(&quot;WM_INITDIALOG&quot;),TEXT(&quot;INIT&quot;),MB_OK);			
+		return TRUE;			
+				
+	case WM_COMMAND:				
+		
+		switch (LOWORD(wParam))			
+		{			
+		case IDC_BUTTON_OK:				
+			MessageBox(NULL,TEXT(&quot;IDC_BUTTON_OK&quot;),TEXT(&quot;OK&quot;),MB_OK);
+			
+			return TRUE;		
+		case IDC_BUTTON_EXIT:			
+			MessageBox(NULL,TEXT(&quot;See u next time&quot;),TEXT(&quot;EXIT&quot;),MB_OK);		
+			EndDialog(hwndDlg, 0);		
+
+			return TRUE;		
+		}
+		
+	break;
+	}
+
+	return FALSE;
+}</code></pre>
+
+<p>The question is how to get content of edit text box.</p>
+<pre><code class="cpp">// get handle of text box
+hEditName = GetDlgItem(hwndDlg, IDC_EDIT_USERNAME);
+hEditPasswd = GetDlgItem(hwndDlg, IDC_EDIT_PASSWD);
+
+// get the content of text box
+TCHAR nameBuffer[0x20]
+TCHAR passwdBuffer[0x20]
+GetWindowText(hEditName, nameBuffer, 0x20);
+GetWindowText(hEditPasswd, passwdBuffer, 0x20);</code></pre>
+
+<p>Finally, the finished version is as follows,</p>
+<pre><code class="cpp">BOOL CALLBACK DialogProc(HWND hwndDlg,
+						 UINT uMsg,
+						 WPARAM wParam,
+						 LPARAM lParam)
+{	
+	HWND hEditName = NULL;
+	HWND hEditPasswd = NULL;
+	switch(uMsg) 
+	{				
+
+	case WM_INITDIALOG:				
+	//	MessageBox(NULL,TEXT(&quot;WM_INITDIALOG&quot;),TEXT(&quot;INIT&quot;),MB_OK);			
+		return TRUE;			
+				
+	case WM_COMMAND:				
+		
+		switch (LOWORD(wParam))			
+		{			
+		case IDC_BUTTON_OK:				
+			// get handle of text box
+			hEditName = GetDlgItem(hwndDlg, IDC_EDIT_USERNAME);
+			hEditPasswd = GetDlgItem(hwndDlg, IDC_EDIT_PASSWD);
+
+			// get the content of text box
+			TCHAR nameBuffer[0x20];
+			TCHAR passwdBuffer[0x20];
+			GetWindowText(hEditName, nameBuffer, 0x20);
+			GetWindowText(hEditPasswd, passwdBuffer, 0x20);
+
+			MessageBox(NULL,TEXT(nameBuffer),TEXT(&quot;OK&quot;),MB_OK);
+			
+			return TRUE;		
+		case IDC_BUTTON_EXIT:			
+			MessageBox(NULL,TEXT(&quot;See u next time&quot;),TEXT(&quot;EXIT&quot;),MB_OK);		
+			EndDialog(hwndDlg, 0);		
+
+			return TRUE;		
+		}
+		
+	break;
+	}
+
+	return FALSE;
+}</code></pre>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/demo-02.png' %}" alt="Login Demo Output" />
+<figcaption>Login Demo Output</figcaption>
+</figure>
+
+</section>
+<section	id="assemblyanalysis">
+<h3>Assembly Analysis</h3>
+
+<p>There are two breakpoints worth talking about &#8211; message breakpoint and memory access breakpoint.</p>
+
+<section	id="messagebreakpoint">
+<h4>Message Breakpoint</h4>
+
+<p>As known before, user-customized process function is called by one of system process functions at some time. We are able to locate system process functions by debug tools as follows,</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/msgbp-01.png' %}" alt="System Process Functions" />
+<figcaption>System Process Functions</figcaption>
+</figure>
+
+<p>Then set a message breakpoint to <code>button</code>.</p>
+<pre><code class="cpp">// event --&gt; system process --&gt; customized process
+//  WM_LBUTTONUP        WM_COMMAND </code></pre>
+
+<p>Hence, we have to set breakpoint of <code>WM_LBUTTONUP</code> rather than <code>WM_COMMAND</code>.</p>
+
+<p>Then we are in system process function, but how to find our process function? The trick is resorting to memory access breakpoint.</p>
+
+</section>
+<section	id="memoryaccessbreakpoint">
+<h4>Memory Access Breakpoint</h4>
+
+<p>As we know, our function is compiled into memory with starting address of <code>0x4000000</code> in general. So we are able to set memory breakpoint at <code>.text</code> segment, aka. code segment.</p>
+
+<p>Click <code>ok</code> button, then the process will stop on the first instruction of system process.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/msgbp-02.png' %}" alt="Message Breakpoint" />
+<figcaption>Message Breakpoint</figcaption>
+</figure>
+
+<p>IMPORTANT: we have to check if the message is what we want by looking at stack. Notice that <code>esp+8</code> is 202, well done.</p>
+
+<p>Then set memory access breakpoint.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/msgbp-03.png' %}" alt="Memory Access Breakpoint" />
+<figcaption>Memory Access Breakpoint</figcaption>
+</figure>
+
+<p>Continue the program,</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/msgbp-04.png' %}" alt="Pitfall" />
+<figcaption>Pitfall</figcaption>
+</figure>
+
+<p>Now we are in our process function, but after checking memory stack, we will find msg code is <code>0x135</code>, <code>WM_CTLCOLORBTN</code>, not what we want, <code>0x11</code>, <code>WM_COMMAND</code>.</p>
+
+<p>What to do then?</p>
+
+<ol>
+<li>single step with <code>F8</code> until going into memory space of system functions.</li>
+<li>click <code>F9</code> to continue program until next memory breakpoint.</li>
+</ol>
+<pre><code class="cpp">// event --&gt; system process --&gt; customized process
+//  WM_LBUTTONUP        WM_CTLCOLORBTN   ..F8..
+//		   		..F9..	WM_COMMAND 
+//                      ...</code></pre>
+
+<p>IMPORTANT: Notice that even if we click left button, the system process function will call our customized function by other message such as <code>WM_CTLCOLORBTN</code>, we have to continue the program until the call is triggered by <code>WM_COMMAND</code>.</p>
+
+<p>Experiment tells us after <code>WM_CTLCOLORBTN</code> is <code>WM_COMMAND</code>, which is <code>0x111</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/msgbp-05.png' %}" alt="WM_COMMAND" />
+<figcaption>WM_COMMAND</figcaption>
+</figure>
+
+</section>
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part22' %}" class="button primary icon solid fa-backward">Back: 22. Win32 Seg.1</a></li> 
+                     <li><span class="button">23. Win32 Seg.2</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part24' %}" class="button primary icon solid fa-forward">Next: 24. Win32 Seg.3</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

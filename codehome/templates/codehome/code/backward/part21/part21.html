@@ -1,0 +1,1018 @@
+{% load static %}
+
+<h1 id="cseg.2">C++ Seg.2</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#newanddelete">New and Delete</a></li>
+<li><a href="#datastructure">Data Structure</a>
+
+<ul>
+<li><a href="#vector">Vector</a></li>
+<li><a href="#linklist">LinkList</a></li>
+<li><a href="#binarysorttree">Binary Sort Tree</a><br/>
+<TableEndMark></li>
+</ul></li>
+</ul>
+
+<section	id="newanddelete">
+<h2>New and Delete</h2>
+
+<ul>
+<li><code>new</code><br/>
+<code>new</code> is a keyword in c++, which has the similar function to <code>malloc</code>. The basic syntax is as follows,</li>
+</ul>
+<pre><code class="cpp">int* pi = new int;
+int* pi_with_initialization = new int(5);  // Initialized as 5
+int* pi_multi = new int[5];  // create 5 int elements</code></pre>
+
+<ul>
+<li><code>delete</code><br/>
+Corresponding to <code>new</code>, <code>delete</code> is used to free memory that&#8217;s allocated by <code>new</code>.</li>
+</ul>
+<pre><code class="cpp">delete pi;
+delete[] pi_multi;</code></pre>
+
+<p>Now the question is how are they different from <code>malloc</code> and <code>free</code>?</p>
+
+<p>The answer is there is only slight difference that even can be ignored.<br/>
+To be specific, it will be clear after tracking calling process of these functions.</p>
+<pre><code class="bash"># In debug version:
+# malloc:
+malloc --&gt; nh_malloc_dbg --&gt; _heap_alloc_dbg --&gt; _heap_alloc_base --&gt; HeapAlloc
+# new:
+new --&gt; _nh_malloc --&gt; _nh_malloc_dbg --&gt; _heap_alloc_dbg --&gt; _heap_alloc_base --&gt; HeapAlloc
+# free:
+free --&gt; _free_dbg --&gt; _free_base --&gt; HeapFree
+# delete:
+delete --&gt; free --&gt; _free_dbg --&gt; _free_base --&gt; HeapFree</code></pre>
+
+</section>
+<section	id="datastructure">
+<h2>Data Structure</h2>
+
+<section	id="vector">
+<h3>Vector</h3>
+
+<p><code>vector</code> is a container of c++, which is similar to array yet more powerful than array.</p>
+
+<p>Now let&#8217;s figure out how a vector works.</p>
+<pre><code class="cpp">// Vector.h: interface for the Vector class.
+#if !defined(AFX_VECTOR_H__3B15E858_AFB2_40D7_AB12_4672708D3060__INCLUDED_)
+#define AFX_VECTOR_H__3B15E858_AFB2_40D7_AB12_4672708D3060__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+#include &lt;windows.h&gt;
+#include &lt;memory.h&gt;
+#include &lt;assert.h&gt;
+
+#define SUCCESS 0
+#define FAILURE -1
+#define MALLOC_ERROR -2
+#define INDEX_ERROR -3
+#define nullptr NULL
+
+#define OUT
+
+#define INITIAL_SIZE 100
+#define INCREMENT 20
+
+template &lt;class T_ELE&gt;
+class Vector {
+public:
+	Vector();
+	Vector(DWORD dwSize);
+	~Vector();
+
+public:
+	DWORD at(DWORD dwIndex, OUT T_ELE* pEle);  // get element according to given index
+	DWORD push_back(T_ELE Element);  // insert element into the last of vector 
+	T_ELE pop_back();  // delete element in the last of vector
+	DWORD insert(DWORD dwIndex, T_ELE Element);  // insert element at given index
+	T_ELE erase(DWORD dwIndex);  // delete the element at given index
+	DWORD capacity();  // return available space in the vector
+	void clear();  // clear all elements in the vector
+	BOOL empty();  // check if the vector is empty
+	DWORD size();  // return the size of the vector
+
+private:
+	BOOL expand();  // expand vector when the container is full
+
+private:
+	DWORD m_dwIndex;      // next available index
+	DWORD m_dwIncrement;  // the increment when the container is full
+	DWORD m_dwLength;     // the length of the container
+	DWORD m_dwInitSize;   // initial size of container
+	T_ELE* m_pVector;     // the pointer to vector allocated in heap
+};
+
+#endif</code></pre>
+<pre><code class="cpp">// Vector.cpp: implementation of the Vector class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include &quot;Vector.h&quot;
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+template &lt;class T_ELE&gt;
+Vector&lt;T_ELE&gt;::Vector()
+:m_dwInitSize(INITIAL_SIZE), m_dwIncrement(INCREMENT) {
+	// memory allocation
+	T_ELE* pVec = new T_ELE[m_dwInitSize];
+
+	// initialization
+	memset(pVec, 0, sizeof(T_ELE) * m_dwInitSize);
+
+	// configuration
+	m_pVector = pVec;
+	m_dwLength = m_dwInitSize;
+	m_dwIndex = 0;
+}
+
+template &lt;class T_ELE&gt;
+Vector&lt;T_ELE&gt;::Vector(DWORD dwSize)
+:m_dwIncrement(INCREMENT) {
+	assert(dwSize &gt; 0);
+	m_dwInitSize = dwSize;
+	
+	T_ELE* pVec = new T_ELE[m_dwInitSize];
+	memset(pVec, 0, sizeof(T_ELE) * m_dwInitSize);
+
+	m_pVector = pVec;
+	m_dwLength = m_dwInitSize;
+	m_dwIndex = 0;
+}
+
+template &lt;class T_ELE&gt;
+Vector&lt;T_ELE&gt;::~Vector() {
+	delete[] m_pVector;
+	m_pVector = nullptr;
+	m_dwLength = 0;
+	m_dwIndex = 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Operations
+//////////////////////////////////////////////////////////////////////
+
+template &lt;class T_ELE&gt;
+DWORD Vector&lt;T_ELE&gt;::at(DWORD dwIndex, OUT T_ELE* pEle) {
+	assert(dwIndex &gt;= 0 &amp;&amp; dwIndex &lt; m_dwLength);
+	pEle = m_pVector + dwIndex;
+
+	return SUCCESS;
+}
+
+template &lt;class T_ELE&gt;
+DWORD Vector&lt;T_ELE&gt;::push_back(T_ELE Element) {
+	if (capacity() &lt;= 0) {
+		expand();
+	}
+
+	memcpy(m_pVector + m_dwIndex, &amp;Element, sizeof(T_ELE));
+	// or m_pVector[m_dwIndex] = Element;
+
+	m_dwIndex++;
+
+	return SUCCESS;
+}
+
+template &lt;class T_ELE&gt;
+T_ELE Vector&lt;T_ELE&gt;::pop_back() {
+	assert(m_dwIndex &gt; 0);
+	T_ELE last;
+	memcpy(&amp;last, &amp;m_pVector[m_dwIndex - 1], sizeof(T_ELE));
+	// or last = m_pVector[m_dwIndex - 1];
+
+	m_dwIndex--;
+
+	return last;
+}
+
+template &lt;class T_ELE&gt;
+DWORD Vector&lt;T_ELE&gt;::insert(DWORD dwIndex, T_ELE Element) {
+	if ((dwIndex &lt; 0) || (dwIndex &gt; m_dwIndex)) {
+		return INDEX_ERROR;	
+	}
+
+	if (capacity() &lt;= 0) {
+		expand();
+	}
+	
+	// move forward
+	for (int i = m_dwIndex; i &gt; dwIndex; i--) {
+		memcpy(&amp;m_pVector[i], &amp;m_pVector[i-1], sizeof(T_ELE));
+		// or m_pVector[i] = m_pVector[i-1];
+	}
+
+	memcpy(&amp;m_pVector[dwIndex], &amp;Element, sizeof(T_ELE));
+	// or m_pVector[dwIndex] = Element;
+	
+	m_dwIndex++;
+
+	return SUCCESS;
+}
+
+template &lt;class T_ELE&gt;
+T_ELE Vector&lt;T_ELE&gt;::erase(DWORD dwIndex) {
+	if ((dwIndex &lt; 0) || (dwIndex &gt;= m_dwIndex)) {
+		return INDEX_ERROR;	
+	}	
+	
+	m_dwIndex--;
+
+	for (int i = dwIndex; i &lt; m_dwIndex - 1; i++) {
+		memcpy(&amp;m_pVector[i], &amp;m_pVector[i+1], sizeof(T_ELE));
+		// or m_pVector[i] = m_pVector[i+1];
+	}
+}
+
+template &lt;class T_ELE&gt;
+DWORD Vector&lt;T_ELE&gt;::capacity() {
+	return m_dwLength - m_dwIndex;	
+}
+
+template &lt;class T_ELE&gt;
+void Vector&lt;T_ELE&gt;::clear() {
+	m_dwIndex = 0;
+}
+
+template &lt;class T_ELE&gt;
+BOOL Vector&lt;T_ELE&gt;::empty() {
+	return m_dwIndex == 0 ? true : false;
+}
+
+template &lt;class T_ELE&gt;
+DWORD Vector&lt;T_ELE&gt;::size() {
+	return m_dwIndex;
+}
+
+template &lt;class T_ELE&gt;
+BOOL Vector&lt;T_ELE&gt;::expand() {
+	DWORD newLength = m_dwLength + m_dwIncrement;
+	T_ELE* pEle = new T_ELE[newLength];
+
+	memset(pEle, 0, sizeof(T_ELE) * newLength);
+
+	// copy elements
+	memcpy(pEle, m_pVector, sizeof(T_ELE) * m_dwLength);
+	
+	if (m_pVector != nullptr) {
+		delete[] m_pVector;
+	}
+	m_pVector = pEle;
+
+	m_dwLength = newLength;
+
+	return true;
+}</code></pre>
+<pre><code class="cpp">// main:
+#include &quot;Vector.h&quot;
+#include &quot;Vector.cpp&quot;
+
+int main(int argc, char* argv[]) {
+	Vector&lt;int&gt; myVec(2);
+	
+	myVec.push_back(1);
+	myVec.push_back(2);
+	myVec.push_back(3);
+	myVec.insert(1, 9);
+	myVec.clear();
+
+	return 0;
+}</code></pre>
+
+<p>Notice that we have to include <code>*.h</code> and <code>*.cpp</code> for template class, otherwise the compiler will do not know the implementation of class.</p>
+
+<p>For example, in <code>main</code> function, we define a vector class <code>Vector&lt;int&gt; vec</code>. In the phase of compiling, the assembler will create a class, say <code>Vector_Int</code>, according to template class. If the main function only include <code>*.h</code> file, it will be confused about how to implement methods of <code>Vector_Int</code>.</p>
+
+</section>
+<section	id="linklist">
+<h3>LinkList</h3>
+
+<p><code>linklist</code> is another builtin container in c++, which has advantages of operation for insert and delete.</p>
+
+<p>The following code gives us an intuition about how a link list works.</p>
+<pre><code class="cpp">// LinkList.h: interface for the LinkList class.
+#if !defined(AFX_LINKLIST_H__59BFA69D_F465_42B7_8733_B409D973AE79__INCLUDED_)
+#define AFX_LINKLIST_H__59BFA69D_F465_42B7_8733_B409D973AE79__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+#include &lt;windows.h&gt;
+
+#define SUCCESS 1
+#define INDEX_ERROR -1
+#define LIST_EMPTY_ERROR -2
+
+#define nullptr NULL
+#define IN
+#define OUT
+
+template &lt;class T_ELE&gt;
+class LinkList  
+{
+public:
+	LinkList();
+	~LinkList();
+
+public:
+	BOOL IsEmpty();  // check if linklist is empty
+	void Clear();  // clear all nodes in list
+	DWORD GetElement(IN DWORD dwIndex, OUT T_ELE&amp; Element);  // get element by index
+	DWORD GetIndex(IN T_ELE&amp; Element);  // get index of given element
+	DWORD Insert(IN T_ELE Element);  // insert element after head
+	DWORD Insert(IN DWORD dwIndex, IN T_ELE Element);  // insert element at given index
+	DWORD Delete(IN DWORD dwIndex);  // delete element at given index
+	DWORD GetSize();  // return the size of linklist
+
+private:
+	typedef struct _NODE {
+		T_ELE key;
+		_NODE* next;
+	} NODE, *PNODE;
+
+	PNODE getPointerToCurrentNode(DWORD dwIndex);  // get pointer to given node
+	PNODE getPointerToPreviousNode(DWORD dwIndex);  // get pointer to the node previous to given node
+	PNODE getPointerToNextNode(DWORD dwIndex);  // get pointer to the node after given node
+
+private:
+	PNODE m_pList;
+	DWORD m_dwLength;
+};
+
+#endif // !defined(AFX_LINKLIST_H__59BFA69D_F465_42B7_8733_B409D973AE79__INCLUDED_)</code></pre>
+<pre><code class="cpp">// LinkList.cpp: implementation of the LinkList class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include &quot;LinkList.h&quot;
+#include &lt;assert.h&gt;
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+template &lt;class T_ELE&gt;
+LinkList&lt;T_ELE&gt;::LinkList() 
+:m_pList(nullptr), m_dwLength(0) {
+
+}
+
+template &lt;class T_ELE&gt;
+LinkList&lt;T_ELE&gt;::~LinkList()
+{
+	Clear();
+	m_pList = nullptr;
+}
+
+
+template &lt;class T_ELE&gt; 
+BOOL LinkList&lt;T_ELE&gt;::IsEmpty() {
+	if (m_dwLength == 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+template &lt;class T_ELE&gt;
+void LinkList&lt;T_ELE&gt;::Clear() {
+	if (!IsEmpty()) {
+		while (m_dwLength &gt; 0) {
+			Delete(0); // delete from the first one to avoid traversing the list
+		}
+	}
+}
+
+template &lt;class T_ELE&gt;
+DWORD LinkList&lt;T_ELE&gt;::Delete(IN DWORD dwIndex) {
+	if ((dwIndex &lt; 0) || (dwIndex &gt;= m_dwLength)) {
+		return INDEX_ERROR;
+	}
+
+	if (IsEmpty()) {
+		return LIST_EMPTY_ERROR;
+	}
+
+	// case 1: only one node left
+	if (m_dwLength == 1) {
+		delete m_pList;
+		m_pList = nullptr;
+		m_dwLength--;
+
+		return SUCCESS;
+	}
+
+	// case 2: more than one nodes left
+	PNODE del_node = nullptr;
+	if (dwIndex == 0) {
+		del_node = m_pList;
+		m_pList = del_node-&gt;next;
+		delete del_node;
+		del_node = nullptr;
+	}
+	else {
+		PNODE pre_node = getPointerToPreviousNode(dwIndex);
+		del_node = pre_node-&gt;next;
+		pre_node-&gt;next = del_node-&gt;next;
+
+		delete del_node;
+		del_node = nullptr;
+	}
+	m_dwLength--;
+
+	return SUCCESS;
+}
+
+
+template &lt;class T_ELE&gt;
+DWORD GetElement(IN DWORD dwIndex, OUT T_ELE&amp; Element) {
+	PNODE cur_node = getPointerToCurrentNode(dwIndex);
+	memcpy(Element, &amp;cur_node-&gt;key, sizeof(T_ELE));
+
+	return SUCCESS;
+}
+
+template &lt;class T_ELE&gt;
+DWORD LinkList&lt;T_ELE&gt;::GetIndex(IN T_ELE&amp; Element) {
+	PNODE pNode = m_pList;
+	int index = -1;
+	while (pNode != nullptr) {
+		index++;
+		if (memcmp(&amp;pNode-&gt;key, Element, sizeof(T_ELE)) == 0) {
+			break;
+		}
+
+		pNode = pNode-&gt;next;
+	}
+
+	return index;
+}
+
+template &lt;class T_ELE&gt;
+DWORD LinkList&lt;T_ELE&gt;::Insert(IN T_ELE Element) {
+	return Insert(0, Element);
+}
+
+template &lt;class T_ELE&gt;
+DWORD LinkList&lt;T_ELE&gt;::Insert(IN DWORD dwIndex, IN T_ELE Element) {
+	if ((dwIndex &lt; 0) || (dwIndex &gt; m_dwLength)) {
+		return INDEX_ERROR;
+	}
+
+	// initialize a new node
+	PNODE node = new NODE;
+	memcpy(&amp;node-&gt;key, &amp;Element, sizeof(T_ELE));
+	node-&gt;next = nullptr;
+	
+	// case 1: insert the first node
+	if (m_dwLength == 0) {
+		m_pList = node;
+		m_dwLength++;
+		return SUCCESS;
+	}
+
+	// case 2: otherwise,
+	if (dwIndex == 0) {
+		node-&gt;next = m_pList;
+		m_pList = node;
+	}
+	else {
+		PNODE pre_node = getPointerToPreviousNode(dwIndex);
+		node-&gt;next = pre_node-&gt;next;
+		pre_node-&gt;next = node;
+	}
+
+	m_dwLength++;
+
+	return SUCCESS;
+}
+
+template &lt;class T_ELE&gt; 
+DWORD LinkList&lt;T_ELE&gt;::GetSize() {
+	return m_dwLength;
+}
+
+////////////////////////////////////////////////////////////
+//  Private Funcs:
+////////////////////////////////////////////////////////////
+
+template &lt;class T_ELE&gt;
+LinkList&lt;T_ELE&gt;::PNODE LinkList&lt;T_ELE&gt;::getPointerToCurrentNode(DWORD dwIndex) {
+	assert((dwIndex &gt;= 0) &amp;&amp; (dwIndex &lt; m_dwLength));
+
+	PNODE pNode = m_pList;
+	DWORD index = -1;
+	while (pNode != nullptr) {
+		index++;
+		if (index == dwIndex) {
+			break;
+		}
+
+		pNode = pNode-&gt;next;
+	}
+	
+	return pNode;
+}
+
+template &lt;class T_ELE&gt;
+LinkList&lt;T_ELE&gt;::PNODE LinkList&lt;T_ELE&gt;::getPointerToPreviousNode(DWORD dwIndex) {
+	return getPointerToCurrentNode(dwIndex - 1);
+}
+
+template &lt;class T_ELE&gt;
+LinkList&lt;T_ELE&gt;::PNODE LinkList&lt;T_ELE&gt;::getPointerToNextNode(DWORD dwIndex) {
+	return getPointerToCurrentNode(dwIndex + 1);
+}</code></pre>
+
+<p>Notice that <code>PNODE</code> is defined in the class as private type. Therefore, in <code>*.cpp</code> file, we<br/>
+ have to add space name to it, <code>LinkList&lt;T_ELE&gt;::PNODE</code>.</p>
+
+</section>
+<section	id="binarysorttree">
+<h3>Binary Sort Tree</h3>
+
+<p>Binary Sort Tree (BSTree) has the same structure as binary tree, but it has its own features as follows,</p>
+
+<ul>
+<li>The value of all nodes on the left subtree is less than or equal to the value of its root node.</li>
+<li>The value of all nodes on the right subtree is greater than or equal to the value of its root node.</li>
+<li>The left and right subtrees are also binary sort trees respectively.</li>
+</ul>
+
+<p>Following code shows how it works,</p>
+
+<p>TIPS: the feature of root node is that its parent is itself.</p>
+
+<p><pre><code class="cpp">// TreeNode.h: interface for the TreeNode class.
+
+#if !defined(AFX_TREENODE_H__1F343F35_786E_46AC_9B62_D7D1D9B1179C__INCLUDED_)
+#define AFX_TREENODE_H__1F343F35_786E_46AC_9B62_D7D1D9B1179C__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+#define nullptr NULL
+
+template &lt;typename T&gt;
+class TreeNode {
+public:
+	T element;
+	TreeNode&lt;T&gt;* leftChild;
+	TreeNode&lt;T&gt;* rightChild;
+	TreeNode&lt;T&gt;* parent;
+	
+	TreeNode();
+	TreeNode(const T ele);
+	~TreeNode();
+	
+	// inline function: only open for given T
+	friend bool operator==(const TreeNode&amp; lhs, const TreeNode&amp; rhs);
+};
+
+
+#endif // !defined(AFX_TREENODE_H__1F343F35_786E_46AC_9B62_D7D1D9B1179C__INCLUDED_)</code></pre></p>
+<pre><code class="cpp">// TreeNode.cpp: implementation of the TreeNode class.
+
+#include &quot;TreeNode.h&quot;
+#include &lt;iostream&gt;
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;::TreeNode()
+{
+	leftChild = nullptr;
+	rightChild = nullptr;
+	parent = nullptr;
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;::TreeNode(const T ele) {
+	memcpy(&amp;element, &amp;ele, sizeof(T));
+	leftChild = nullptr;
+	rightChild = nullptr;
+	parent = nullptr;
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;::~TreeNode()
+{
+	this-&gt;leftChild = nullptr;
+	this-&gt;rightChild = nullptr;
+	this-&gt;parent = nullptr;
+}
+
+// a normal function 
+template &lt;typename T&gt;
+bool operator==(const TreeNode&lt;T&gt;&amp; lhs, const TreeNode&lt;T&gt;&amp; rhs) {
+	return lhs.element == rhs.element;
+}</code></pre>
+
+<p>Notice that how to overload operator in template class. Here we use inline declaration.</p>
+<pre><code class="cpp">// BSTree.h: interface for the BSTree class.
+
+#if !defined(AFX_BSTREE_H__D27265E3_49C4_48F7_9D1B_33F78F322A9C__INCLUDED_)
+#define AFX_BSTREE_H__D27265E3_49C4_48F7_9D1B_33F78F322A9C__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+#include &quot;TreeNode.h&quot;
+#include &quot;TreeNode.cpp&quot;
+#include &lt;assert.h&gt;
+#include &lt;iostream&gt;
+#include &lt;windows.h&gt;
+
+template &lt;typename T&gt;
+class BSTree {
+public:
+	BSTree();
+	virtual ~BSTree();
+
+	bool IsEmpty();				
+	DWORD Insert(T element);				
+	void Delete(T element);				
+	TreeNode&lt;T&gt;* Search(const T element);	
+	
+	void InOrderTraverse();				
+	void PreOrderTraverse();				
+	void PostOrderTraverse();	
+	
+private:
+	TreeNode&lt;T&gt;* getMaxNode(TreeNode&lt;T&gt;* pNode);	
+	TreeNode&lt;T&gt;* getMinNode(TreeNode&lt;T&gt;* pNode);			
+	TreeNode&lt;T&gt;* searchNode(TreeNode&lt;T&gt;* pNode,T element);		
+	DWORD insertNode(T element, TreeNode&lt;T&gt;* pNode);	
+	TreeNode&lt;T&gt;* deleteNode(T element, TreeNode&lt;T&gt;* pNode);		
+	void clear(TreeNode&lt;T&gt;* pNode);	
+
+	void inOrderTraverse(TreeNode&lt;T&gt;* pNode);				
+	void preOrderTraverse(TreeNode&lt;T&gt;* pNode);				
+	void postOrderTraverse(TreeNode&lt;T&gt;* pNode);	
+
+private:
+	TreeNode&lt;T&gt;* m_pRoot;
+	int m_size;
+};
+
+#endif // !defined(AFX_BSTREE_H__D27265E3_49C4_48F7_9D1B_33F78F322A9C__INCLUDED_)</code></pre>
+
+<p>Notice that we have to include <code>TreeNode.cpp</code> since it is a template class.</p>
+<pre><code class="cpp">// BSTree.cpp: implementation of the BSTree class.
+
+#include &quot;BSTree.h&quot;
+
+template &lt;typename T&gt;
+BSTree&lt;T&gt;::BSTree() 
+:m_pRoot(nullptr), m_size(0) {
+
+}
+
+template &lt;typename T&gt;
+BSTree&lt;T&gt;::~BSTree()
+{
+	clear(m_pRoot);
+	assert(m_size == 0);
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;* BSTree&lt;T&gt;::getMaxNode(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+
+	if (pNode-&gt;rightChild != nullptr) {
+		return getMaxNode(pNode-&gt;rightChild);
+	}
+
+	return pNode;
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;* BSTree&lt;T&gt;::getMinNode(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+
+	if (pNode-&gt;leftChild != nullptr) {
+		return getMinNode(pNode-&gt;leftChild);
+	}
+
+	return pNode;
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;* BSTree&lt;T&gt;::Search(const T element) {
+	return searchNode(m_pRoot, element);	
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;* BSTree&lt;T&gt;::searchNode(TreeNode&lt;T&gt;* pNode,T element) {
+	assert(pNode != nullptr);
+	
+	// memcpy: equal return 0, &lt;0 for a &lt; b, &gt;0 for a &gt; b
+	if (pNode-&gt;element == element) {
+		return pNode;
+	}
+	else if (pNode-&gt;element &gt; element) {
+		return searchNode(pNode-&gt;leftChild, element);
+	}
+	else {
+		return searchNode(pNode-&gt;rightChild, element);
+	}
+
+	return nullptr;
+}	
+
+template &lt;typename T&gt;
+DWORD BSTree&lt;T&gt;::Insert(T element) {	
+	return insertNode(element, m_pRoot);
+}
+
+template &lt;typename T&gt;
+DWORD BSTree&lt;T&gt;::insertNode(T element, TreeNode&lt;T&gt;* pNode) {
+	// if it is the first node to be inserted
+	if (m_size == 0) {
+		TreeNode&lt;T&gt;* node = new TreeNode&lt;T&gt;(element);
+		node-&gt;parent = node;
+		m_pRoot = node;
+		m_size++;
+		return 0;
+	}
+
+	// else
+	assert(pNode != nullptr);
+
+	if (element &lt;= pNode-&gt;element) {
+		if (pNode-&gt;leftChild == nullptr) {
+			TreeNode&lt;T&gt;* newNode = new TreeNode&lt;T&gt;(element);
+			newNode-&gt;parent = pNode;
+			pNode-&gt;leftChild = newNode;
+			m_size++;
+			return 0;
+		} 
+		else {
+			return insertNode(element, pNode-&gt;leftChild);
+		}
+	}
+	else {
+		if (pNode-&gt;rightChild == nullptr) {
+			TreeNode&lt;T&gt;* newNode = new TreeNode&lt;T&gt;(element);
+			newNode-&gt;parent = pNode;
+			pNode-&gt;rightChild = newNode;
+			m_size++;
+			return 0;
+		}
+		else {
+			return insertNode(element, pNode-&gt;rightChild);
+		}
+	}
+
+	return 255;
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::Delete(T element) {
+	assert(m_size &gt; 0);
+	TreeNode&lt;T&gt;* node = deleteNode(element, m_pRoot);
+	if (node == nullptr) {
+		std::cout &lt;&lt; &quot;Error: No node matched.&quot; &lt;&lt; std::endl;
+	} 
+	else {
+		delete node;
+		node = nullptr;
+		std::cout &lt;&lt; &quot;The element has been deleted.&quot; &lt;&lt; std::endl;
+	}
+}
+
+template &lt;typename T&gt;
+TreeNode&lt;T&gt;* BSTree&lt;T&gt;::deleteNode(T element, TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+	
+	// find matching node
+	TreeNode&lt;T&gt;* node = searchNode(pNode, element);
+	if (node == nullptr) {
+		return nullptr;
+	}
+
+	// if this is the only node left in the tree
+	if (m_size == 1) {
+		m_size--;
+		return pNode;
+	}
+	
+	// IMPORTANT: if the node is root node, reshape so that it will  not be the root
+	TreeNode&lt;T&gt;* parentNode = node-&gt;parent;
+	if (parentNode == node) {
+		TreeNode&lt;T&gt;* newRoot = getMaxNode(node-&gt;leftChild);
+		newRoot-&gt;parent-&gt;rightChild = nullptr;
+		newRoot-&gt;parent = newRoot;
+		newRoot-&gt;leftChild = node-&gt;leftChild;
+		newRoot-&gt;rightChild = node;
+		node-&gt;leftChild = nullptr;
+		node-&gt;parent = newRoot;
+	}
+
+	// reshape nodes whose ancestor is node to be deleted
+	parentNode = node-&gt;parent; // do NOT forget to update parent;
+	bool isLeft = 0;
+	bool isRight = 0;
+	
+	// check left or right child
+	if (parentNode-&gt;leftChild == node) {
+		isLeft = 1;
+	}
+	else {
+		isRight = 1;
+	}
+
+	// case 1: no child
+	if (isLeft) {
+		parentNode-&gt;leftChild = nullptr;
+		m_size--;
+		return node;
+	}
+	else {
+		parentNode-&gt;rightChild = nullptr;
+		m_size--;
+		return node;
+	}
+
+	// case 2: one of children exists
+	if ((node-&gt;leftChild != nullptr) &amp;&amp; (node-&gt;rightChild == nullptr)) {
+		node-&gt;leftChild-&gt;parent = node-&gt;parent;
+		if (isLeft) {
+			parentNode-&gt;leftChild = node-&gt;leftChild;
+		}
+		else {
+			parentNode-&gt;rightChild = node-&gt;leftChild;
+		}
+
+		m_size--;
+		return node;
+	}
+	if ((node-&gt;leftChild == nullptr) &amp;&amp; (node-&gt;rightChild != nullptr)) {
+		node-&gt;rightChild-&gt;parent = node-&gt;parent;
+		if (isLeft) {
+			parentNode-&gt;leftChild = node-&gt;rightChild;
+		}
+		else {
+			parentNode-&gt;rightChild = node-&gt;rightChild;
+		}
+
+		m_size--;
+		return node;
+	}
+
+	// case 3: both of children exist
+	TreeNode&lt;T&gt;* newAncestor = getMaxNode(node-&gt;leftChild);
+	newAncestor-&gt;parent-&gt;rightChild = nullptr;
+	newAncestor-&gt;parent = parentNode;
+	newAncestor-&gt;leftChild = node-&gt;leftChild;
+	newAncestor-&gt;rightChild = node-&gt;rightChild;
+
+	if (isLeft) {
+		parentNode-&gt;leftChild = newAncestor;
+		m_size--;
+		return node;
+	}
+	else {
+		parentNode-&gt;rightChild = newAncestor;
+		m_size--;
+		return node;
+	}
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::clear(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+
+	if (pNode-&gt;leftChild != nullptr) {
+		clear(pNode-&gt;leftChild);
+	}
+	
+	if (pNode-&gt;rightChild != nullptr) {
+		clear(pNode-&gt;rightChild);
+	}
+
+	delete pNode;
+	pNode = nullptr;
+	m_size--;
+}
+
+template &lt;typename T&gt;
+bool BSTree&lt;T&gt;::IsEmpty() {
+	if (m_size == 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::InOrderTraverse() {
+	inOrderTraverse(m_pRoot);	
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::PreOrderTraverse() {
+	preOrderTraverse(m_pRoot);	
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::PostOrderTraverse() {
+	postOrderTraverse(m_pRoot);
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::inOrderTraverse(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+	
+	if (pNode-&gt;leftChild != nullptr) {
+		inOrderTraverse(pNode-&gt;leftChild);
+	}
+	std::cout &lt;&lt; pNode-&gt;element &lt;&lt; endl;
+	if (pNode-&gt;rightChild != nullptr) {
+		inOrderTraverse(pNode-&gt;rightChild);
+	}
+}
+
+template &lt;typename T&gt;	
+void BSTree&lt;T&gt;::preOrderTraverse(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+	
+	std::cout &lt;&lt; pNode-&gt;element &lt;&lt; endl;
+	if (pNode-&gt;leftChild != nullptr) {
+		preOrderTraverse(pNode-&gt;leftChild);
+	}
+	if (pNode-&gt;rightChild != nullptr) {
+		preOrderTraverse(pNode-&gt;rightChild);
+	}
+}
+
+template &lt;typename T&gt;
+void BSTree&lt;T&gt;::postOrderTraverse(TreeNode&lt;T&gt;* pNode) {
+	assert(pNode != nullptr);
+	
+	if (pNode-&gt;leftChild != nullptr) {
+		postOrderTraverse(pNode-&gt;leftChild);
+	}
+	if (pNode-&gt;rightChild != nullptr) {
+		postOrderTraverse(pNode-&gt;rightChild);
+	}
+	std::cout &lt;&lt; pNode-&gt;element &lt;&lt; endl;
+}</code></pre>
+<pre><code class="cpp">// main:
+#include &lt;iostream&gt;
+#include &quot;BSTree.h&quot;
+#include &quot;BSTree.cpp&quot;
+using namespace std;
+
+void TEST_BSTree() {
+	BSTree&lt;int&gt; tree;
+
+	tree.Insert(12);	
+	tree.Insert(8);	
+	tree.Insert(5);	
+	tree.Insert(9);	
+	tree.Insert(17);	
+	tree.Insert(15);	
+	tree.Insert(13);
+
+	tree.InOrderTraverse();
+
+	tree.Delete(9);
+	tree.InOrderTraverse();
+}
+
+int main(int argc, char* argv[]) {
+	
+	TEST_BSTree();
+
+	return 0;
+}</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part20' %}" class="button primary icon solid fa-backward">Back: 20. C++ Seg.1</a></li> 
+                     <li><span class="button">21. C++ Seg.2</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part22' %}" class="button primary icon solid fa-forward">Next: 22. Win32 Seg.1</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

@@ -1,0 +1,1491 @@
+{% load static %}
+
+<h1 id="bashforlinux">Bash for Linux</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#whatisshell">What is Shell</a>
+
+<ul>
+<li><a href="#thehistoryofunixshell">The History of Unix Shell</a>
+
+<ul>
+<li><a href="#additionalinfo">Additional Info</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#shellvariables">Shell Variables</a>
+
+<ul>
+<li><a href="#environmentvariable">Environment Variable</a>
+
+<ul>
+<li><a href="#envandset">env and set</a></li>
+<li><a href="#$and?">$ and ?</a></li>
+<li><a href="#export">export</a></li>
+<li><a href="#locale">locale</a></li>
+</ul></li>
+<li><a href="#operationonvariables">Operation on Variables</a>
+
+<ul>
+<li><a href="#readanddeclare">read and declare</a></li>
+<li><a href="#ulimitanddd">ulimit and dd</a></li>
+<li><a href="#deleteandreplace">delete and replace</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#aliasandhistory">Alias and History</a></li>
+<li><a href="#bashshellenvironment">Bash Shell Environment</a>
+
+<ul>
+<li><a href="#theordertofindcommand">The Order to Find Command</a></li>
+<li><a href="#logininformation">Login Information</a></li>
+<li><a href="#environmentconfiguration">Environment Configuration</a>
+
+<ul>
+<li><a href="#systemenvconfiguration">System Env Configuration</a></li>
+<li><a href="#userenvconfiguration">User Env Configuration</a></li>
+<li><a href="#non-loginshell">Non-login Shell</a></li>
+<li><a href="#otherconfiguration">Other Configuration</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#wildcardandspecialsymbol">Wildcard and Special Symbol</a>
+
+<ul>
+<li><a href="#wildcard">Wildcard</a></li>
+<li><a href="#specialsymbol">Special Symbol</a></li>
+</ul></li>
+<li><a href="#dataredirection">Data Redirection</a>
+
+<ul>
+<li><a href="#overview">Overview</a>
+
+<ul>
+<li><a href="#standardoutput">Standard Output</a></li>
+<li><a href="#standardinput">Standard Input</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#logicexpression">Logic Expression</a></li>
+<li><a href="#pipelineexpression">Pipeline Expression</a>
+
+<ul>
+<li><a href="#cutandgrep">Cut and Grep</a></li>
+<li><a href="#sortwcanduniq">sort, wc and uniq</a></li>
+<li><a href="#doubleredirection">Double Redirection</a></li>
+</ul></li>
+<li><a href="#characteroperation">Character Operation</a></li>
+<li><a href="#splitandxargs">Split and Xargs</a></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="whatisshell">
+<h2>What is Shell</h2>
+
+<p>Simply put, the shell is a program that takes commands from the keyboard and gives them to the operating system to perform. In the old days, it was the only user interface available on a Unix-like system such as Linux. Nowadays, we have graphical user interfaces (GUIs) in addition to command line interfaces (CLIs) such as the shell.</p>
+
+<p>In computing, a shell is a computer program which exposes an operating system&#8217;s services to a human user or other program. It is named a shell because it is the outermost layer around the operating system.</p>
+<pre><code class="bash"># the overall layers of a computer
+
+     |____User____|
+          |  |
+|_Shell, DKE, Application_|  # &lt;--- here 
+          |  |
+     |___Kernel___|   
+          |  |
+    |___Hardware___|</code></pre>
+
+<section	id="thehistoryofunixshell">
+<h3>The History of Unix Shell</h3>
+
+<p>The first Unix shell was the Thompson shell, <code>sh</code>, written by Ken Thompson at Bell Labs and distributed with Versions 1 through 6 of Unix, from 1971 to 1975.</p>
+
+<p>But the most widely distributed and influential of the early Unix shells were the Bourne shell and the C shell. Both shells have been used as the coding base and model for many derivative and work-alike shells with extended feature sets.</p>
+
+<p>The <code>Bourne shell</code>, sh, was a new Unix shell by Stephen Bourne at Bell Labs. Distributed as the shell for UNIX Version 7 in 1979, it introduced the rest of the basic features considered common to all the Unix shells. Traditionally, the Bourne shell program name is sh and its path in the Unix file system hierarchy is /bin/sh. But a number of compatible work-alikes are also available with various improvements and additional features. On many systems, sh may be a symbolic link or hard link to one of these alternatives:</p>
+
+<ul>
+<li><code>Bourne-Again Shell (Bash)</code>: written as part of the GNU Project to provide a superset of Bourne Shell functionality. This shell can be found installed and is the default interactive shell for users on most Linux systems.</li>
+<li><code>KornShell (ksh)</code>: written by David Korn based on the Bourne shell sources while working at Bell Labs.</li>
+<li><code>Z Shell (zsh)</code>: a relatively modern shell that is backward compatible with bash. It&#8217;s the default shell in macOS since 10.15 Catalina.</li>
+</ul>
+
+<p>Yet there is another popular shell called <code>csh</code>. The C shell, csh, was modeled on the C programming language, including the control structures and the expression grammar. It was written by Bill Joy as a graduate student at University of California, Berkeley, and was widely distributed with BSD Unix.</p>
+
+<p>So what&#8217;s legal shell in your machine, just find it out in <code>/etc/shells</code></p>
+<pre><code class="bash">[root@localhost ~] vi /etc/shells
+/bin/sh                                     
+/bin/bash                    
+/sbin/nologin    # Wow              
+/usr/bin/sh               
+/usr/bin/bash               
+/usr/sbin/nologin   # Wow again, this two nologin will be introduced later.
+/bin/zsh</code></pre>
+
+<p>Another question, how the computer know which shell a user should get?<br/>
+The answer will be found in <code>/etc/passwd</code></p>
+<pre><code class="bash">[root@localhost ~] vi /etc/passwd
+root:x:0:0:root:/root:/bin/zsh    # &lt;-- the last column shows that
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin </code></pre>
+
+<section	id="additionalinfo">
+<h4>Additional Info</h4>
+
+<ul>
+<li><code>type</code> command<br/>
+<code>type</code> could be used to look for the type of a command. As we all know every command is a executable file.</li>
+</ul>
+<pre><code class="bash">type [-ta] (name)
+# where,
+# -t: will show the type of command as file, alias and builtin.
+# -a: find all executable files in ${PATH} and list them.
+
+[root@localhost ~] type ls
+ls is an alias for ls --color=tty
+
+# in bash environment
+[root@localhost ~] type -t ls
+alias    
+
+[root@localhost ~] type -a ls
+ls is an alias for ls --color=tty 
+ls is /usr/bin/ls</code></pre>
+
+<p>BTW, if a command is too long, <code>\[Enter]</code> could be used to write command in another line.</p>
+<pre><code class="bash">[root@localhost ~] cp hello helloworld westword \
+&gt; /root </code></pre>
+
+</section>
+</section>
+</section>
+<section	id="shellvariables">
+<h2>Shell Variables</h2>
+
+<p>There are two kinds of variables in bash &#8211; <code>Environment variable</code> and <code>User variable</code>. The one of the significant differences between them is <em>environment var could be used by other processes</em> while user var can be used only in current process.</p>
+<pre><code class="bash"># get an environment var
+[root@localhost ~] echo ${PATH}
+/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+# set a user var
+[root@localhost ~] myVar=&apos;HelloWorld&apos;
+[root@localhost ~] echo ${myVar}
+HelloWorld
+
+# the difference between &apos; and &apos;&apos;
+# &apos; will interpret the value of a var as a plain string
+[root@localhost ~] name=&apos;Peter&apos;
+[root@localhost ~] greet=&apos;Hello ${name}&apos;
+[root@localhost ~] echo ${greet}
+Hello ${name}
+# &apos;&apos; will explain the value of variable in the string
+[root@localhost ~] greet=&quot;Hello ${name}&quot;
+[root@localhost ~] echo ${greet}
+Hello Peter
+
+# transfer a user variable into environment
+[root@localhost ~] export name
+[root@localhost ~] bash  # go into a new process
+[root@localhost ~] echo ${name}
+Peter
+[root@localhost ~] exit  # back to father process
+
+# &apos;\&apos; could be used to transfer the meaning of some special character
+[root@localhost ~] greet=How\&apos;s\ the\ weather\ today
+[root@localhost ~] echo ${greet}
+How&apos;s the weather today</code></pre>
+
+<section	id="environmentvariable">
+<h3>Environment Variable</h3>
+
+<section	id="envandset">
+<h4>env and set</h4>
+
+<ul>
+<li><code>env</code><br/>
+<code>env</code> command is used to find all environment variables in bash.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] env
+USER=root
+LOGNAME=root
+HOME=/root
+PATH=/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+MAIL=/var/spool/mail/root
+...</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Env Var</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">USER</td>
+	<td style="text-align:center;">show identification of user</td>
+</tr>
+<tr>
+	<td style="text-align:center;">HOME</td>
+	<td style="text-align:center;">the home directory of current user</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SHELL</td>
+	<td style="text-align:center;">the shell used by user</td>
+</tr>
+<tr>
+	<td style="text-align:center;">HISTSIZE</td>
+	<td style="text-align:center;">the maximum # of history entries that will be stored</td>
+</tr>
+<tr>
+	<td style="text-align:center;">MAIL</td>
+	<td style="text-align:center;">the mail address of user</td>
+</tr>
+<tr>
+	<td style="text-align:center;">PATH</td>
+	<td style="text-align:center;">the path where to find executable command</td>
+</tr>
+<tr>
+	<td style="text-align:center;">LANG</td>
+	<td style="text-align:center;">which language system that will be used to code</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li><code>set</code> and <code>unset</code><br/>
+<code>set</code> is used to get all variables of bash. <code>unset</code> is used to unset/free a variable.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] set
+GID=0
+HISTCHARS=&apos;!^#&apos;
+HISTCMD=725
+HISTCONTROL=ignoredups
+HISTFILE=/root/.zsh_history
+...
+PS1=&apos;%(?:%% :%% ) %$fg[cyan]%%c%$reset_color% $(git_prompt_info)&apos;
+PS2=&apos;%_&gt; &apos;
+PS3=&apos;?# &apos;
+...</code></pre>
+
+<p>One funny environment is <code>PS(Prompt Symbol)</code>, user could define his own<br/>
+ps according to following rules.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Arguments</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>\d</code></td>
+	<td style="text-align:center;">show date, eg. Mon Feb 2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\H</code></td>
+	<td style="text-align:center;">show full hostname</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\t</code></td>
+	<td style="text-align:center;">show 24-hour time, HH-MM-SS</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\A</code></td>
+	<td style="text-align:center;">show 24-hour time, HH-MM</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\u</code></td>
+	<td style="text-align:center;">show user&#8217;s name</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\v</code></td>
+	<td style="text-align:center;">show info of bash version</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\w</code></td>
+	<td style="text-align:center;">show full directory path</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\W</code></td>
+	<td style="text-align:center;">show basename of a directory path</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\#</code></td>
+	<td style="text-align:center;">show the number of executed command</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\$</code></td>
+	<td style="text-align:center;">show prompt symbol, $ for users, # for root</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="$and?">
+<h4>$ and ?</h4>
+
+<p><code>$</code> and <code>?</code> are two special variables. <code>$</code> saves PID(Process ID) and <code>?</code> stores the status code from last command, <strong>0 for success and others for failure</strong>.</p>
+<pre><code class="bash">[root@localhost ~] echo $$
+8471
+[root@localhost ~] echo ?
+0
+[root@localhost ~] 12name=hello\ world
+-bash: command not found: 12name=hello  
+[root@localhost ~] echo ?
+127</code></pre>
+
+<p>Also <code>OSTYPE</code> and <code>MACHTYPE</code> saves information about your computer.</p>
+<pre><code class="bash">[root@localhost ~] echo ${OSTYPE}
+darwin19.0
+[root@localhost ~] echo ${MACHTYPE}
+x86_64</code></pre>
+
+</section>
+<section	id="export">
+<h4>export</h4>
+
+<ul>
+<li><code>export</code><br/>
+<code>export</code> command is used to tranfer a user variable into an environment variable.</li>
+</ul>
+<pre><code class="bash">export (variable)
+
+[root@localhost ~] export
+HISTCONTROL=ignoredups 
+HISTSIZE=50000
+HOME=/root 
+HOSTNAME=iZ2zei99okbo7v4d6fma9eZ 
+...
+
+[root@localhost ~] export name</code></pre>
+
+</section>
+<section	id="locale">
+<h4>locale</h4>
+
+<p>To find which language your machine support, <code>locale</code> command will help you.</p>
+<pre><code class="bash">[root@localhost ~] locale
+LANG=en_US.UTF-8
+LC_CTYPE=&quot;en_US.UTF-8&quot;
+LC_NUMERIC=&quot;en_US.UTF-8&quot;
+LC_TIME=&quot;en_US.UTF-8&quot;
+LC_COLLATE=&quot;en_US.UTF-8&quot;
+LC_MONETARY=&quot;en_US.UTF-8&quot;
+LC_MESSAGES=&quot;en_US.UTF-8&quot;
+LC_PAPER=&quot;en_US.UTF-8&quot;
+LC_NAME=&quot;en_US.UTF-8&quot;
+LC_ADDRESS=&quot;en_US.UTF-8&quot;
+LC_TELEPHONE=&quot;en_US.UTF-8&quot;
+LC_MEASUREMENT=&quot;en_US.UTF-8&quot;
+LC_IDENTIFICATION=&quot;en_US.UTF-8&quot;
+LC_ALL=</code></pre>
+
+<p>Often, we set system language in <code>LANG</code> variable.</p>
+
+</section>
+</section>
+<section	id="operationonvariables">
+<h3>Operation on Variables</h3>
+
+<section	id="readanddeclare">
+<h4>read and declare</h4>
+
+<ul>
+<li><code>read</code><br/>
+<code>read</code> command allows to read information from keyboard.</li>
+</ul>
+<pre><code class="bash">read [-pt] variable
+# where,
+# -p: prompt for input.
+# -t: time waitting for input from user.
+[root@localhost ~] read -p &quot;Please type in your name: &quot; -t 30 name
+Please type in your name: Peter</code></pre>
+
+<ul>
+<li><code>declare</code><br/>
+<code>declare</code> is used to declare the type of a variable.</li>
+</ul>
+<pre><code class="bash">declare [-aixr] (variable)
+# where,
+# -a: declare as an array.
+# -i: declare as an integer.
+# -x: declare as an environment variable.
+# -r: declare as a read-only variable.
+
+[root@localhost ~] declare -ix sum=100+200+300
+[root@localhost ~] echo ${sum}
+600</code></pre>
+
+</section>
+<section	id="ulimitanddd">
+<h4>ulimit and dd</h4>
+
+<ul>
+<li><code>ulimit</code><br/>
+<code>ulimit</code> is used to limit user to use resources abusively.</li>
+</ul>
+<pre><code class="bash">ulimit [-afu] (allocation size)
+# where,
+# -a: show all limit information.
+# -f: limit the maximum size of a new file.
+# -u: limit the maximum number of process a user could use.
+
+[root@localhost ~] ulimit -a
+-t: cpu time (seconds)              unlimited
+-f: file size (blocks)              unlimited
+-d: data seg size (kbytes)          unlimited
+-s: stack size (kbytes)             8192
+-c: core file size (blocks)         0
+-m: resident set size (kbytes)      unlimited
+-u: processes                       7271
+-n: file descriptors                65535
+-l: locked-in-memory size (kbytes)  64
+-v: address space (kbytes)          unlimited
+-x: file locks                      unlimited
+-i: pending signals                 7271
+-q: bytes in POSIX msg queues       819200
+-e: max nice                        0
+-r: max rt priority                 0
+-N 15:                              unlimited
+
+# set the maximum size of new file to be 10240
+[root@localhost ~] ulimit -f 10240
+[root@localhost ~] dd -if=/dev/zero -of=123 bs=1M count=20
+File size limit exceeded  # &lt;= error</code></pre>
+
+<p>BTW, <code>dd</code> is very useful command, which is used to convert and copy a file.</p>
+<pre><code class="bash">[root@localhost ~] dd -if=/dev/zero -of=123 bs=1M count=20
+# where,
+# -if: input file, read from FILE instead of stdin.
+# -of: output file, write to FILE instead of stdout.
+# bs: read and write up to 1M bytes at a time.
+# count: copy only N input blocks.
+
+# also, dd could be used to backup a filesystem or a file
+[root@localhost ~] dd -if=/dev/vda1 -of=/root/vda.img
+[root@localhost ~] dd -if=/root/helloworld -of=/root/helloworld.bk
+
+# to restore
+[root@localhost ~] dd -if=/root/helloworld.bk -of=/root/helloworld</code></pre>
+
+</section>
+<section	id="deleteandreplace">
+<h4>delete and replace</h4>
+
+<p>There are some special syntax in bash as follows,</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Syntax</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">${var#keyword}</td>
+	<td style="text-align:center;">search keyword from the beginning and delete until the first matching index</td>
+</tr>
+<tr>
+	<td style="text-align:center;">${var##keyword}</td>
+	<td style="text-align:center;">search keyword from the beginning and delete until the last matching index</td>
+</tr>
+<tr>
+	<td style="text-align:center;">${var%keyword}</td>
+	<td style="text-align:center;">search keyword from the end and delete until the first matching index</td>
+</tr>
+<tr>
+	<td style="text-align:center;">${var%%keyword}</td>
+	<td style="text-align:center;">search keyword from the end and delete until the last matching index</td>
+</tr>
+<tr>
+	<td style="text-align:center;">${var/old/new}</td>
+	<td style="text-align:center;">search old and replace it with new only one time</td>
+</tr>
+<tr>
+	<td style="text-align:center;">${var//old/new}</td>
+	<td style="text-align:center;">search old and replace it with new for all matching result</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash">[root@localhost ~] mypath=${PATH}
+[root@localhost ~] echo ${mypath}
+/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~] echo ${mypath#/*:}
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~] echo ${mypath##/*:}
+/root/bin
+[root@localhost ~] echo ${mypath%:*bin}
+/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+
+# but notice that mypath has not changed, we just echo the result
+[root@localhost ~] echo ${mypath}
+/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin</code></pre>
+
+<p>And an if-then syntax in bash is as follow, <code>:-</code> and <code>:+</code> are frequently being used.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Syntax</th>
+	<th style="text-align:center;">str is null</th>
+	<th style="text-align:center;">str is &#8217;&#8217;</th>
+	<th style="text-align:center;">str is not &#8217;&#8217;</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">var=${str-expr}</td>
+	<td style="text-align:center;">var = expr</td>
+	<td style="text-align:center;">var = &#8217;&#8217;</td>
+	<td style="text-align:center;">var = ${str}</td>
+</tr>
+<tr>
+	<td style="text-align:center;">var=${str:-expr}</td>
+	<td style="text-align:center;">var = expr</td>
+	<td style="text-align:center;">var = expr</td>
+	<td style="text-align:center;">var = ${str}</td>
+</tr>
+<tr>
+	<td style="text-align:center;">var=${str+expr}</td>
+	<td style="text-align:center;">var = &#8217;&#8217;</td>
+	<td style="text-align:center;">var = expr</td>
+	<td style="text-align:center;">var = expr</td>
+</tr>
+<tr>
+	<td style="text-align:center;">var=${str:+expr}</td>
+	<td style="text-align:center;">var = &#8217;&#8217;</td>
+	<td style="text-align:center;">var = &#8217;&#8217;</td>
+	<td style="text-align:center;">var = expr</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash"># in general, var and str are the same variable and the syntax is used like this
+[root@localhost ~] username=&quot;&quot;
+# which means if username is null or &apos;&apos;, it will be replaced by root
+[root@localhost ~] username=${username:-root}
+
+[root@localhost ~] username=&quot;Peter&quot;
+# which means the user name will be replaced by root only if username has value(not &apos;&apos;)
+[root@localhost ~] username=${username:+root}</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="aliasandhistory">
+<h2>Alias and History</h2>
+
+<ul>
+<li><code>alias</code> and <code>unalias</code><br/>
+<code>alias</code> is used to set alias to a command.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] alias
+l=&apos;ls -lah&apos;
+l.=&apos;ls -d .* --color=auto&apos;
+la=&apos;ls -lAh&apos;
+ll=&apos;ls -lh&apos;
+ls=&apos;ls --color=tty&apos;
+lsa=&apos;ls -lah&apos;
+...
+
+# to set alias
+[root@localhost ~] alias rm=&apos;rm -i&apos;</code></pre>
+
+<ul>
+<li><code>history</code><br/>
+<code>history</code> is used to find command history. The maximum # of history record is limited by <code>HISTSIZE</code>.</li>
+</ul>
+<pre><code class="bash">history [n] # list last n history records
+history [-c] # clear all history records
+history [-rw] # read and write current history records into histfiles
+
+[root@localhost ~] history
+  763  echo ${mypath##/*:}
+  764  echo ${mypath#:*bin}
+  765  echo ${mypath%:*bin}
+  766  alais
+  767  alias
+
+[root@localhost ~] history 3
+  765  echo ${mypath%:*bin}
+  766  alais
+  767  alias
+
+[root@localhost ~] history -w
+# in default, the history will be written into ~/.bash_history
+
+# execute last command in history
+[root@localhost ~] !!
+# execute the command with number 3 in history
+[root@localhost ~] !3
+# execute the command starting with &apos;gre&apos; recently.
+[root@localhost ~] !gre</code></pre>
+
+</section>
+<section	id="bashshellenvironment">
+<h2>Bash Shell Environment</h2>
+
+<section	id="theordertofindcommand">
+<h3>The Order to Find Command</h3>
+
+<p>In general, there are many command with the same name, like <code>ls</code>. Yet which <code>ls</code> is going to be executed when user key in the command.</p>
+<pre><code class="bash">[root@localhost ~] type -a echo
+echo is an alias for echo -n
+echo is a shell builtin
+echo is /usr/bin/echo</code></pre>
+
+<p>Through <code>type</code> command, we will know that the alias will be found first and then builtin, finally the command in <code>${PATH}</code>.</p>
+
+</section>
+<section	id="logininformation">
+<h3>Login Information</h3>
+
+<p>Users are allowed to define their login information in <code>/etc/issue</code> or <code>/etc/motd</code>.</p>
+<pre><code class="bash">[root@localhost ~] cat /etc/issue
+\S
+Kernel \r on an \m</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Syntax</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>\d</code></td>
+	<td style="text-align:center;">show host time</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\l</code></td>
+	<td style="text-align:center;">show which client login, tty1<sub>6</sub></td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\m</code></td>
+	<td style="text-align:center;">show hardware version, (i386/i486/i586/&#8230;)</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\n</code></td>
+	<td style="text-align:center;">show the network name of the host</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\o</code></td>
+	<td style="text-align:center;">show domain name</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\r</code></td>
+	<td style="text-align:center;">show shell version, (uname -r)</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\t</code></td>
+	<td style="text-align:center;">show local time</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\s</code></td>
+	<td style="text-align:center;">show the name of OS</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\v</code></td>
+	<td style="text-align:center;">show the version of OS</td>
+</tr>
+</tbody>
+</table>
+
+<p>In addition to <code>/etc/issue</code>, there is also <code>/etc/issue.net</code>, which is used for remote clients to change their login information.</p>
+
+<p>Furthermore, <code>/etc/motd</code> is used to inform everyone who login the host of some information.</p>
+<pre><code class="bash">[root@localhost ~] cat /etc/motd
+
+Welcome to Alibaba Cloud Elastic Compute Service !
+</code></pre>
+
+</section>
+<section	id="environmentconfiguration">
+<h3>Environment Configuration</h3>
+
+<p>Before discussing the environment configuration of Linux, we have to figure out the difference between two login mode &#8211; <code>login shell</code> and <code>non-login shell</code>. </p>
+
+<ul>
+<li><code>login</code>: requires user to type in username and password so that user could access to the host.</li>
+<li><code>non-login</code>: user could access to the host without password. eg. when creating a new process by <code>bash</code>, then you get a non-login shell in that new process.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] bash
+# now i&apos;m in a new process with non-login shell
+[root@iZ2zeifma9eZ ~]#  </code></pre>
+
+<p>Why we talk about that difference? Because these two login mode read environment configuration files in various ways. For <code>login shell</code>, it will read two configuration files, <code>/etc/profile</code>, and <code>~/.bash_profile</code> or <code>~/.bash_login</code> or <code>~/.profile</code>.</p>
+
+<section	id="systemenvconfiguration">
+<h4>System Env Configuration</h4>
+
+<p><code>/etc/profile</code> is a system environment configuration file. It includes settings of environment variables (<code>PATH</code>, <code>MAIL</code>, <code>USER</code>, <code>HISTSIZE</code> &#8230;) and calls some other configuration files shown below,</p>
+
+<ul>
+<li><code>/etc/input</code>: if user does not set their own input shortcut, <code>/etc/profile</code> will call this file to configure system environment.</li>
+<li><code>/etc/profile.d/*.sh</code>: all shell scripts in <code>profile.d</code> will be executed. So if you want to change some environment configuration for all users, you are able to do it here by writing a shell script (eg. alias setting file).</li>
+<li><code>/etc/sysconfig/i18n</code>: sets the language system of Linux.</li>
+</ul>
+
+</section>
+<section	id="userenvconfiguration">
+<h4>User Env Configuration</h4>
+
+<p>After executing system environment configuration files, bash will read users&#8217;. It will read one of three files following in given order,</p>
+
+<ul>
+<li><code>~/.bash_profile</code></li>
+<li><code>~/.bash_login</code></li>
+<li><code>~/.profile</code></li>
+</ul>
+
+<p>Let&#8217;s look at root&#8217;s bash_profile,</p>
+<pre><code class="bash"># .bash_profile
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then 
+        . ~/.bashrc
+fi 
+
+# User specific environment and startup programs       
+PATH=$PATH:$HOME/bin  
+export PATH </code></pre>
+
+<p>So for <code>login shell</code>, the read flow is like this,</p>
+<pre><code class="markdown">/etc/profile ------&gt; ~/.bash_profile -------&gt; Done
+     |                        |
+     |----&gt; /etc/inputrc      |----- ~/.bashrc
+     |                                  |
+     |                               /etc/.bashrc
+     |----&gt; /etc/profile.d/*.sh  &lt;------|
+                  |
+                  |----&gt; /etc/sysconfig/i18n</code></pre>
+
+<p>TIP: After changing environment configuration files, users should make it come into effect by <code>source</code>.</p>
+
+</section>
+<section	id="non-loginshell">
+<h4>Non-login Shell</h4>
+
+<p>For Non-login shell, the bash will read only <code>~/.bashrc</code>.</p>
+<pre><code class="bash">[root@localhost ~] cat ~/.bashrc
+# .bashrc
+
+# User specific aliases and functions
+
+alias rm=&apos;rm -i&apos;
+alias cp=&apos;cp -i&apos;
+alias mv=&apos;mv -i&apos;
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi</code></pre>
+
+<p>we will find that it will call <code>/etc/bashrc</code>, and then will call <code>/etc/profile.d/*.sh</code>. So it will not call <code>/etc/profile</code> as shown in read flow figure above.</p>
+
+<p>Often <code>/etc/bashrc</code> will do following things,</p>
+
+<ul>
+<li>setting <code>umask</code> according to UID</li>
+<li>setting PS(prompt symbol) according to UID</li>
+<li>calling <code>/etc/profile.d/*sh</code></li>
+</ul>
+
+</section>
+<section	id="otherconfiguration">
+<h4>Other Configuration</h4>
+
+<ul>
+<li><code>bash_history</code>: configuration of history, such as <code>HISTSIZE</code>.</li>
+<li><code>bash_logout</code>: what will be executed when logging out.</li>
+<li><code>stty</code>: setting tty.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] stty -a 
+# ^ means ctrl
+speed 38400 baud; rows 30; columns 95; line = 0;
+intr = ^C; quit = ^\; erase = ^?; kill = ^U; eof = ^D; eol = M-^?; eol2 = M-^?; swtch = &lt;undef&gt;;                  
+start = ^Q; stop = ^S; susp = ^Z; rprnt = ^R; werase = ^W; lnext = ^V; flush = ^O; 
+min = 1; time = 0;    
+
+# setting erase to ^h
+[root@localhost ~] stty erase ^h</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="wildcardandspecialsymbol">
+<h2>Wildcard and Special Symbol</h2>
+
+<section	id="wildcard">
+<h3>Wildcard</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Symbol</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">*</td>
+	<td style="text-align:center;">matches any character zero or more times</td>
+</tr>
+<tr>
+	<td style="text-align:center;">?</td>
+	<td style="text-align:center;">matches a single character once</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[]</td>
+	<td style="text-align:center;">matches a single character in a range, eg. [abc] or [a-z]</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[^]</td>
+	<td style="text-align:center;">match a single character not in a range</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="specialsymbol">
+<h3>Special Symbol</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Symbol</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">#</td>
+	<td style="text-align:center;">comment symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">\</td>
+	<td style="text-align:center;">escape symbol, ESC</td>
+</tr>
+<tr>
+	<td style="text-align:center;">|</td>
+	<td style="text-align:center;">pipe symbol, used for redirect control flow</td>
+</tr>
+<tr>
+	<td style="text-align:center;">;</td>
+	<td style="text-align:center;">delimiter of more than one command</td>
+</tr>
+<tr>
+	<td style="text-align:center;">~</td>
+	<td style="text-align:center;">user&#8217;s home directory</td>
+</tr>
+<tr>
+	<td style="text-align:center;">$</td>
+	<td style="text-align:center;">variable symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&amp;</td>
+	<td style="text-align:center;">job control symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">!</td>
+	<td style="text-align:center;">logic operation NOT</td>
+</tr>
+<tr>
+	<td style="text-align:center;">/</td>
+	<td style="text-align:center;">directory symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&gt;, &gt;&gt;</td>
+	<td style="text-align:center;">data redirect symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&lt;, &lt;&lt;</td>
+	<td style="text-align:center;">data redirect symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&#8217;&#8217;</td>
+	<td style="text-align:center;">plain string</td>
+</tr>
+<tr>
+	<td style="text-align:center;">&quot;&quot;</td>
+	<td style="text-align:center;">string with variable transformation</td>
+</tr>
+<tr>
+	<td style="text-align:center;">``</td>
+	<td style="text-align:center;">command executive symbol, equals to $(&#8230;)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">()</td>
+	<td style="text-align:center;">children shell flag symbol</td>
+</tr>
+<tr>
+	<td style="text-align:center;">{}</td>
+	<td style="text-align:center;">command block</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+</section>
+<section	id="dataredirection">
+<h2>Data Redirection</h2>
+
+<section	id="overview">
+<h3>Overview</h3>
+
+<p>Before discussing what the redirection is, we have to know what&#8217;s the normal data flow.</p>
+<pre><code class="bash"># where, std means standard, in/out/err means input/output/error
+ ______             _________                ______      ________
+|_file_| --stdin--&gt; |_command_| --stdout--&gt; |_file_| or |_device_|
+                         |             ______      ________
+                         |--stderr--&gt; |_file_| or |_device_|</code></pre>
+
+<p>In bash, standard flow has been abstracted as 0 for <code>standard input</code>, 1 for <code>standard output</code>, and 2 for <code>standard error</code>.</p>
+
+<section	id="standardoutput">
+<h4>Standard Output</h4>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Redirection Syntax</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">1&gt;</td>
+	<td style="text-align:center;">put standard output into a file and override it</td>
+</tr>
+<tr>
+	<td style="text-align:center;">1&gt;&gt;</td>
+	<td style="text-align:center;">add standard output to the end of a file</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2&gt;</td>
+	<td style="text-align:center;">put standard error into a file and override it</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2&gt;&gt;</td>
+	<td style="text-align:center;">add standard error to the end of a file</td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Notice that 1 is often be ignored.</em></p>
+<pre><code class="bash"># put stdout and stderr into two different files
+[root@localhost ~] find /home -name .bashrc &gt; result 2&gt; errorlog
+
+# discard stderr and only show stdout
+[root@localhost ~] find /home -name .bashrc 2&gt; /dev/null
+
+# put stdout and stderr into the same file
+[root@localhost ~] find /home -name .bashrc &gt; result 2&gt;&amp;1
+# or
+[root@localhost ~] find /home -name .bashrc &amp;&gt; result
+</code></pre>
+
+</section>
+<section	id="standardinput">
+<h4>Standard Input</h4>
+
+<p>There is a very interesting syntax allowing user to input from keyboard by <code>cat &gt; (filename)</code>, </p>
+<pre><code class="bash">[root@localhost ~] cat &gt; newfile
+testing
+testfile
+# [ctrl] + d to leave
+[root@localhost ~] cat newfile
+testing
+testfile
+
+# &lt;&lt; is used to add end flag, so that type in eof is equal to [ctrl] + d
+[root@localhost ~] cat &gt; newfile &lt;&lt; &quot;eof&quot;</code></pre>
+
+<p><em>Notice that <code>cat &gt; (filename)</code> can be seen as two command, <code>cat filename</code> and <code>&gt; filename</code>, given that the command is executed from right to left.</em></p>
+
+<p>Now how to use a file to input so as to free our hands? The answer is <code>input redirection</code>.</p>
+<pre><code class="bash">[root@localhost ~] cat &gt; bashrc.bk &lt; ~/.bashrc
+[root@localhost ~] ll bashrc.bk ~/.bashrc
+-rw-r--r--. 1 root root 176 Dec 29  2013 .bashrc
+-rw-r--r--  1 root root 176 Dec  2 17:00 bashrc.bk</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="logicexpression">
+<h2>Logic Expression</h2>
+
+<p>There are three logic Expression in bash - <code>;</code>, <code>&amp;&amp;</code> and <code>||</code>.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Expression</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>cmd1; cmd2</code></td>
+	<td style="text-align:center;">execute cmd1 and cmd2 in order</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>cmd1 &amp;&amp; cmd2</code></td>
+	<td style="text-align:center;">execute cmd1 and, if $0 == 0 (means cmd is properly executed), cmd2 is executed</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>cmd1 || cmd2</code></td>
+	<td style="text-align:center;">execute cmd1 and, if $0 != 0, cmd2 is executed</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash"># if &apos;/root/abs&apos; directory exists, &apos;touch file1&apos;
+[root@localhost ~] ls /root/abs &amp;&amp; touch file1
+
+# if &apos;/root/crontab.conf&apos; exists, print &apos;exist&apos; or print &apos;not exist&apos;
+[root@localhost ~] ls /root/crontab.conf &amp;&amp; echo &apos;exist&apos; || echo &apos;not exist&apos; </code></pre>
+
+<p>For command block like <code>cmd1 || cmd2 &amp;&amp; cmd3</code>, <code>cmd3</code> will be always executed, take two scenarios,</p>
+
+<ul>
+<li><code>cmd1</code> is executed improperly, <code>$0 != 0</code> so <code>cmd2</code> will go on. <code>cmd2</code> is likely to be executed properly, thereby <code>$0 == 0</code> and <code>cmd</code> will be executed.</li>
+<li><code>cmd2</code> is executed properly, <code>$0 == 0</code> so <code>cmd</code> will not be executed and <code>$0</code> continues to be passed, thereby <code>cmd3</code> being executed.</li>
+<li>Of course, in scenario 1, if <code>cmd2</code> is problematic, <code>cmd3</code> will not be executed, but command block in this way appears to make no sense.</li>
+</ul>
+
+</section>
+<section	id="pipelineexpression">
+<h2>Pipeline Expression</h2>
+
+<p>Pipeline <code>|</code> allows users to transfer the standard output into another command.</p>
+<pre><code class="bash">cmd1 | cmd2 | cmd3
+
+[root@localhost ~] ls -al /etc | less -
+# where,
+# - means the output stream from last command.</code></pre>
+
+<section	id="cutandgrep">
+<h3>Cut and Grep</h3>
+
+<ul>
+<li><code>cut</code><br/>
+<code>cut</code> is used to print selected parts of lines from each FILE to standard output.</li>
+</ul>
+<pre><code class="bash">cut -d (delimiter) -f (fields)
+cut -c (range)
+# where,
+# -d: specifies delimiter, TAB in default.
+# -f: select only these fields.
+# -c: select only these characters.
+
+[root@localhost ~] echo ${PATH}
+/root/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~] echo ${PATH} | cut -d &apos;:&apos; -f 5
+/usr/bin
+[root@localhost ~] echo ${PATH} | cut -d &apos;:&apos; -f 3,5
+/usr/local/bin:/usr/bin  
+
+[root@localhost ~] export
+declare -x HISTCONTROL=ignoredups
+declare -x HISTSIZE=50000
+declare -x HOME=/root
+declare -x HOSTNAME=iZ2zei99okbo7v4d6fma9eZ
+declare -x LANG=en_US.UTF-8
+declare -x LESS=-R
+declare -x LESSOPEN=&apos;||/usr/bin/lesspipe.sh %s&apos;
+...
+[root@localhost ~] export | cut -c 12-
+HISTCONTROL=ignoredups
+HISTSIZE=50000
+HOME=/root
+HOSTNAME=iZ2zei99okbo7v4d6fma9eZ
+LANG=en_US.UTF-8
+LESS=-R
+LESSOPEN=&apos;||/usr/bin/lesspipe.sh %s&apos;
+...</code></pre>
+
+<ul>
+<li><code>grep</code><br/>
+<code>grep</code> searches the named input FILEs for lines containing a match to the given PATTERN.</li>
+</ul>
+<pre><code class="bash">grep [-acinv --color=auto] (pattern) (filename)
+# where,
+# -a: processes a binary file as if it were text. 
+# -c: counts the time of matching pattern.
+# -i: ignores case distinctions.
+# -n: show line numbers.
+# -v: inverts the sense of matching, to select non-matching lines.
+
+[root@localhost ~] last | grep &apos;root&apos;
+root     pts/0    1.80.165.191     Wed Dec  2 20:26   still logged in
+root     pts/0    1.80.165.191     Wed Dec  2 17:00 - 17:05  (00:05) 
+root     pts/3    1.80.167.173     Wed Dec  2 16:23 - 19:10  (02:47)
+root     pts/2    1.80.167.173     Wed Dec  2 15:38 - 17:50  (02:11)
+...</code></pre>
+
+</section>
+<section	id="sortwcanduniq">
+<h3>sort wc and uniq</h3>
+
+<ul>
+<li><code>sort</code><br/>
+<code>sort</code> serves to sort lines of text files.</li>
+</ul>
+<pre><code class="bash">sort [-fbMnrutk] (file or stdin)
+# where,
+# -f: ignore case, fold lower case to upper case characters.
+# -b: ignore leading blanks.
+# -M: compare by month, (unknown) &lt; &apos;JAN&apos; &lt; ... &lt; &apos;DEC&apos;.
+# -n: compare according to string numerical value.
+# -r: reverse the result of comparisons.
+# -u: uniq, output only the first of an equal run.
+# -t: delimiter.
+# -k: sort via a key/field.
+
+# sort by the third field in numerical order
+[root@localhost ~] cat /etc/passwd | sort -t &apos;:&apos; -k 3 -n -
+root:x:0:0:root:/root:/bin/zsh 
+bin:x:1:1:bin:/bin:/sbin/nologin 
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync     
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt 
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin 
+
+# find who login host, noting that leading blank line and line with &apos;wtmp&apos; is useless and generated by `last`, thereby we use grep to get rid of them
+[root@localhost ~] last | cut -d &apos; &apos; -f1 | sort -u | grep &apos;[a-zA-Z]&apos; | grep -v &apos;wtmp&apos;
+reboot
+root</code></pre>
+
+<ul>
+<li><code>uniq</code><br/>
+<code>uniq</code> is to report or omit repeated lines.</li>
+</ul>
+<pre><code class="bash">uniq [-ic]
+# where,
+# -i: ignore case.
+# -c: count time of repetition.
+
+[root@localhost ~] last | cut -d &apos; &apos; -f1 | sort -u
+# or
+[root@localhost ~] last | cut -d &apos; &apos; -f1 | sort - | uniq -</code></pre>
+
+<ul>
+<li><code>wc</code><br/>
+<code>wc</code> stands for word counter, prints newline, word, and byte counts for each file.</li>
+</ul>
+<pre><code class="bash">wc [-lwc]
+# where,
+# -l: print the newline counts.
+# -w: print the word counts.
+# -c: print the byte counts. If a char is a byte, it also can be seen as character counts.
+
+[root@localhost ~] last | cut -d &apos; &apos; -f1 | sort -u | grep &apos;[a-zA-Z]&apos; | grep -v &apos;wtmp&apos; | wc -l
+2</code></pre>
+
+</section>
+<section	id="doubleredirection">
+<h3>Double Redirection</h3>
+
+<ul>
+<li><code>tee</code><br/>
+<code>tee</code> is going to read from standard input and write to standard output and files.</li>
+</ul>
+<pre><code class="bash"># double data flow
+Standard Input  ----&gt;  tee  ----&gt; Screen(Standard Output)
+                        |
+                        |-------&gt; File
+</code></pre>
+<pre><code class="bash">tee [-a] (file)
+# where,
+# -a: append to the given FILEs, do not overwrite.
+
+# not only print the content of `/home` on screen, but backup into home.log file.
+[root@localhost ~] ls -l /home | tee ~/home.log | more
+total 8
+drwx------ 2 ftpuser ftpuser 4096 Aug  6 23:07 ftpuser
+drwx------ 2 ftpUser ftpUser 4096 Aug  7 10:15 ftpUser</code></pre>
+
+</section>
+</section>
+<section	id="characteroperation">
+<h2>Character Operation</h2>
+
+<ul>
+<li><code>tr</code><br/>
+<code>tr</code> is used to translate or delete characters.</li>
+</ul>
+<pre><code class="bash">tr [-ds] (SET1 ...) (stdin)
+# where,
+# -d: delete strings that match pattern in stdin
+# -s: replace each input sequence of a repeated character that is  listed in SET1
+
+# replace lower case into upper case
+[root@localhost ~] last | tr &apos;[a-z]&apos; &apos;[A-Z]&apos;
+ROOT     PTS/0    1.80.165.191     THU DEC  3 09:10   STILL LOGGED IN
+ROOT     PTS/0    1.80.165.191     WED DEC  2 20:26 - 21:05  (00:39)
+...
+
+# delete &apos;:&apos; of stdin
+[root@localhost ~] cat /etc/passwd  | tr -d &apos;:&apos;
+rootx00root/root/bin/zsh
+binx11bin/bin/sbin/nologin
+daemonx22daemon/sbin/sbin/nologin
+...
+
+# transfer DOS delimiter to linux delimiter
+[root@localhost ~] unix2dos passwd.dos
+[root@localhost ~] cat -A passwd.dos
+root:x:0:0:root:/root:/bin/zsh^M$
+bin:x:1:1:bin:/bin:/sbin/nologin^M$
+...
+# &apos;/r&apos; means DOS delimiter
+[root@localhost ~] cat /root/passwd.dos | tr -d &apos;\r&apos; &gt; /root/passwd.linux
+[root@localhost ~] cat passwd.linux
+root:x:0:0:root:/root:/bin/zsh
+bin:x:1:1:bin:/bin:/sbin/nologin
+...</code></pre>
+
+<ul>
+<li><code>col</code><br/>
+<code>col</code> is to filter reverse line feeds from input. The common use of <code>col</code> is <em>to transfer TAB to SPACE and to transfer man page into plain text for accessing conveniently</em>.</li>
+</ul>
+<pre><code class="bash">col [-xb] (stdin)
+# where,
+# -x: outputs multiple spaces instead of tabs.
+# -b: do not output any backspaces, printing only the last character written to each column position.
+
+# ^I means TAB
+[root@localhost ~] cat -A /etc/man.config
+...
+#$
+#MANDATORY_MANPATH ^I^I^I/usr/src/pvm3/man$
+#$
+MANDATORY_MANPATH^I^I^I/usr/man$
+MANDATORY_MANPATH^I^I^I/usr/share/man$
+...
+[root@localhost ~] cat /etc/man.config | col -x | cat -A &gt; man.config.with.space
+# the TAB has been transferred to space
+[root@localhost ~] cat man.config.with.space
+...
+#$$
+#MANDATORY_MANPATH                      /usr/src/pvm3/man$$
+#$$
+MANDATORY_MANPATH                       /usr/man$$
+MANDATORY_MANPATH                       /usr/share/man$$
+...
+
+# save manpage as plain text for looking
+[root@localhost ~] man ls | col -b &gt; /root/ls.man</code></pre>
+
+<ul>
+<li><code>join</code><br/>
+<code>join</code> join lines of two files on a common field.</li>
+</ul>
+<pre><code class="bash">join [-ti12] (file1) (file2)
+# where,
+# -t: specifies delimiter.
+# -i: ignore cases.
+# -1: join on this FIELD of file1.
+# -2: join on this FIELD of file2.
+
+[root@localhost ~] head -n 3 /etc/passwd /etc/group
+==&gt; /etc/passwd &lt;== 
+root:x:0:0:root:/root:/bin/zsh    
+bin:x:1:1:bin:/bin:/sbin/nologin               
+daemon:x:2:2:daemon:/sbin:/sbin/nologin  
+
+==&gt; /etc/group &lt;==                
+root:x:0:                               
+bin:x:1:                                        
+daemon:x:2: 
+
+# join two file in GID
+[root@localhost ~] join -t &apos;:&apos; -1 4 /etc/passwd -2 3 /etc/group
+0:root:x:0:root:/root:/bin/zsh:root:x:
+1:bin:x:1:bin:/bin:/sbin/nologin:bin:x:
+2:daemon:x:2:daemon:/sbin:/sbin/nologin:daemon:x:
+...</code></pre>
+
+<ul>
+<li><code>paste</code><br/>
+<code>paste</code> is going to write lines consisting of the sequentially corresponding lines from each FILE.</li>
+</ul>
+<pre><code class="bash">paste [-d] (file1) (file2)
+# where,
+# -d: delimiter, TAB by default. Delimiter can be only one character or escape code like &apos;\t&apos;.
+[root@localhost ~] paste -d &apos;:&apos; /etc/passwd /etc/group | head -n 3
+bin:x:1:1:bin:/bin:/sbin/nologin        bin:*:17632:0:99999:7:::
+daemon:x:2:2:daemon:/sbin:/sbin/nologin daemon:*:17632:0:99999:7:::
+adm:x:3:4:adm:/var/adm:/sbin/nologin    adm:*:17632:0:99999:7:::</code></pre>
+
+<ul>
+<li><code>expand</code><br/>
+<code>expand</code> is used to convert tabs to spaces, which has the same function with <code>col -x</code>.</li>
+</ul>
+<pre><code class="bash">expand [-t] (file)
+# where,
+# -t: have tabs NUMBER characters apart, not 8.
+
+[root@localhost ~] grep &apos;^MANPATH&apos; /etc/man.config | head -n 3 | \
+&gt; expand -t 4 - | cat -A
+MANPATH_MAP /bin            /usr/share/man$
+MANPATH_MAP /usr/bin        /usr/share/man$
+MANPATH_MAP /sbin           /usr/share/man$</code></pre>
+
+</section>
+<section	id="splitandxargs">
+<h2>Split and Xargs</h2>
+
+<ul>
+<li><code>split</code><br/>
+<code>split</code> is used to split a file into smaller ones.</li>
+</ul>
+<pre><code class="bash">split [-bl] (file) (PREFIX)
+# where,
+# -b: put SIZE bytes per output file.
+# -l: put NUMBER lines per output file.
+
+[root@localhost ~] ll /root/etc.tar.gz
+-rw-r--r-- 1 root root 9.4M Nov 29 08:47 etc.tar.gz
+# noting that unit of -b is k/M, like 100k, 3M
+[root@localhost ~] split -b 3M /root/etc.tar.gz etc.tar.gz.sp
+[root@localhost ~] ll etc.tar.gz.*
+-rw-r--r-- 1 root root 3.0M Dec  3 15:00 etc.tar.gz.spaa
+-rw-r--r-- 1 root root 3.0M Dec  3 15:00 etc.tar.gz.spab
+-rw-r--r-- 1 root root 3.0M Dec  3 15:00 etc.tar.gz.spac
+-rw-r--r-- 1 root root 399K Dec  3 15:00 etc.tar.gz.spad
+
+# restore to a full file
+[root@localhost ~] cat etc.tar.gz.* &gt; etc.tar.gz.bk
+[root@localhost ~] ll etc.tar.gz.bk
+-rw-r--r-- 1 root root 9.4M Dec  3 15:02 etc.tar.gz.bk
+
+# also we could split file according to lines, where &apos;-&apos; means stdin
+[root@localhost ~] ls -al / | split -l 10 - lsroot
+[root@localhost ~] ll lsroot*
+-rw-r--r-- 1 root root 477 Dec  3 15:05 lsrootaa
+-rw-r--r-- 1 root root 504 Dec  3 15:05 lsrootab
+-rw-r--r-- 1 root root 144 Dec  3 15:05 lsrootac</code></pre>
+
+<ul>
+<li><code>xargs</code><br/>
+<code>xargs</code> is used to build and execute command lines from standard input.</li>
+</ul>
+<pre><code class="bash">xargs [-0epn] (command)
+# where,
+# -0: Input items are terminated by a null character instead of by whitespace, and the quotes and backslash are not special.
+# -e: sets a eof flag by user.
+# -p: prompts the user about whether to run each command line and read a line from terminal.
+# -n: specifies how many arguments the command need when being executed.
+
+# get information of the first 3 users in /etc/passwd
+[root@localhost ~] cut -d &apos;:&apos; -f1 /etc/passwd | head -n 3 | xargs finger
+Login: root                             Name: root
+Directory: /root                        Shell: /bin/zsh
+On since Thu Dec  3 15:10 (CST) on pts/0 from 1.80.165.191 6 seconds idle
+No mail.
+No Plan.
+
+Login: bin                              Name: bin
+Directory: /bin                         Shell: /sbin/nologin
+Never logged in.
+No mail.
+No Plan.
+...
+
+# executing with promting from user
+[root@localhost ~] cut -d &apos;:&apos; -f1 /etc/passwd | head -n 3 | xargs -p finger
+finger root bin daemon ?...
+
+# get information of all users in /etc/passwd, but list 5 a time
+[root@localhost ~] cut -d &apos;:&apos; -f1 /etc/passwd | xargs -p -n 5 finger
+finger root bin daemon adm lp ?...
+....
+finger sync shutdown halt mail operator ?...
+....
+
+# set end flag, list until matching &apos;ftp&apos; as an argument
+[root@localhost ~] cut -d &apos;:&apos; -f1 /etc/passwd | xargs -p -e&apos;ftp&apos; finger</code></pre>
+
+<p>The IDEA is that <code>xargs</code> give us a way to use pipe syntax for those command not able to do that. For example, <code>ls</code> does not support pipe syntax, however,</p>
+<pre><code class="bash">[root@localhost ~] find /sbin -perm +7000 | ls -l
+# However, command above is equal to run `ls -l .`, since `ls` does not support pipe syntax.
+
+# So we can fix it by `xargs`, to transfer stdin to args of following command.
+[root@localhost ~] find /sbin -perm +7000 | xargs ls -l</code></pre>
+</section>
+
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'vim' %}" class="button primary icon solid fa-backward">Back: 4. Vim</a></li> 
+                     <li><span class="button">5. Bash</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'regular-expression' %}" class="button primary icon solid fa-forward">Next: 6. Regular Expression</a></li> 
+                 </ul> 
+             </div> 
+         </div>

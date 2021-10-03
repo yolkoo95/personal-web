@@ -1,0 +1,679 @@
+{% load static %}
+
+<h1 id="regularexpressionandfileformatting">Regular Expression and File Formatting</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#regularexpression">Regular Expression</a>
+
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#preparation">Preparation</a>
+
+<ul>
+<li><a href="#locale">Locale</a></li>
+<li><a href="#specialcharacter">Special Character</a></li>
+<li><a href="#advancedgrep">Advanced grep</a></li>
+</ul></li>
+<li><a href="#naiveregularexpression">Naive Regular Expression</a></li>
+<li><a href="#streameditor">Stream Editor</a></li>
+<li><a href="#extendedre">Extended RE</a></li>
+</ul></li>
+<li><a href="#fileformatting">File Formatting</a>
+
+<ul>
+<li><a href="#formattingoutput">Formatting Output</a></li>
+<li><a href="#formattingtool">Formatting tool</a></li>
+<li><a href="#filecomparingandpatching">File Comparing and Patching</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="regularexpression">
+<h2>Regular Expression</h2>
+
+<section	id="overview">
+<h3>Overview</h3>
+
+<p>A regular expression (shortened as regex or regexp) is a sequence of characters that define a search pattern. Usually such patterns are used by string-searching algorithms for &#8220;find&#8221; or &#8220;find and replace&#8221;. operations on strings, or for input validation. It is a technique developed in theoretical computer science and formal language theory.</p>
+
+<p>Regular expressions are used in search engines, search and replace dialogs of word processors and text editors, in text processing utilities such as sed and AWK and in lexical analysis. Many programming languages provide regex capabilities either built-in or via libraries.</p>
+
+</section>
+<section	id="preparation">
+<h3>Preparation</h3>
+
+<section	id="locale">
+<h4>Locale</h4>
+
+<p>Before we have our experiment, we have to make some configuration so that we are on the same level. Here what we want to emphasize is <strong>locale</strong>. </p>
+<pre><code class="bash"># Different coding system will have a great influence on how we use regular expression
+
+When LANG=C, 0 1 2 3 4 ... A B C D ... Z a b c d ... z
+When LANG=zh_CH, 0 1 2 3 4 ... a A b B c C d D ... z Z
+When LANG=zh_CH.gb2312, 0 1 2 3 4 ... A a B b C c D d ... Z z
+
+# Thereby, regular expression like &apos;[A-Z]&apos; will generate different results in various locales.</code></pre>
+
+</section>
+<section	id="specialcharacter">
+<h4>Special Character</h4>
+
+<p>In order to fix that problem, computer scientist came up with a method &#8211; using abstraction.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Special Character</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">[:alnum:]</td>
+	<td style="text-align:center;">means all alphas in English and digit numbers, 0&#8211;9, A-Z, a-z</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:alpha:]</td>
+	<td style="text-align:center;">means all alphas, A-Z, a-z</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:blank:]</td>
+	<td style="text-align:center;">means blank space and TAB</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:cntrl:]</td>
+	<td style="text-align:center;">means control keys on keyboard, CR, LF, TAB, Del, &#8230;</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:digit:]</td>
+	<td style="text-align:center;">means all digit numbers</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:lower:]</td>
+	<td style="text-align:center;">all lower case character</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:upper:]</td>
+	<td style="text-align:center;">all upper case character</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:punct:]</td>
+	<td style="text-align:center;">means punctuation symbols</td>
+</tr>
+<tr>
+	<td style="text-align:center;">[:xdigit:]</td>
+	<td style="text-align:center;">means all hex digit numbers, 0&#8211;9, A-F, a-f</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="advancedgrep">
+<h4>Advanced grep</h4>
+
+<p>Here we introduce some advanced function of <code>grep</code>,</p>
+<pre><code class="bash">grep [-AB, --color=auto] (regular expression) (filename)
+# where,
+# -A: means after, also print n lines after matching lines.
+# -B: means before, also print n lines before matching lines.
+
+# alias grep=&apos;grep --color=auto&apos;
+[root@localhost ~] dmesg | grep -n &apos;net&apos;
+146:[    0.293385] Initializing cgroup subsys net_cls
+151:[    0.298888] Initializing cgroup subsys net_prio
+330:[    0.935320] audit: initializing netlink socket (disabled)
+340:[    0.987526] SELinux:  Registering netfilter hooks
+398:[    1.118371] drop_monitor: Initializing network drop monitor service 
+400:[    1.120694] Initializing XFRM netlink socket 
+507:[    3.778487] SELinux:  Unregistering netfilter hooks 
+
+[root@localhost ~] dmesg | grep -n -A 2 &apos;net&apos;
+146:[    0.293385] Initializing cgroup subsys net_cls 
+147-[    0.294475] Initializing cgroup subsys blkio 
+148-[    0.295560] Initializing cgroup subsys perf_event
+--                                                                                             
+151:[    0.298888] Initializing cgroup subsys net_prio 
+152-[    0.301229] mce: CPU supports 10 MCE banks
+153-[    0.302341] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0 
+...</code></pre>
+
+</section>
+</section>
+<section	id="naiveregularexpression">
+<h3>Naive Regular Expression</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Meta Character</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>^word</code></td>
+	<td style="text-align:center;">matches the starting position within the string</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>word$</code></td>
+	<td style="text-align:center;">matches the ending position of the string or the position just before a string-ending newline</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>.</code></td>
+	<td style="text-align:center;">matches any single character, blank character is okay</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\</code></td>
+	<td style="text-align:center;">escape character</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>*</code></td>
+	<td style="text-align:center;">matches the preceding element zero or more times</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>[list]</code></td>
+	<td style="text-align:center;">a bracket expression, matches a single character that is contained within the brackets</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>[n1-n2]</code></td>
+	<td style="text-align:center;">a derivation from <code>[list]</code>, ranging from n1 ~ n2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>[^list]</code></td>
+	<td style="text-align:center;">matches a single character that is NOT contained within the brackets</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>\{n,m\}</code></td>
+	<td style="text-align:center;">matches the preceding element at least m and not more than n times</td>
+</tr>
+</tbody>
+</table>
+
+<p>Noting that <code>[^list]</code> and <code>^[list]</code> are totally different, the latter means matching any single character in the list, <strong>which must be at the start of the line</strong>.</p>
+
+<p>Now experiment time!</p>
+<pre><code class="bash"># EXP 1: search specific pattern
+[root@localhost ~] grep -n &apos;the&apos; regular_expression.txt
+8:I cant finish the test.
+12:the symbol &apos;*&apos; is represented as start.     
+15:You are the best is mean you are the no. 1.
+16:The world &lt;Happy&gt; is the same with &quot;glad&quot;.
+18:google is the best tools for search keyword.
+
+# ignore cases
+[root@localhost ~] grep -in &apos;the&apos; regular_expression.txt
+8:I cant finish the test. 
+9:Oh! The soup taste good.
+12:the symbol &apos;*&apos; is represented as start. 
+14:The gd software is a library for drafting programs.
+15:You are the best is mean you are the no. 1.
+16:The world &lt;Happy&gt; is the same with &quot;glad&quot;.          
+18:google is the best tools for search keyword.
+
+# EXP 2: use []
+[root@localhost ~] grep -n &apos;[^a-z]oo&apos; regular_expression.txt
+3:Football game is not use feet only. 
+# or
+[root@localhost ~] grep -n &apos;[^[:lower:]]oo&apos; regular_expression.txt
+3:Football game is not use feet only. 
+
+# EXP 3: ^ and $
+[root@localhost ~] grep -n &apos;^the&apos; regular_expression.txt
+12:the symbol &apos;*&apos; is represented as start.
+
+# find all lines excluding blank line, for blank lines, it will start end with end symbol &apos;^M$&apos; for DOS and &apos;$&apos; for linux.
+[root@localhost ~] grep -nv &apos;^$&apos; regular_expression.txt
+1:&quot;Open Source&quot; is a good mechanism to develop programs.
+2:apple is my favorite food.                             
+3:Football game is not use feet only.                 
+4:this dress does not fit me.                
+5:However, this dress is about $ 3183 dollars.       
+6:GNU is free air not free beer.                         
+7:Her hair is very beauty.                                   
+8:I cannot finish the test.                    
+9:Oh! The soup taste good.                               
+10:motorcycle is cheap than car.             
+11:This window is clear.                                        
+12:the symbol &apos;*&apos; is represented as start.               
+13:Oh!  My god!                                                    
+14:The gd software is a library for drafting programs. 
+15:You are the best is mean you are the no. 1.            
+16:The world &lt;Happy&gt; is the same with &quot;glad&quot;.                    
+17:I like dog.                      
+18:google is the best tools for search keyword.      
+19:goooooogle yes!                                         
+20:go! go! Let us go.                                    
+
+# find lines end with &apos;.&apos;
+[root@localhost ~] grep -n &apos;\.$&apos; regular_expression.txt
+
+# EXP 4: . and *
+[root@localhost ~] grep -n &apos;g..d&apos; regular_expression.txt
+1:&quot;Open Source&quot; is a good mechanism to develop programs. 
+9:Oh! The soup taste good. 
+16:The world &lt;Happy&gt; is the same with &quot;glad&quot;.
+
+[root@localhost ~] grep -n &apos;goo*g&apos; regular_expression.txt
+18:google is the best tools for search keyword.  
+19:goooooogle yes! 
+
+[root@localhost ~] grep -n &apos;g.*g&apos; regular_expression.txt
+1:&quot;Open Source&quot; is a good mechanism to develop programs.
+14:The gd software is a library for drafting programs.
+18:google is the best tools for search keyword.   
+19:goooooogle yes!
+20:go! go! Let us go. 
+
+# EXP 5: \{n,m\}
+# &apos;o&apos; will repeat only 2 times
+[root@localhost ~] grep -n &apos;go\{2\}g&apos; regular_expression.txt
+18:google is the best tools for search keyword.
+
+# &apos;o&apos; will repeat no less than 2 times
+[root@localhost ~] grep -n &apos;go\{2,\}g&apos; regular_expression.txt
+18:google is the best tools for search keyword.  
+19:goooooogle yes!
+
+# &apos;o&apos; will repeat no less than 2 and no more than 5 times
+[root@localhost ~] grep -n &apos;go\{2,5\}g&apos; regular_expression.txt
+18:google is the best tools for search keyword.</code></pre>
+
+</section>
+<section	id="streameditor">
+<h3>Stream Editor</h3>
+
+<p>Before discussing extended regular expression, let us learn about a new tool &#8211; stream editor, known as <code>sed</code>.</p>
+<pre><code class="bash">sed [-nefr] (action sets)
+# where,
+# -n, --silent: suppress automatic printing of pattern space, processed lines will be printed.
+# -e: add the script to the commands to be executed.
+# -f: add the contents of script-file to the commands to be executed, script-file include sed command.
+# -r: use extended regular expressions in the script.
+# -i: edit files in place.
+# [n1[,n2]]action: the action will be executed on lines from n1 to n2
+# actions:
+# a: append text, which has each embedded newline preceded by a backslash.
+# c: replace the selected lines with text.
+# d: delete pattern space.
+# i: insert text, different from &apos;a&apos;, text will be inserted on the line before current line.
+# p: print the current pattern space.
+# s: attempt to match regexp against the pattern space.
+
+
+# delete lines
+[root@localhost ~] nl /etc/passwd | sed &apos;2,5d&apos;
+
+# backup passwd
+[root@localhost ~] nl /etc/passwd &gt; passwd.txt
+
+# add after the second line, if want to insert before, just change &apos;a&apos; to &apos;i&apos;
+[root@localhost ~] sed &apos;2a drink a cup of tea&apos; passwd.txt
+     1  root:x:0:0:root:/root:/bin/zsh
+     2  bin:x:1:1:bin:/bin:/sbin/nologin
+drink a cup of tea
+     3  daemon:x:2:2:daemon:/sbin:/sbin/nologin
+     4  adm:x:3:4:adm:/var/adm:/sbin/nologin
+...
+
+# change with lines
+[root@localhost ~] sed &apos;2,5c hello world \nwelcome to west world&apos; passwd.txt
+     1  root:x:0:0:root:/root:/bin/zsh
+hello world 
+welcome to west world
+     6  sync:x:5:0:sync:/sbin:/bin/sync
+...
+
+# print desired lines, &apos;-n&apos; prevent from printing original text, which is often used in &apos;p&apos;
+[root@localhost ~] sed -n &apos;2,5p&apos; passwd.txt
+     2  bin:x:1:1:bin:/bin:/sbin/nologin
+     3  daemon:x:2:2:daemon:/sbin:/sbin/nologin
+     4  adm:x:3:4:adm:/var/adm:/sbin/nologin
+     5  lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+[root@localhost ~] sed &apos;s/sbin/yolkoo/g&apos; passwd.txt
+     1  root:x:0:0:root:/root:/bin/zsh
+     2  bin:x:1:1:bin:/bin:/yolkoo/nologin
+     3  daemon:x:2:2:daemon:/yolkoo:/yolkoo/nologin
+     4  adm:x:3:4:adm:/var/adm:/yolkoo/nologin
+     5  lp:x:4:7:lp:/var/spool/lpd:/yolkoo/nologin
+     ...
+
+[root@localhost ~] sed -i &apos;s/\.$/\!/g&apos; regular_expression.txt
+# we will find that those lines ending with $ is executed properly, yet with ^M$, improperly.
+[root@localhost ~] cat -A regular_express.txt
+&quot;Open Source&quot; is a good mechanism to develop programs!$
+apple is my favorite food!$
+Football game is not use feet only!$
+this dress does not fit me!$
+However, this dress is about $ 3183 dollars.^M$
+GNU is free air not free beer.^M$
+Her hair is very beauty.^M$
+...</code></pre>
+
+</section>
+<section	id="extendedre">
+<h3>Extended RE</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Meta Character</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>+</code></td>
+	<td style="text-align:center;">the preceding item will be matched one or more times.</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>?</code></td>
+	<td style="text-align:center;">include a character or not, eg. <code>o?</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>|</code></td>
+	<td style="text-align:center;">match string within a or b or c, eg. <code>gd|good|god</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>()</code></td>
+	<td style="text-align:center;">match strings within the range, eg. <code>g(oo|o)d</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>()+</code></td>
+	<td style="text-align:center;">combination of <code>+</code> and <code>()</code>, meaning <code>()</code> will be repeated one or more times. eg. AxyzxyzxyzC, <code>A(xyz)+C</code></td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Notice that &#8216;!&#8217; and &#8216;&gt;&#8217; are NOT special character in regular expression, though in bash they are.</em></p>
+
+</section>
+</section>
+<section	id="fileformatting">
+<h2>File Formatting</h2>
+
+<section	id="formattingoutput">
+<h3>Formatting Output</h3>
+
+<p><code>print</code> allows users to formatting output.</p>
+<pre><code class="bash">print [format] (content)
+# where,
+# formatting arguments:
+# \a: warning tone.
+# \b: backspace.
+# \f: clear screen.
+# \n: jump to a new line.
+# \r: enter.
+# \t: horizontal TAB.
+# \v: vertical TAB.
+# \xNN: translate hex NN to character.
+# like C:
+# %ns: s means string, n characters width.
+# %ni: i means integer, n integers width.
+# %N.nf: f means floating, N for width, n for point length. 8.2f means
+# 00000.00, where point takes one bit.
+
+[root@localhost ~] printf &quot;\x45\n&quot;
+E
+
+[root@localhost ~] printf &apos;%10s %5i %5i %8.2f \n&apos; $(cat printf.txt | grep -v Name)
+     VBird    12    22     1.23
+     Brain    22    23    22.11
+  Veronica    12    21     2.44</code></pre>
+
+</section>
+<section	id="formattingtool">
+<h3>Formatting tool</h3>
+
+<ul>
+<li><code>awk</code><br/>
+<code>awk</code> is a pattern scanning and processing language, which will divide a line into some fields, some sort of like <code>cut</code>, and process them. By default, the delimiter is blank space or TAB.</li>
+</ul>
+<pre><code class="bash"># basic syntax of awk
+awk &apos;condition1 {action1} condition2 {action2} ...&apos; (filename)
+
+# take a simple example with no condition, where $0 means this line, $1 means the first field, $2 the second, and so on.
+[root@localhost ~] last -n 5
+root     pts/0    1.80.152.234     Sat Dec  5 09:13   still logged in 
+root     pts/0    1.80.152.234     Fri Dec  4 14:02 - 16:01  (01:59)
+root     pts/0    1.80.152.234     Fri Dec  4 13:53 - 13:59  (00:05)
+root     pts/0    1.80.165.191     Thu Dec  3 21:53 - 22:25  (00:32)
+root     pts/0    1.80.165.191     Thu Dec  3 21:40 - 21:53  (00:12)
+[root@localhost ~] last -n 5 | awk &apos;{print $1 &quot;\t&quot; $3}&apos;
+root    1.80.152.234
+root    1.80.152.234
+root    1.80.152.234
+root    1.80.165.191
+root    1.80.165.191
+        
+wtmp    Fri # &lt;&lt;==== this line should be ignored.</code></pre>
+
+<p>How does <code>awk</code> work?</p>
+
+<ul>
+<li>read a line and assign different segments into fields ($0, $1, $2, &#8230;), where $0 means the line.</li>
+<li>decide whether to go on next move according to conditions.</li>
+<li>process all moves and conditions</li>
+<li>proceed to deal with next line if there is, repeating three steps above.</li>
+</ul>
+
+<p>How does <code>awk</code> know how many cols and rows there are? By its builtin variables.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Builtin Var</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">NF</td>
+	<td style="text-align:center;">how many fields in a line</td>
+</tr>
+<tr>
+	<td style="text-align:center;">NR</td>
+	<td style="text-align:center;">which row is under processed</td>
+</tr>
+<tr>
+	<td style="text-align:center;">FS</td>
+	<td style="text-align:center;">record delimiter, blank space by default</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash"># proceed with our example
+[root@localhost ~] last -n 5 | awk &apos;{print $1 &quot;\t lines being processed: &quot; NR &quot;\t columns: &quot; NF}&apos;
+root     lines being processed: 1        columns: 10
+root     lines being processed: 2        columns: 10
+root     lines being processed: 3        columns: 10
+root     lines being processed: 4        columns: 10
+root     lines being processed: 5        columns: 10
+         lines being processed: 6        columns: 0   # &lt;&lt;== blank line
+wtmp     lines being processed: 7        columns: 7   # &lt;&lt;== ignore it</code></pre>
+
+<p>Now let&#8217;s talk about conditions by introducing logic operations.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Operation Symbols</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>&gt;</code></td>
+	<td style="text-align:center;">bigger than</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>&lt;</code></td>
+	<td style="text-align:center;">less than</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>&gt;=</code></td>
+	<td style="text-align:center;">bigger than or equal to</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>&lt;=</code></td>
+	<td style="text-align:center;">less than or equal to</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>==</code></td>
+	<td style="text-align:center;">equal to</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>!=</code></td>
+	<td style="text-align:center;">not equal to</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash">[root@localhost ~] cat /etc/passwd | awk &apos;{FS=&quot;:&quot;} $3 &lt; 10 {print $1 &quot;\t &quot; $3}&apos;
+# why the first line is improperly displayed
+root:x:0:0:root:/root:/bin/zsh   
+bin      1
+daemon   2
+adm      3
+lp       4
+sync     5
+shutdown         6
+halt     7
+mail     8</code></pre>
+
+<p>The reason is that when we read the first line, <code>awk</code> has not set its delimiter as &#8216;:&#8217; but default one blank space until the second step. Using keyword <code>BEGIN</code> or <code>END</code>, which is builtin keyword of <code>awk</code>, is a good way to solve this problem.</p>
+<pre><code class="bash">[root@localhost ~] cat /etc/passwd | awk &apos;BEGIN {FS=&quot;:&quot;} $3 &lt; 10 {print $1 &quot;\t &quot; $3}&apos;
+root     0   
+bin      1
+daemon   2
+adm      3
+lp       4
+sync     5
+...
+
+# also there is a complex example
+[root@localhost ~] cat salary.txt
+Name      1st      2nd
+Brain     120      240
+Bob       200      80
+
+[root@localhost ~] cat salary.txt| awk &apos;NR==1{printf &quot;%8s %8s %8s %8s\n&quot;, $1, $2, $3, &quot;Total&quot;} NR&gt;=2{total = $2 + $3; printf &quot;%8s %8d %8d %10.2f\n&quot;, $1, $2, $3, total}&apos;
+    Name      1st      2nd    Total
+   Brain      120      240     360.00
+     Bob      200       80     280.00</code></pre>
+
+<p>Notice that 1. the variable in <code>awk</code> do not need <code>${}</code> 2. more then one command in <code>{}</code> should be separated by <code>;</code>.</p>
+
+</section>
+<section	id="filecomparingandpatching">
+<h3>File Comparing and Patching</h3>
+
+<ul>
+<li><code>diff</code><br/>
+<code>diff</code> is used to compare files line by line.</li>
+</ul>
+<pre><code class="bash">diff [-bBi] (from-file) (to-file)
+# where,
+# -b: ignore the difference of blank spaces (&quot;about me&quot; is equal to &quot;about    me&quot;).
+# -B: ignore the difference of blank lines.
+# -i: ignore cases.
+
+[root@localhost ~] cp /etc/passwd ./passwd.old
+[root@localhost ~] cat passwd.old | sed -e &apos;4d&apos; -e &apos;6c hello world&apos; &gt; passwd.new
+[root@localhost ~] diff passwd.old passwd.new
+4d3  # &lt;=== 4th row of lhs file has been deleted relative to 3th row of new file
+&lt; adm:x:3:4:adm:/var/adm:/sbin/nologin
+6c5  # 6th row has been changed
+&lt; sync:x:5:0:sync:/sbin:/bin/sync
+---
+&gt; hello world</code></pre>
+
+<ul>
+<li><code>patch</code><br/>
+<code>patch</code> is used to apply a diff file to an original, often used for updating files.</li>
+</ul>
+
+<p>First, make a patch file with <code>diff</code> command.</p>
+<pre><code class="bash">[root@localhost ~] diff -Naur passwd.old passwd.new &gt; passwd.patch
+--- passwd.old  2020-12-05 11:02:40.232156981 +0800                                            
++++ passwd.new  2020-12-05 11:02:45.027452008 +0800
+@@ -1,9 +1,8 @@  # &apos;-&apos; means old file, &apos;+&apos; means new file
+ root:x:0:0:root:/root:/bin/zsh
+ bin:x:1:1:bin:/bin:/sbin/nologin
+ daemon:x:2:2:daemon:/sbin:/sbin/nologin
+-adm:x:3:4:adm:/var/adm:/sbin/nologin  # delete in left file
+ lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+-sync:x:5:0:sync:/sbin:/bin/sync  # delete in left file
++hello world  # add in right file
+ shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+ halt:x:7:0:halt:/sbin:/sbin/halt
+ mail:x:8:12:mail:/var/spool/mail:/sbin/nologin</code></pre>
+
+<p>How to update with patch file?</p>
+<pre><code class="bash">patch [-pN] &lt; patch_file   # &lt;-- for update
+patch [-R -pN] &lt; patch_file   # &lt;-- for restore
+# where,
+# -p: strip the smallest prefix containing num leading slashes from each file name found in the patch file. If in the same directory, -p0.
+# -R: means restore.
+
+# update
+[root@localhost ~] patch -p0 &lt; passwd.patch
+patching file passwd.old
+[root@localhost ~] ll passwd.*
+-rw-r--r-- 1 root root 1.1K Dec  5 11:02 passwd.new
+-rw-r--r-- 1 root root 1.1K Dec  5 11:17 passwd.old
+-rw-r--r-- 1 root root  479 Dec  5 11:09 passwd.patch
+
+# restore
+[root@localhost ~] patch -p0 -R &lt; passwd.patch
+patching file passwd.old
+[root@localhost ~] ll passwd.*
+-rw-r--r-- 1 root root 1.1K Dec  5 11:02 passwd.new
+-rw-r--r-- 1 root root 1.2K Dec  5 11:18 passwd.old
+-rw-r--r-- 1 root root  479 Dec  5 11:09 passwd.patch</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'bash' %}" class="button primary icon solid fa-backward">Back: 5. Bash</a></li> 
+                     <li><span class="button">6. Regular Expression</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'shell-script' %}" class="button primary icon solid fa-forward">Next: 7. Shell Script</a></li> 
+                 </ul> 
+             </div> 
+         </div>

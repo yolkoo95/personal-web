@@ -1,0 +1,405 @@
+{% load static %}
+
+<h1 id="peseg.6">PE Seg.6</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#library">Library</a>
+
+<ul>
+<li><a href="#differences">Differences</a></li>
+<li><a href="#staticlibrary">Static Library</a></li>
+<li><a href="#dynamiclinklibrary">Dynamic Link Library</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="library">
+<h2>Library</h2>
+
+<p>A library is a collection of pre-compiled pieces of code called functions. The library contains common functions, and they form a package called — a <strong>library</strong>. Functions are blocks of code that get reused throughout the program. Using the pieces of code again in a program saves time. It keeps the programmer from rewriting the code several times. For programmers, libraries provide reusable functions, data structures, classes and so forth.</p>
+
+<p>A library is not executable and that is a key difference from processes and applications. Libraries play their role at run time or compile time. In the C programming language, we have two types of libraries: <strong>dynamic libraries</strong> and <strong>static libraries</strong>.</p>
+
+<section	id="differences">
+<h3>Differences</h3>
+
+<p>When using a <strong>dynamic library</strong>, the programmer is referencing that library when it needs to at runtime. For instance, to access the string length function from the <code>stdio.h</code> - you can access it dynamically.</p>
+
+<p>It will find the program’s library reference at runtime because of the dynamic loader. It then loads that string length function into memory. Thus, the dynamic library accessibility must be readily available or it becomes powerless. It keeps the library independent to the executable when comes to compiling.</p>
+
+<p>Advantages and Disadvantages of Dynamic Libraries:</p>
+
+<ul>
+<li>It only needs one copy at runtime. It is dependent on the application and the library being closely available to each other.</li>
+<li>Multiple running applications use the same library without the need of each file having its own copy.</li>
+<li>They hold smaller files and keep module independently.</li>
+<li>Dynamic libraries are linked at run-time. It does not require recompilation and relinking when the programmer makes a change.</li>
+<li>However, what if the dynamic library becomes corrupt? The executable file may not work because it lives outside of the executable and is vulnerable to breaking.</li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/DynamicAndStatic.png' %}" alt="Static vs. Dynamic Linking" />
+<figcaption>Static vs. Dynamic Linking</figcaption>
+</figure>
+
+<p>However at compile time, applications utilize <strong>static libraries</strong>. All the copies of the functions get placed into the application file because they are needed to run the process.</p>
+
+<p>Advantages and Disadvantages of Static Libraries:</p>
+
+<ul>
+<li>Static libraries resist vulnerability because it lives inside the executable file.</li>
+<li>The speed at run-time occurs faster because its object code (binary) is in the executable file. Thus, calls made to the functions get executed quicker. Remember, the dynamic library lives outside of the executable, so calls would be made from the outside of the executable.</li>
+<li>Changes made to the files and program require relinking and recompilation</li>
+<li>File size is much larger.</li>
+</ul>
+
+</section>
+<section	id="staticlibrary">
+<h3>Static Library</h3>
+
+<p>Then we will demonstrate how to use static library with VC++6.0.</p>
+<pre><code class="c">// TODO STEP1: create a new static project TestStatic and generate a new class Static.
+
+// Static.h: interface for the Static class.
+
+#if !defined(AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_)
+#define AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+class Static  
+{
+public:
+	Static();
+	virtual ~Static();
+
+};
+
+#endif // !defined(AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_)
+
+
+// Static.cpp: implementation of the Static class.
+#include &quot;Static.h&quot;
+
+//////////////////////////////
+// Construction/Destruction //
+//////////////////////////////
+
+Static::Static()
+{
+
+}
+
+Static::~Static()
+{
+
+}</code></pre>
+<pre><code class="c">// TODO STEP2: insert lib functions
+
+// Static.h: interface for the Static class.
+
+#if !defined(AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_)
+#define AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+int Plus(int x, int y);
+int Sub(int x, int y);
+int Mul(int x, int y);
+int Div(int x, int y);
+
+class Static  
+{
+public:
+	Static();
+	virtual ~Static();
+
+};
+
+#endif // !defined(AFX_STATIC_H__EECA4D62_97C8_4B64_85E3_2056DBD903AF__INCLUDED_)
+
+
+// Static.cpp: implementation of the Static class.
+#include &quot;Static.h&quot;
+
+int Plus(int x, int y) {
+	return x + y;
+}
+
+int Sub(int x, int y) {
+	return x - y;
+}
+
+int Mul(int x, int y) {
+	return x * y;
+}
+
+int Div(int x, int y) {
+	return x / y;
+}
+
+//////////////////////////////
+// Construction/Destruction //
+//////////////////////////////
+
+Static::Static()
+{
+
+}
+
+Static::~Static()
+{
+
+}</code></pre>
+
+<p>After compiling, we will get a file <code>TestStatic.lib</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/TestStaticLib.png' %}" alt="A New Generated Lib File" />
+<figcaption>A New Generated Lib File</figcaption>
+</figure>
+
+<p>Then if we want use static library <code>TestStatic.lib</code>, we just need two files - <code>TestStatic.lib</code> and <code>Static.h</code>. Copy these two files into working directory.</p>
+
+<p>Assuming that we will use the static library in a new project <code>Test</code>, noting that we have to use suffix <code>.cpp</code> since there includes c++ class.</p>
+<pre><code class="c">// TODO STEP3: main.cpp
+#include &lt;stdio.h&gt;
+#include &quot;Static.h&quot;
+
+// method 1:
+// use pragma syntax
+// #pragma comment (lib, &quot;LIB_NAME&quot;)
+#pragma comment (lib, &quot;TestStatic.lib&quot;)
+
+// method 2:
+// configure project: project setting -&gt; link -&gt; add TestStatic.lib
+
+int main(int argc, char* argv[]) {
+	printf(&quot;%d\n&quot;, Plus(1, 2));
+
+	return 0;
+}</code></pre>
+
+<p>Looking at its assembly language, it will be found that the function <code>Plus</code> is put into code section, which means that it is compiled together with main function. That&#8217;s a core feature of static library.</p>
+<pre><code class="c">12:       printf(&quot;%d\n&quot;, Plus(1, 2));
+00401028 6A 02                push        2
+0040102A 6A 01                push        1
+0040102C E8 3F 00 00 00       call        Plus (00401070)
+00401031 83 C4 08             add         esp,8
+00401034 50                   push        eax
+00401035 68 1C 20 42 00       push        offset string &quot;%d\n&quot; (0042201c)
+0040103A E8 B1 01 00 00       call        printf (004011f0)
+0040103F 83 C4 08             add         esp,8</code></pre>
+
+</section>
+<section	id="dynamiclinklibrary">
+<h3>Dynamic Link Library</h3>
+
+<p>Now let&#8217;s try dynamic link library.</p>
+<pre><code class="c">// TODO STEP1: create and compile to generate a dll file
+// myDll.h: interface for the myDll class.
+
+#if !defined(AFX_MYDLL_H__89113A2B_9A2C_4E98_AF2E_750F09253B1E__INCLUDED_)
+#define AFX_MYDLL_H__89113A2B_9A2C_4E98_AF2E_750F09253B1E__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+// where, &apos;extern&apos; is global symbol
+// &quot;C&quot; tells system to compile in C convention
+// &apos;dllexport&apos; tells system to this is an export function declaration
+// noting that calling convention is put ahead of return type here which is special. 
+extern &quot;C&quot; _declspec(dllexport) __stdcall int Plus(int x, int y);
+extern &quot;C&quot; _declspec(dllexport) __stdcall int Sub(int x, int y);
+extern &quot;C&quot; _declspec(dllexport) __stdcall int Mul(int x, int y);
+extern &quot;C&quot; _declspec(dllexport) __stdcall int Div(int x, int y);
+
+
+#endif // !defined(AFX_MYDLL_H__89113A2B_9A2C_4E98_AF2E_750F09253B1E__INCLUDED_)
+
+
+// myDll.cpp: implementation of the myDll class.
+
+#include &quot;myDll.h&quot;
+
+//////////////////////////////
+// Construction/Destruction //
+//////////////////////////////
+
+int __stdcall Plus(int x, int y) {
+	return x + y;
+}
+
+int __stdcall Sub(int x, int y) {
+	return x - y;
+}
+
+int __stdcall Mul(int x, int y) {
+	return x * y;
+}
+
+int __stdcall Div(int x, int y) {
+	return x / y;
+}</code></pre>
+
+<p>Using <code>depends</code> tool in VC++6.0, it will list description of <code>myDLL.dll</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/myDLL.png' %}" alt="Description of myDLL" />
+<figcaption>Description of myDLL</figcaption>
+</figure>
+
+<p>Now the next question is how to use dll. There are two ways - link explicitly and implicitly.</p>
+
+<h5 id="implicitlink">Implicit Link</h5>
+
+<ul>
+<li>Preparation: put <code>*.lib</code> and <code>*.dll</code> into working directory. Different from <code>*.lib</code> in static library, it includes references to compiled function in <code>*.dll</code> rather than function code that is not compiled as static library does.</li>
+<li>Comment: add <code>#pragma comment (lib, &quot;LIB_NAME&quot;)</code>.</li>
+<li>Reference: <code>extern &quot;C&quot; _declspec(dllimport) __stdcall int foo(TYPE NAME)</code>;</li>
+</ul>
+<pre><code class="c">// main.cpp
+#include &lt;stdio.h&gt;
+
+#pragma comment (lib, &quot;myDLL.lib&quot;)
+
+extern &quot;C&quot; _declspec(dllimport) __stdcall int Plus(int x, int y);
+extern &quot;C&quot; _declspec(dllimport) __stdcall int Sub(int x, int y);
+extern &quot;C&quot; _declspec(dllimport) __stdcall int Mul(int x, int y);
+extern &quot;C&quot; _declspec(dllimport) __stdcall int Div(int x, int y);
+
+int main(int argc, char* argv[]) {
+	printf(&quot;%d\n&quot;, Plus(1, 2));
+
+	return 0;
+}</code></pre>
+<pre><code class="c">// Output:
+3</code></pre>
+
+<p>Well done, now let&#8217;s dig into <code>myDLL</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/myDLL2.png' %}" alt="Address of DLL" />
+<figcaption>Address of DLL</figcaption>
+</figure>
+
+<p>We will find that DLL file is in its own space, <code>10001250</code>, rather than in code section in static library case.</p>
+
+<h5 id="explicitlink">Explicit Link</h5>
+
+<p>What&#8217;s different from implicitly link is that we have to refer to function in <code>*.dll</code> file manually.</p>
+
+<ul>
+<li>Define Function Pointer: e.g. <code>typedef int (__stdcall *pPlus)(int, int)</code>.</li>
+<li>Declare Pointer: e.g. <code>pPlus myPlus</code>.</li>
+<li>Load Dynamically: <code>HINSTANCE hModule = LoadLibrary(&quot;myDll.dll&quot;)</code>, <code>H</code> means handles, which is type of <code>DWORD</code>.</li>
+<li>Get Function Address: <code>myPlus = (pPlus)GetProcAddress(hModule, &quot;_Plus@8&quot;)</code>, where <code>_</code> responds to <code>__stdcall</code>, <code>@8</code> responds to argument list (<code>int, int</code>). Also we could find function name by tools <code>depends</code> as follows,</li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/myDLL3.png' %}" alt="Get Function Name" />
+<figcaption>Get Function Name</figcaption>
+</figure>
+<pre><code class="c">// main.cpp:
+#include &lt;stdio.h&gt;
+#include &lt;windows.h&gt;
+
+typedef int (__stdcall *pPlus)(int, int);
+
+int main(int argc, char* argv[]) {
+	pPlus myPlus;
+	
+	HINSTANCE hModule = LoadLibrary(&quot;myDLL.dll&quot;);
+	myPlus = (pPlus)GetProcAddress(hModule, &quot;_Plus@8&quot;);
+
+	printf(&quot;%d\n&quot;, myPlus(1, 2));
+
+	return 0;
+}</code></pre>
+
+<h5 id="anonymizefunction">Anonymize Function</h5>
+
+<p>In order to keep our code safe, we will normally anonymize our function since function name will expose the purpose of a function.</p>
+
+<ul>
+<li>Declare and Definition: without <code>export</code> or <code>import</code> keywords.</li>
+<li>DEF File: create a mapping file, <code>*.def</code>.</li>
+<li>Export by Export Number.</li>
+</ul>
+<pre><code class="c">// TODO STEP1: create a new dll
+// NONameDLL.h: interface for the NONameDLL class.
+
+#if !defined(AFX_NONAMEDLL_H__C3301509_4885_4AC7_8B26_7F58F218E75E__INCLUDED_)
+#define AFX_NONAMEDLL_H__C3301509_4885_4AC7_8B26_7F58F218E75E__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+
+int __stdcall Plus(int x, int y);
+int __stdcall Sub(int x, int y);
+int __stdcall Mul(int x, int y);
+int __stdcall Div(int x, int y);
+
+#endif // !defined(AFX_NONAMEDLL_H__C3301509_4885_4AC7_8B26_7F58F218E75E__INCLUDED_)
+
+
+// NONameDLL.cpp: implementation of the NONameDLL class.
+#include &quot;NONameDLL.h&quot;
+
+int __stdcall Plus(int x, int y) {
+	return x + y;
+}
+
+int __stdcall Sub(int x, int y) {
+	return x - y;
+}
+
+int __stdcall Mul(int x, int y) {
+	return x * y;
+}
+
+int __stdcall Div(int x, int y) {
+	return x / y;
+}</code></pre>
+<pre><code class="c">// TODO STEP2: create map file
+// map.def:
+EXPORTS
+
+Plus	@12
+Sub		@15 NONAME
+Mul		@13
+Div		@16</code></pre>
+
+<p>After compiling, we will get a dll file with anonymized function.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/myDLL4.png' %}" alt="Anonymized Function" />
+<figcaption>Anonymized Function</figcaption>
+</figure>
+
+<p>In the next notes, we will discuss how to link dynamic library with ordinal.</p>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part14' %}" class="button primary icon solid fa-backward">Back: 14. PE Seg.5</a></li> 
+                     <li><span class="button">15. PE Seg.6</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part16' %}" class="button primary icon solid fa-forward">Next: 16. PE Seg.7</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

@@ -1,0 +1,56 @@
+{% extends 'home2/base-slim.html' %}
+{% load static %}
+
+{% block title %} 
+  {{ category }} - {{ topic }}
+{% endblock %} 
+
+{% block style %}
+  <link rel="stylesheet" href="{% static 'codehome/src/css/markdown.css' %}">
+  <link rel="stylesheet" href="{% static 'codehome/src/css/notepage.css' %}" />
+  <link rel="stylesheet" href="{% static 'codehome/src/css/pre-next.css' %}">
+  <link rel="stylesheet" href="{% static 'codehome/src/css/font-awesome.css' %}">
+{% endblock %} 
+
+{% block body %}
+    <div id="notepage" class="container mt-3">
+        <div class="row justify-content-center">
+          <div class="col-md-3">
+            <div id="table" class="my-3 p-3 bg-light rounded shadow-sm">
+              <div id="wrapper">
+                {% include tableURL %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-9">
+            <div id="content" class="my-3 p-3 bg-light rounded shadow-sm">
+              <div id="wrapper">
+                {% include contentURL %}
+              </div>
+              <!-- back to toc -->
+              <a href="#tableofcontents" class="back-to-toc float-right mr-1">
+                <i class="bx bxs-up-arrow-alt"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+  <!-- Scroll spy for sidebar table -->
+  <script src="{% static 'codehome/src/js/scrollbar.js' %}"></script>
+  <div style="display: none;" markdown="0">
+    <!--This seemingly unnecessary div markup is the only thing keeping this script working after Markdown conversion. Trust me.-->
+    <script src="{% static 'codehome/src/js/markdown.js' %}"></script>
+    <script>
+      hljs.initHighlightingOnLoad();
+    </script>
+    <!-- add class to all img to center them -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        $("img").addClass("rounded mx-auto d-block");
+      })
+    </script>
+  </div>
+{% endblock %}

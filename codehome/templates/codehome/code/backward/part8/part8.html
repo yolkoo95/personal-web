@@ -1,0 +1,671 @@
+{% load static %}
+
+<h1 id="memorymanagement">Memory Management</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#bitoperation">Bit Operation</a>
+
+<ul>
+<li><a href="#shiftoperation">Shift Operation</a></li>
+<li><a href="#cbitoperation">C Bit Operation</a></li>
+<li><a href="#cshiftoperation">C Shift Operation</a></li>
+</ul></li>
+<li><a href="#headerinc">Header in C</a>
+
+<ul>
+<li><a href="#macro">Macro</a></li>
+<li><a href="#headerfile">Header File</a></li>
+</ul></li>
+<li><a href="#dynamicmemory">Dynamic Memory</a>
+
+<ul>
+<li><a href="#allocation">Allocation</a></li>
+<li><a href="#initialization">Initialization</a></li>
+<li><a href="#free">Free</a></li>
+</ul></li>
+<li><a href="#fileoperation">File Operation</a>
+
+<ul>
+<li><a href="#openandclose">Open and Close</a></li>
+<li><a href="#search">Search</a></li>
+<li><a href="#print">Print</a></li>
+<li><a href="#position">Position</a></li>
+<li><a href="#get">Get</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="bitoperation">
+<h2>Bit Operation</h2>
+
+<p>In the C programming language, operations can be performed on a bit level using bitwise operators. Bitwise operations are contrasted by byte-level operations which characterize the bitwise operators&#8217; logical counterparts, the AND, OR and NOT operators. Instead of performing on individual bits, byte-level operators perform on strings of eight bits (known as bytes) at a time. The reason for this is that a byte is normally the smallest unit of addressable memory.</p>
+
+<section	id="shiftoperation">
+<h3>Shift Operation</h3>
+<pre><code class="c">// syntax for assembly language
+[shift instruction] (register), imm</code></pre>
+
+<p>Shift instructions are summarized as follows,</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Operation</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">SHL</td>
+	<td style="text-align:center;">logic shift left</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SHR</td>
+	<td style="text-align:center;">logic shift right, 0 extension</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SAL</td>
+	<td style="text-align:center;">arithmetic shift left</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SAR</td>
+	<td style="text-align:center;">arithmetic shift right, sign extension</td>
+</tr>
+<tr>
+	<td style="text-align:center;">ROL</td>
+	<td style="text-align:center;">rotate left without carry</td>
+</tr>
+<tr>
+	<td style="text-align:center;">ROR</td>
+	<td style="text-align:center;">rotate right without carry</td>
+</tr>
+</tbody>
+</table>
+
+<p>The most/least significant bit will be stored into <code>CF</code> for left shift and right shift respectively. But there are two special instructions,</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Operation</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">RCL</td>
+	<td style="text-align:center;">rotate left with carry</td>
+</tr>
+<tr>
+	<td style="text-align:center;">RCR</td>
+	<td style="text-align:center;">rotate right with carry</td>
+</tr>
+</tbody>
+</table>
+
+<p>Compared with <code>ROL</code> and <code>ROR</code>, it rotates with carry.</p>
+<pre><code class="bash"># rotate without carry
+ ____       __ __ __ __ __ __ __ __
+|_CF_| &lt;-- |__|__|__|__|__|__|__|__| &lt;---|
+        |----------&gt;---------------------|
+
+# rotate with carry
+ ____       __ __ __ __ __ __ __ __
+|_CF_| &lt;-- |__|__|__|__|__|__|__|__| &lt;---|
+  |----------------&gt;---------------------|</code></pre>
+
+</section>
+<section	id="cbitoperation">
+<h3>C Bit Operation</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Operation</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">AND</td>
+	<td style="text-align:center;"><code>x &amp; y</code>, 1101 &amp; 1001 == 1001</td>
+</tr>
+<tr>
+	<td style="text-align:center;">OR</td>
+	<td style="text-align:center;"><code>x | y</code>, 1101 &amp; 1001 == 1101</td>
+</tr>
+<tr>
+	<td style="text-align:center;">NOT</td>
+	<td style="text-align:center;"><code>!x</code>, !1101 == 0010</td>
+</tr>
+<tr>
+	<td style="text-align:center;">XOR</td>
+	<td style="text-align:center;"><code>x ^ y</code>, 1101 ^ 1001 == 0100</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="cshiftoperation">
+<h3>C Shift Operation</h3>
+<pre><code class="c">int main(int argc, char* argv[]) {
+    // 0000 0000 0000 1000
+    int i = 8;
+    unsigned int ui = 8;
+
+    // signed
+    printf(&quot;%x\n&quot;, i &lt;&lt; 1);
+    printf(&quot;%x\n&quot;, i &gt;&gt; 1);
+    // unsigned
+    printf(&quot;%x\n&quot;, ui &lt;&lt; 1);
+    printf(&quot;%x\n&quot;, ui &gt;&gt; 1);
+
+    return 0;
+}</code></pre>
+<pre><code class="c">// signed
+8:        printf(&quot;%x\n&quot;, i &lt;&lt; 1);
+00401036 8B 45 FC             mov         eax,dword ptr [ebp-4]
+00401039 D1 E0                shl         eax,1
+0040103B 50                   push        eax
+0040103C 68 1C 20 42 00       push        offset string &quot;%x\n&quot; (0042201c)
+00401041 E8 7A 00 00 00       call        printf (004010c0)
+00401046 83 C4 08             add         esp,8
+9:        printf(&quot;%x\n&quot;, i &gt;&gt; 1);
+00401049 8B 4D FC             mov         ecx,dword ptr [ebp-4]
+// only effect in right shift
+0040104C D1 F9                sar         ecx,1
+0040104E 51                   push        ecx
+0040104F 68 1C 20 42 00       push        offset string &quot;%x\n&quot; (0042201c)
+00401054 E8 67 00 00 00       call        printf (004010c0)
+00401059 83 C4 08             add         esp,8
+10:       // unsigned
+11:       printf(&quot;%x\n&quot;, ui &lt;&lt; 1);
+0040105C 8B 55 F8             mov         edx,dword ptr [ebp-8]
+0040105F D1 E2                shl         edx,1
+00401061 52                   push        edx
+00401062 68 1C 20 42 00       push        offset string &quot;%x\n&quot; (0042201c)
+00401067 E8 54 00 00 00       call        printf (004010c0)
+0040106C 83 C4 08             add         esp,8
+12:       printf(&quot;%x\n&quot;, ui &gt;&gt; 1);
+0040106F 8B 45 F8             mov         eax,dword ptr [ebp-8]
+00401072 D1 E8                shr         eax,1
+00401074 50                   push        eax
+00401075 68 1C 20 42 00       push        offset string &quot;%x\n&quot; (0042201c)
+0040107A E8 41 00 00 00       call        printf (004010c0)
+0040107F 83 C4 08             add         esp,8</code></pre>
+
+<p>Notice that there is no difference in left shift between signed and unsigned data.</p>
+
+</section>
+</section>
+<section	id="headerinc">
+<h2>Header in C</h2>
+
+<p>Before we talk about header file, we will introduce macro definition (<code>#define</code>) first.</p>
+
+<section	id="macro">
+<h3>Macro</h3>
+
+<p>The first question is how a program run?</p>
+<pre><code class="c">foo.c  --&gt;  replace macro (#define) --&gt;  compile (0x21)  --&gt; link (header files) --&gt;  executable binary file (.exe)</code></pre>
+<pre><code class="c">// macro without arguments
+#define TRUE 1
+#define FALSE 0
+#define PI 3.141592
+#define DEBUG 1
+
+// macro with arguments, arguments must enclosed by parentheses
+#define MAX(A, B) ((A) &gt; (B) ? (A) : (B))
+#define MALLOC(n, type) ((type*)malloc((n) * sizeof(type)))</code></pre>
+
+<p>What&#8217;s the advantages of making <code>MAX</code> as macro instead of a function? From the point of assembler, there is no need to allocate memory for a function call.</p>
+
+</section>
+<section	id="headerfile">
+<h3>Header File</h3>
+
+<p>A header file is a file with extension <code>.h</code> which contains C function declarations and macro definitions to be shared between several source files. There are two types of header files: the files that the programmer writes and the files that comes with your compiler.</p>
+<pre><code class="c">// foo.h
+void foo();
+
+// foo.c
+void foo() {
+  // statement;
+}</code></pre>
+<pre><code class="c">// main.c
+#include &quot;foo.h&quot;
+
+int main(int argc, char* argv[]) {
+    foo();
+
+    return 0;
+}</code></pre>
+
+<p>PROBLEM: there is a scenario where a header file could be included repeatedly. How to fix it?</p>
+<pre><code class="c">#if !defined(filename_header)
+#define filename_header
+
+// if the version of microsoft compiler is greater than 1000, than use &apos;#pragma once&apos;
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif
+
+#endif</code></pre>
+
+</section>
+</section>
+<section	id="dynamicmemory">
+<h2>Dynamic Memory</h2>
+
+<p>Since C is a structured language, it has some fixed rules for programming. One of it includes changing the size of an array. An array is collection of items stored at continuous memory locations.</p>
+<pre><code class="bash"> ___ ___ ___ ___ ___ ___ ___ ___ ___
+|_1_|_2_|_4_|_8_|_1_|_2_|_4_|_8_|_1_|
+  0   1   2   3   4   5   6   7   8</code></pre>
+
+<p>As it can be seen that the length (size) of the array above made is 9. But what if there is a requirement to change this length (size). What should we do? Then we have to resort to dynamic memory allocation. Notice that dynamic memory is in <strong>heap space</strong> of virtual memory.</p>
+
+<section	id="allocation">
+<h3>Allocation</h3>
+
+<p>REQUIRED, <code>&lt;sdtlib.h&gt;</code> and <code>&lt;malloc.h&gt;</code></p>
+
+<ul>
+<li><code>malloc</code><br/>
+<code>malloc</code> is used to allocate memory blocks.</li>
+</ul>
+<pre><code class="c">// typedef unsigned int size_t
+void *malloc( size_t size );</code></pre>
+<pre><code class="c">// allocate 4 int for ptr
+int* ptr = (int*)malloc(sizeof(int) * 4);</code></pre>
+
+</section>
+<section	id="initialization">
+<h3>Initialization</h3>
+
+<ul>
+<li><code>memset</code><br/>
+<code>memset</code> sets buffers to a specified character.</li>
+</ul>
+<pre><code class="c">void *memset(void *str, int c, size_t n)</code></pre>
+<pre><code class="c">// initialization
+memset(ptr, 0, sizeof(int) * 4);</code></pre>
+
+</section>
+<section	id="free">
+<h3>Free</h3>
+
+<ul>
+<li><code>free</code><br/>
+<code>free</code> is used to deallocate or frees a memory block.</li>
+</ul>
+<pre><code class="c">void free( void *memblock );</code></pre>
+<pre><code class="c">free(ptr);
+ptr = NULL;</code></pre>
+
+</section>
+</section>
+<section	id="fileoperation">
+<h2>File Operation</h2>
+
+<section	id="openandclose">
+<h3>Open and Close</h3>
+
+<ul>
+<li><code>fopen</code><br/>
+Each of these functions returns a pointer to the open file. A null pointer value indicates an error.</li>
+</ul>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Mode</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">r</td>
+	<td style="text-align:center;">Opens for reading. If the file does not exist or cannot be found, the <code>fopen</code> call fails.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">w</td>
+	<td style="text-align:center;">Opens an empty file for writing. If the given file exists, its contents are destroyed.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">a</td>
+	<td style="text-align:center;">Opens for writing at the end of the file (appending) WITHOUT removing the EOF marker before writing new data to the file; creates the file first if it doesn’t exist.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">r+</td>
+	<td style="text-align:center;">Opens for both reading and writing. (The file must exist)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">w+</td>
+	<td style="text-align:center;">Opens an empty file for both reading and writing. If the given file exists, its contents are destroyed.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">a+</td>
+	<td style="text-align:center;">Opens for reading and appending; the appending operation includes the removal of the EOF marker before new data is written to the file and the EOF marker is restored after writing is complete</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li><code>fclose</code><br/>
+fclose returns 0 if the stream is successfully closed. _fcloseall returns the total number of streams closed. Both functions return EOF to indicate an error.</li>
+</ul>
+<pre><code class="c">#include &quot;stdio.h&quot;
+
+FILE *stream;
+
+int main(int argc, char* argv[]) {
+    int numclosed = 0;
+
+    // open for read
+    if ( (stream = fopen(&quot;data&quot;, &quot;r&quot;)) == NULL ) {
+        printf(&quot;The file &apos;data&apos; was not found.\n&quot;);
+    }
+    else {
+        printf(&quot;The file &apos;data&apos; was opened.\n&quot;);
+    }
+
+    // open for write
+    if ( (stream = fopen(&quot;data&quot;, &quot;w+&quot;)) == NULL ) {
+        printf(&quot;The file &apos;data&apos; was not found.\n&quot;);
+    }
+    else {
+        printf(&quot;The file &apos;data&apos; was opened.\n&quot;);
+    }
+
+    // close file
+    // noting the return rule of &apos;fclose&apos;
+    if ( fclose(stream) ) {
+        printf(&quot;The file &apos;data&apos; was not closed\n&quot;);
+    }
+
+    // close all other files
+    numclosed = _fcloseall();
+    printf(&quot;Number of files closed by _fcloseall: %u\n&quot;, numclosed);
+}</code></pre>
+
+</section>
+<section	id="search">
+<h3>Search</h3>
+
+<ul>
+<li><code>fseek</code><br/>
+If successful, fseek returns 0. Otherwise, it returns a nonzero value. On devices incapable of seeking, the return value is undefined.</li>
+</ul>
+<pre><code class="c">int fseek( FILE *stream, long offset, int origin );</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Builtin Para.</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">SEEK_CUR</td>
+	<td style="text-align:center;">current position of file pointer</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SEEK_END</td>
+	<td style="text-align:center;">end of file</td>
+</tr>
+<tr>
+	<td style="text-align:center;">SEEK_SET</td>
+	<td style="text-align:center;">beginning of file</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="c">#include &lt;stdio.h&gt;
+
+int main(int argc, char* argv[]) {
+   FILE *stream;
+   char line[81];
+   int  result;
+
+   stream = fopen( &quot;fseek.out&quot;, &quot;w+&quot; );
+   if( stream == NULL )
+      printf( &quot;The file fseek.out was not opened\n&quot; );
+   else {
+      fprintf( stream, &quot;The fseek begins here: &quot;
+                       &quot;This is the file &apos;fseek.out&apos;.\n&quot; );
+      // L means &apos;long&apos;
+      result = fseek( stream, 23L, SEEK_SET);
+      if ( result )
+         perror( &quot;Fseek failed&quot; );
+      else {
+         printf( &quot;File pointer is set to middle of first line.\n&quot; );
+         fgets( line, 80, stream );
+         printf( &quot;%s&quot;, line );
+      }
+      fclose( stream );
+   }
+}</code></pre>
+
+</section>
+<section	id="print">
+<h3>Print</h3>
+
+<ul>
+<li><code>fprintf</code> or <code>fwprintf</code><br/>
+<code>fprintf</code> returns the number of bytes written. <code>fwprintf</code> returns the number of wide characters written. Each of these functions returns a <strong>negative value</strong> instead when an output error occurs.</li>
+</ul>
+<pre><code class="c">int fprintf( FILE *stream, const char *format [, argument ]...);</code></pre>
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;process.h&gt;
+
+FILE *stream;
+
+int main(int argc, char* argv[]) {
+    int    i = 10;
+    double fp = 1.5;
+    char   s[] = &quot;this is a string&quot;;
+    char   c = &apos;\n&apos;;
+
+    stream = fopen( &quot;fprintf.out&quot;, &quot;w&quot; );
+    fprintf( stream, &quot;%s%c&quot;, s, c );
+    fprintf( stream, &quot;%d\n&quot;, i );
+    fprintf( stream, &quot;%f\n&quot;, fp );
+    fclose( stream );
+    system( &quot;type fprintf.out&quot; );
+
+    return 0;
+}</code></pre>
+<pre><code class="c">// Output:
+this is a string
+10
+1.500000</code></pre>
+
+</section>
+<section	id="position">
+<h3>Position</h3>
+
+<ul>
+<li><code>ftell</code><br/>
+<code>ftell</code> is used to get the current position of a file pointer.</li>
+</ul>
+<pre><code class="c">long ftell( FILE *stream );</code></pre>
+
+<p>ftell returns the current file position. The value returned by ftell may not reflect the physical byte offset for streams opened in text mode, because text mode causes carriage return–linefeed translation.</p>
+<pre><code class="c">#include &lt;stdio.h&gt;
+
+FILE *stream;
+
+int main(int argc, char* argv[]) {
+    long position;
+    char list[100];
+    if( (stream = fopen( &quot;ftell.c&quot;, &quot;rb&quot; )) != NULL ) {
+        /* Move the pointer by reading data: */
+        fread( list, sizeof( char ), 100, stream );
+        /* Get position after read: */
+        position = ftell( stream );
+        printf( &quot;Position after trying to read 100 bytes: %ld\n&quot;,
+                position );
+        fclose( stream );
+    }
+}</code></pre>
+<pre><code class="c">// Output:
+Position after trying to read 100 bytes: 100</code></pre>
+
+</section>
+<section	id="get">
+<h3>Get</h3>
+
+<ul>
+<li><code>fgetc</code><br/>
+<code>fgetc</code> is used to read a character from a stream, which returns the character read as an int or return EOF to indicate an error or end of file.</li>
+</ul>
+<pre><code class="c">int fgetc( FILE *stream );</code></pre>
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(int argc, char* argv[]) {
+    FILE *stream;
+    char buffer[81];
+    int  i, ch;
+
+    /* Open file to read line from: */
+    if( (stream = fopen( &quot;fgetc.c&quot;, &quot;r&quot; )) == NULL ) {
+        exit( 0 );
+    }
+
+    /* Read in first 80 characters and place them in &quot;buffer&quot;: */
+    ch = fgetc(stream);
+    for (i = 0; (i &lt; 80) &amp;&amp; (feof(stream) == 0); i++) {
+        buffer[i] = (char)ch;
+        ch = fgetc( stream );
+    }
+
+    /* Add null to end string */
+    buffer[i] = &apos;\0&apos;;
+    printf( &quot;%s\n&quot;, buffer );
+    fclose( stream );
+}</code></pre>
+
+<ul>
+<li><code>fgets</code><br/>
+<code>fgets</code> is used to get a string from a stream, which returns string. NULL is returned to indicate an error or an end-of-file condition. Use <code>feof</code> or <code>ferror</code> to determine whether an error occurred.</li>
+</ul>
+
+<p>BTW, <code>feof</code> function returns a nonzero value after the first read operation that attempts to read past the end of the file. It returns 0 if the current position is not end of file. There is no error return.</p>
+<pre><code class="c">char *fgets( char *string, int n, FILE *stream );</code></pre>
+<pre><code class="c">int main(int argc, char* argv[]) {
+   FILE *stream;
+   char line[100];
+
+   if( (stream = fopen( &quot;fgets.c&quot;, &quot;r&quot; )) != NULL ) {
+      if ( fgets( line, 100, stream ) == NULL)
+         printf( &quot;fgets error\n&quot; );
+      else
+         printf( &quot;%s&quot;, line );
+      fclose( stream );
+   }
+}</code></pre>
+
+</section>
+<section	id="example">
+<h3>Example</h3>
+
+<p>Here we are going to read a file into memory.</p>
+<pre><code class="markdown">&lt;!-- data.txt --&gt;
+123 123 123 123 123
+
+&lt;!-- binary code --&gt;
+            +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F
+0x00000000: 31 32 33 20 31 32 33 20 31 32 33 20 31 32 33 20 
+0x00000010: 31 32 33
+
+file size: 19 Bytes</code></pre>
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define INT_T unsigned int
+#define nullptr NULL
+
+int main(int argc, char* argv[]) {
+    FILE *stream;
+	INT_T filesize = 0;
+	char* file = nullptr;
+	int i, ch;
+	
+	if ((stream = fopen(&quot;data.txt&quot;, &quot;r&quot;)) != NULL) {
+		// get file size
+		fseek(stream, 0L, SEEK_END);
+		filesize = ftell(stream);
+		// reset stream pointer
+		fseek(stream, 0L, SEEK_SET);
+
+		// memory allocation and initialization
+		file = (char*)malloc(sizeof(char) * filesize + 1);
+		memset(file, 0, sizeof(char) * filesize + 1);
+
+		// read stream to file
+		ch = fgetc(stream);
+		for (i = 0; (i &lt; filesize); i++) {
+			file[i] = (char)ch;
+			ch = fgetc(stream);
+		}
+		file[filesize] = &apos;\0&apos;;
+
+		printf(&quot;Filesize: %d\n&quot;, filesize);
+		printf(&quot;Length: %d\n&quot;, i);
+		printf(&quot;%s\n&quot;, file);
+	}
+	else {
+		printf(&quot;ERROR: The file was not opened properly.&quot;);
+	}
+}</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part7' %}" class="button primary icon solid fa-backward">Back: 7. C Pointer</a></li> 
+                     <li><span class="button">8. Memory Management</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part9' %}" class="button primary icon solid fa-forward">Next: 9. PE Seg.1</a></li> 
+                 </ul> 
+             </div> 
+         </div>

@@ -1,0 +1,380 @@
+{% load static %}
+
+<h1 id="peseg.5">PE Seg.5</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#miscandsrd">Misc and SRD</a></li>
+<li><a href="#sectionextension">Section Extension</a>
+
+<ul>
+<li><a href="#procedure">Procedure</a></li>
+<li><a href="#cprogram">C Program</a></li>
+</ul></li>
+<li><a href="#sectionmerging">Section Merging</a>
+
+<ul>
+<li><a href="#method">Method</a></li>
+<li><a href="#c">C</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+<!-- Insert content here -->
+
+<section	id="miscandsrd">
+<h2>Misc and SRD</h2>
+
+<p>Now let&#8217;s go back to the concept of <code>Misc</code>, which is an union of <code>VirtualSize</code> and <code>PhysicalAddress</code>, that of and <code>SizeOfRawData</code>(SRD).</p>
+<pre><code class="c">// notepad.exe
+SectionHeader[1] {
+    Name: .data
+    Misc: 1ba8
+    VirtualAddress: 9000 // VirtualAddress[1] = VirtualAddress[0] + SectionAlignment(SizeOfRawData[0])
+    SizeOfRawData: 800
+    PointerToRawData: 7c00 // PointerToRawData[1] = PointerToRawData[0] + SizeOfRawData[0]
+    Characteristics: c0000040
+}</code></pre>
+
+<p>Surprisingly, <code>Misc.VirtualSize</code> is bigger than <code>SizeOfRawData</code>, why?</p>
+
+<p><code>SizeOfRawData</code> is the size of the section (for object files) or the size of the <strong>initialized data</strong> on disk (for image files) <strong>after file alignment</strong>. For executable images, this must be a multiple of FileAlignment from the optional header. </p>
+
+<p>VirtualSize can be more or less than <code>SizeOfRawData</code>. </p>
+
+<ul>
+<li>We for example can have only several bytes of initialized actual data in section and no uninitialized data - so VirtualSize will be only several bytes size, while <code>SizeOfRawData</code> 512 bytes.</li>
+<li>In another case in .data or .bss section - can be no initialized data at all (so <code>SizeOfRawData == 0</code>) but <code>VirtualSize != 0</code>.</li>
+</ul>
+
+<p>Therefore, in general if there are uninitialized data far more than initialized one, <code>Misc.VirtualSize</code>, which is the real size (no alignment) of data when program is loaded into memory, is highly likely to be greater than <code>SizeOfRawData</code>. More specifically, if <code>(size of uninitialized data) &gt; (zero-filled padding)</code>, then <code>Misc.VirtualSize</code> is greater than <code>SizeOfRawData</code>.</p>
+
+</section>
+<section	id="sectionextension">
+<h2>Section Extension</h2>
+
+<p>Assuming a scenario that there is no space for a new section header, then how could we create a safe space for our shell code? The straight answer is extension of the last section.</p>
+
+<section	id="procedure">
+<h3>Procedure</h3>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/SectionExtension.png' %}" alt="Extension of Last Section" />
+<figcaption>Extension of Last Section</figcaption>
+</figure>
+
+<p>What we have to do first is stretch memory as system do when loading image, and then allocate a block of memory after the end of last section. Next in order to keep the original data unchanged, <strong>we treat original section memory as raw data (including original raw data and zero-filled padding for section alignment)</strong>. Therefore, the new raw data contains three parts - original raw data, padding zeros, and extension memory. At last, we have to transfer image buffer to file buffer for saving as a file.</p>
+
+<p>Notice that after section extension, the size of new file is greater than the old.</p>
+
+<p>So which members are going to change:</p>
+
+<ul>
+<li>SizeOfImage: <code>SizeOfImage + sizeof(EXT)</code></li>
+<li>LastSection.VirtualSize: <code>SectionAlignment(SectionAlignment(MAX(SizeOfRawData, VirtualSize)) + sizeof(EXT))</code></li>
+<li>LastSection.SizeOfRawData: <code>FileAlignment(SectionAlignment(MAX(SizeOfRawData, VirtualSize)) + sizeof(EXT))</code></li>
+</ul>
+
+<p>Why <code>MAX(SizeOfRawData, VirtualSize)</code>? In order to keep the original data unchanged, since <code>SizeOfRawData</code> can be greater or less than <code>VirtualSize</code>.</p>
+
+</section>
+<section	id="cprogram">
+<h3>C Program</h3>
+
+<p>Here we define a helper function <code>align()</code>, which return the size after alignment.</p>
+<pre><code class="c">// Tools.h
+// align:
+//     This function will return a size aligned by given align size.
+// @size: size of data.
+// @alignSize: size of alignment.
+DWORD align(DWORD size, DWORD alignSize);
+
+// Tools.c
+DWORD align(DWORD size, DWORD alignSize) {
+	DWORD ret = ((size - 1) / alignSize + 1) * alignSize;
+	return ret;
+}</code></pre>
+
+<p>Now, let&#8217;s do it.</p>
+<pre><code class="c">// Tools.h
+// ExtensionOfLastSection:
+//     The function will extend the size of last section
+// @fileBuffer: the base address of file buffer.
+// @addition: the size to be extended.
+// @newFileBuffer: the base address of new file buffer whose last section is extended.
+STATUS ExtensionOfLastSection(IN PMEMORYBASE fileBuffer, IN DWORD addition, OUT PMEMORYBASE* newFileBuffer);
+
+// TEST_ExtensionOfLastSection:
+//     This function will extend the size of last section.
+void TEST_ExtensionOfLastSection();</code></pre>
+<pre><code class="c">// Tools.c
+STATUS ExtensionOfLastSection(IN PMEMORYBASE fileBuffer, IN DWORD addition, OUT PMEMORYBASE* newFileBuffer) {
+	STATUS ret;
+	PMEMORYBASE imgBuffer = nullptr;
+	PMEMORYBASE imgBuffer_ext = nullptr;
+	DWORD last = pFileHeader-&gt;NumberOfSections - 1;
+	DWORD newSize = 0;
+
+	ret = FileBufferToImageBuffer(fileBuffer, &amp;imgBuffer);
+
+	// TODO: allocate new img buffer and modify SizeOfImage
+	imgBuffer_ext = (PMEMORYBASE)malloc(sizeof(BYTE) * pOptionalHeader-&gt;SizeOfImage + addition);
+	memset(imgBuffer_ext, 0, sizeof(BYTE) * pOptionalHeader-&gt;SizeOfImage + addition);
+	memcpy(imgBuffer_ext, imgBuffer, pOptionalHeader-&gt;SizeOfImage);
+
+	// parse members of new buffer, IMPORTANT
+	ret = PEParser(imgBuffer_ext);
+
+	pOptionalHeader-&gt;SizeOfImage += addition;
+
+	// TODO: modify section header of the last one
+	newSize = p_section_header[last].Misc.VirtualSize &gt; p_section_header[last].SizeOfRawData ? p_section_header[last].Misc.VirtualSize : p_section_header[last].SizeOfRawData;
+	p_section_header[last].Misc.VirtualSize = align(align(newSize, pOptionalHeader-&gt;SectionAlignment) + addition, pOptionalHeader-&gt;SectionAlignment);
+	p_section_header[last].SizeOfRawData = align(align(newSize, pOptionalHeader-&gt;SectionAlignment) + addition, pOptionalHeader-&gt;FileAlignment);
+
+	// TODO: save as file buffer
+	ret = ImageBufferToFileBuffer(imgBuffer_ext, newFileBuffer);
+
+	free(imgBuffer);
+	free(imgBuffer_ext);
+
+	return 0;
+}
+
+void TEST_ExtensionOfLastSection() {
+	PMEMORYBASE newFileBuffer = nullptr;
+	STATUS ret;
+
+	// initialize global pointers
+	fileBuffer = nullptr;
+	pDosHeader = nullptr;
+	pFileHeader = nullptr;
+	pOptionalHeader = nullptr;
+
+	ret = PEReader(&quot;notepad.exe&quot;, &amp;fileBuffer);
+	ret = PEParser(fileBuffer);
+	printHeaders();
+	ret = ExtensionOfLastSection(fileBuffer, 0x1000, &amp;newFileBuffer);
+	
+	ret = SaveBufferAsFile(&quot;notepad_ext.exe&quot;, newFileBuffer);
+	ret = PEParser(newFileBuffer);
+	printHeaders();
+
+	free(fileBuffer);
+	free(newFileBuffer);
+}</code></pre>
+<pre><code class="c">// Output:
+// notepad.exe:
+OptionalHeader.SizeOfImage: 13000
+
+Description of SECTION[0]{
+    Name: .text
+    Misc: 7748
+    VirtualAddress: 1000
+    SizeOfRawData: 7800
+    PointerToRawData: 400
+    Characteristics: 60000020
+}
+
+Description of SECTION[1]{
+    Name: .data
+    Misc: 1ba8
+    VirtualAddress: 9000
+    SizeOfRawData: 800
+    PointerToRawData: 7c00
+    Characteristics: c0000040
+}
+
+Description of SECTION[2]{
+    Name: .rsrc
+    Misc: 7f30
+    VirtualAddress: b000
+    SizeOfRawData: 8000
+    PointerToRawData: 8400
+    Characteristics: 40000040
+}
+
+// notepad_ext.exe:
+OptionalHeader.SizeOfImage: 14000
+
+Description of SECTION[0]{
+    Name: .text
+    Misc: 7748
+    VirtualAddress: 1000
+    SizeOfRawData: 7800
+    PointerToRawData: 400
+    Characteristics: 60000020
+}
+
+Description of SECTION[1]{
+    Name: .data
+    Misc: 1ba8
+    VirtualAddress: 9000
+    SizeOfRawData: 800
+    PointerToRawData: 7c00
+    Characteristics: c0000040
+}
+
+Description of SECTION[2]{
+    Name: .rsrc
+    Misc: 9000
+    VirtualAddress: b000
+    SizeOfRawData: 9000
+    PointerToRawData: 8400
+    Characteristics: 40000040
+}</code></pre>
+
+</section>
+</section>
+<section	id="sectionmerging">
+<h2>Section Merging</h2>
+
+<p>Besides section extension, there is another common operation on section - section merging, which will reserve memory space in section header, but the size of file will be greater unfortunately.</p>
+
+<section	id="method">
+<h3>Method</h3>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/SectionMerging.png' %}" alt="Section Merging" />
+<figcaption>Section Merging</figcaption>
+</figure>
+
+<p>The idea of merging section is somewhat similar to section extension. First stretch memory, and then treat all sections in image buffer as raw data (including raw data of each merged section and their zero-filled paddings). Finally transfer it to file buffer for saving file.</p>
+
+<p>So which members are going to change (Assuming merging all section to the first section):</p>
+
+<ul>
+<li>FirstSection.VirtualSize: <code>SizeOfImage - FirstSection.VirtualAddress</code>, which is must be the multiple of <code>SectionAlignment</code>.</li>
+<li>FirstSection.SizeOfRawData: <code>FileAlignment(SizeOfImage - FirstSection.VirtualAddress)</code>.</li>
+<li>FirstSection.Characteristics: includes all characteristics of each original section.</li>
+<li>FileHeader.NumberOfSections: is modified to 1.</li>
+</ul>
+
+</section>
+<section	id="c">
+<h3>C</h3>
+<pre><code class="c">// Tools.h
+// MergingSections:
+//     The function will merge all sections into the first one
+// @fileBuffer: the base address of file buffer.
+// @newFileBuffer: the base address of new file buffer whose sections are merged.
+STATUS MergingSections(IN PMEMORYBASE fileBuffer, OUT PMEMORYBASE* newFileBuffer);
+
+// TEST_MergingSections:
+//     This function will merge all sections into the first one.
+void TEST_MergingSections();</code></pre>
+<pre><code class="c">// Tools.c
+STATUS MergingSections(IN PMEMORYBASE fileBuffer, OUT PMEMORYBASE* newFileBuffer) {
+	STATUS ret;
+	PMEMORYBASE imgBuffer = nullptr;
+	DWORD newCharacteristics = 0;
+	DWORD i;
+
+	ret = FileBufferToImageBuffer(fileBuffer, &amp;imgBuffer);
+	
+	// parse new buffer
+	ret = PEParser(imgBuffer);
+	
+	// TODO: update members of new buffer
+	// record characteristics of each section and update characteristics
+	for (i = 0; i &lt; pFileHeader-&gt;NumberOfSections; i++) {
+		newCharacteristics = newCharacteristics | p_section_header[i].Characteristics;
+	}
+	p_section_header[0].Characteristics = newCharacteristics;
+	// update virtual size
+	p_section_header[0].Misc.VirtualSize = pOptionalHeader-&gt;SizeOfImage - p_section_header[0].VirtualAddress;
+	// update size of raw data
+	p_section_header[0].SizeOfRawData = align(p_section_header[0].Misc.VirtualSize, pOptionalHeader-&gt;FileAlignment);
+
+	// update number of sections
+	pFileHeader-&gt;NumberOfSections = 1;
+
+	ret = ImageBufferToFileBuffer(imgBuffer, newFileBuffer);
+
+	free(imgBuffer);
+
+	return 0;
+}
+
+void TEST_MergingSections() {
+	PMEMORYBASE newFileBuffer = nullptr;
+	STATUS ret;
+
+	// initialize global pointers
+	fileBuffer = nullptr;
+	pDosHeader = nullptr;
+	pFileHeader = nullptr;
+	pOptionalHeader = nullptr;
+
+	ret = PEReader(&quot;notepad.exe&quot;, &amp;fileBuffer);
+	ret = PEParser(fileBuffer);
+	printHeaders();
+
+	ret = MergingSections(fileBuffer, &amp;newFileBuffer);
+	
+	ret = SaveBufferAsFile(&quot;notepad_merge.exe&quot;, newFileBuffer);
+	ret = PEParser(newFileBuffer);
+	printHeaders();
+
+	free(fileBuffer);
+	free(newFileBuffer);
+}</code></pre>
+<pre><code class="c">// Output:
+// notepad.exe:
+FileHeader.NumberOfSections: 3
+
+Description of SECTION[0]{
+    Name: .text
+    Misc: 7748
+    VirtualAddress: 1000
+    SizeOfRawData: 7800
+    PointerToRawData: 400
+    Characteristics: 60000020
+}
+
+Description of SECTION[1]{
+    Name: .data
+    Misc: 1ba8
+    VirtualAddress: 9000
+    SizeOfRawData: 800
+    PointerToRawData: 7c00
+    Characteristics: c0000040
+}
+
+Description of SECTION[2]{
+    Name: .rsrc
+    Misc: 7f30
+    VirtualAddress: b000
+    SizeOfRawData: 8000
+    PointerToRawData: 8400
+    Characteristics: 40000040
+}
+
+// notepad_merge.exe:
+FileHeader.NumberOfSections: 1
+
+Description of SECTION[0]{
+    Name: .text
+    Misc: 12000
+    VirtualAddress: 1000
+    SizeOfRawData: 12000
+    PointerToRawData: 400
+    Characteristics: e0000060
+}</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part13' %}" class="button primary icon solid fa-backward">Back: 13. PE Seg.4</a></li> 
+                     <li><span class="button">14. PE Seg.5</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part15' %}" class="button primary icon solid fa-forward">Next: 15. PE Seg.6</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

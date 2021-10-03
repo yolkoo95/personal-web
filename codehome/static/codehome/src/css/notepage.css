@@ -1,0 +1,92 @@
+body {
+    background-image: url(../img/design-h-10.jpg);
+    background-size: 100vw;
+}
+
+#notepage #wrapper {
+    max-height: 98vh;
+    overflow: scroll;
+    scroll-behavior: smooth;
+}
+
+#notepage #wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+/* for old version */
+#table-of-contents {
+    padding-top: 0.5rem !important;
+}
+
+#tableofcontents {
+    padding-top: 0.5rem !important;
+}
+
+/* ScrollSpy active styles (see JS tab for activation) */
+.section-nav li.active > a {
+    color: #d33637 !important;
+    font-weight: 400 !important;
+    padding-left: 4px !important;
+    border-color: #d33637 !important;
+    border-left: 3px solid !important;
+}
+
+#wrapper section {
+    padding: 0em;
+}
+
+/* Sidebar Table of Content */
+#wrapper .section-nav a {
+    color: #aaa;
+    text-decoration: none;
+}
+
+#wrapper .section-nav li a:hover {
+    color: #d33637 !important;
+}
+
+#wrapper .section-nav ul {
+    list-style: none;
+    margin: 0em 0.5em !important;
+}
+
+#wrapper .section-nav ul ul {
+    list-style: none;
+    margin: 0em 0.8em !important;
+}
+
+#wrapper .section-nav ul>li {
+    font-size: 110%;
+}
+
+#wrapper .section-nav ul li ul li{
+    font-size: 90%;
+}
+
+/* back to table of contents / category / home */
+
+.back-to-toc, .back-to-category, .back-to-home {
+    position: relative;
+    bottom: 40px;
+    z-index: 99999;
+}
+
+.back-to-toc i, .back-to-category i, .back-to-home i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: rgba(255, 110, 78, 0.500);
+    color: #fff;
+    transition: all 0.4s;
+}
+
+.back-to-toc i:hover, .back-to-category i:hover, .back-to-home i:hover {
+    background: #FF604E;
+    color: #fff;
+}
+
+/* back to category */

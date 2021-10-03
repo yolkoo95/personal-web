@@ -1,0 +1,1254 @@
+{% extends 'home2/base.html' %} 
+{% load static %} 
+
+{% block style %}
+<!-- <link rel="stylesheet" href="{% static 'leetcode/src/css/stroll.css' %}"> -->
+<link rel="stylesheet" href="{% static 'codehome/src/css/codehome.css' %}" />
+<link rel="stylesheet" href="{% static 'codehome/src/css/button.css' %}">
+{% endblock %} 
+
+{% block title %} 
+  Code 
+{% endblock %} 
+
+{% block body %}
+
+<main id="code">
+  <div
+  id="carouselExampleIndicators"
+  class="carousel slide"
+  data-ride="carousel"
+>
+  <!-- <ol class="carousel-indicators">
+    <li
+      data-target="#carouselExampleIndicators"
+      data-slide-to="0"
+      class="active"
+    ></li>
+    <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+    <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+  </ol> -->
+
+  <div class="carousel-inner" role="listbox">
+    <!-- CPP -->
+    <div
+      class="carousel-item active carousel-background"
+    >
+      <div class="container" role="cpp section">
+        <div class="row justify-content-end" name="cpp section">
+          <div class="col-8">
+            <div class="my-3 mt-5 p-3 bg-white rounded shadow-sm">
+              <h3 class="border-bottom border-gray pb-3 mb-0 text-center">
+                C++
+              </h3>
+              <ul>
+                <!-- Basic -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Basic</title>
+                      <rect width="100%" height="100%" fill="#D783FF" />
+                      <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'basic' %}">Basic</a></strong>
+                        <!-- description -->
+                        Introduction to C++ and some basic syntax of C++
+                    </p>
+                  </div>
+                </li>
+        
+                <!-- Strings -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Strings</title>
+                      <rect width="100%" height="100%" fill="#6f42c1" />
+                      <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'strings' %}">Strings</a></strong>
+                        <!-- description -->
+                        Diving into C++ strings and related libraries
+                    </p>
+                  </div>
+                </li>
+        
+                <!-- Classes -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Classes</title>
+                      <rect width="100%" height="100%" fill="#e83e8c" />
+                      <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'classes' %}">Classes</a></strong>
+                        <!-- description -->
+                        Introducing some standard classes in C++, such as vector, grid, stack, queue, set and map
+                    </p>
+                  </div>
+                </li>
+        
+                <!-- Algorithm Analysis -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Algorithm Analysis</title>
+                      <rect width="100%" height="100%" fill="#D783FF" />
+                      <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'algorithm-analysis' %}">Algorithm Analysis</a></strong>
+                        <!-- description -->
+                        Big O and Asymptotic Analysis
+                    </p>
+                  </div>
+                </li>
+        
+                <!-- Recursion -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Recursion</title>
+                      <rect width="100%" height="100%" fill="#6f42c1" />
+                      <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'recursion' %}">Recursion</a></strong>
+                        <!-- description -->
+                        Introduction to recursion world
+                    </p>
+                  </div>
+                </li>
+        
+                <!-- Fractals -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Fractals</title>
+                      <rect width="100%" height="100%" fill="#e83e8c" />
+                      <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'cpp' 'fractals' %}">Fractals</a></strong>
+                        <!-- description -->
+                        Diving deeper into recursion with C++
+                    </p>
+                  </div>
+                </li>
+              </ul name="cppEnd">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backward Programming -->
+    <div
+      class="carousel-item carousel-background"
+    >
+      <div class="container" role="backward-programming section">
+        <div class="row justify-content-end" name="backward-programming section">
+          <div class="col-8">
+            <div class="my-3 mt-5 p-3 bg-white rounded shadow-sm">
+              <h3 class="border-bottom border-gray pb-3 mb-0 text-center">
+                Backward Programming
+              </h3>
+              <ul>
+
+          <!-- part1 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>part1</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part1' %}">Foundation</a></strong>
+                  <!-- description -->
+                  Base, Register and Assembly Language
+              </p>
+            </div>
+          </li>
+ 
+          <!-- part2 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>part2</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part2' %}">Stack Analysis</a></strong>
+                  Analysis of changes of the stack when assembly instruction is executed.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- part3 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>C Language Seg.1</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part3' %}">C Language Seg.1</a></strong>
+                  Introduction to calling convention, naked function, memory and if clause.
+                  
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part4 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part4</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part4' %}">C Language Seg.2</a></strong>
+                  <!-- description -->
+                  Type conversion, logic operation, data delivery and array.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part5 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part5</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part5' %}">C Language Seg.3</a></strong>
+                  Multi dimension array, struct and word alignment.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part6 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part6</title>
+                <rect width="100%" height="100%" fill="#6f42c1" />
+                <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part6' %}">C Language Seg.4</a></strong>
+                  <!-- description -->
+                  Switch, while loop and for loop in the form of assembly language.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part7 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part7</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part7' %}">C Pointer</a></strong>
+                  <!-- description -->
+                  Star type, relation between array and string, array pointer and function pointer.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part8 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part8</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part8' %}">Memory Management</a></strong>
+                  <!-- description -->
+                  Bit operation, macro definition, dynamic memory allocation, and file read and write.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part9 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part9</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part9' %}">PE Seg.1</a></strong>
+                  <!-- description -->
+                  DOS Header, PE Standard Header and Optional Header, and PE Parser in C.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part10 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part10</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part10' %}">PE Seg.2</a></strong>
+                  <!-- description -->
+                  Union and discussion of table of sections.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part11 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part11</title>
+                <rect width="100%" height="100%" fill="#6f42c1" />
+                <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part11' %}">PE Seg.3</a></strong>
+                  <!-- description -->
+                  Transferring between image buffer and file buffer.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part12 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part12</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part12' %}">Coding</a></strong>
+                  <!-- description -->
+                  Coding guideline and reorganization of previous codes.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part13 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part13</title>
+                <rect width="100%" height="100%" fill="#6f42c1" />
+                <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part13' %}">PE Seg.4</a></strong>
+                  <!-- description -->
+                  Add shell code to a given code section and to a new code section.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part14 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part14</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part14' %}">PE Seg.5</a></strong>
+                  <!-- description -->
+                  Review of VirtualSize and SizeOfRawData, section extension and merging.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part15 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part15</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part15' %}">PE Seg.6</a></strong>
+                  <!-- description -->
+                  Static library and dynamic link library.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part16 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part16</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part16' %}">PE Seg.7</a></strong>
+                  <!-- description -->
+                  Export directory and important tables in it.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part17 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part17</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part17' %}">PE Seg.8</a></strong>
+                  <!-- description -->
+                  Base relocation table, move of export directory and base relocation table.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part18 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part18</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part18' %}">PE Seg.9</a></strong>
+                  <!-- description -->
+                  Import tables, IAT, and bound import tables.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part19 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part19</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part19' %}">PE Seg.10</a></strong>
+                  <!-- description -->
+                  Move of import table and add dll to import table.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part20 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part20</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part20' %}">C++ Seg.1</a></strong>
+                  <!-- description -->
+                  C++ features, inheritance, multi-state, operation override, friend functions,
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part21 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part21</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part21' %}">C++ Seg.2</a></strong>
+                  <!-- description -->
+                  Memory allocation, and implementation of some data structure
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part22 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part22</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part22' %}">Win32 Seg.1</a></strong>
+                  <!-- description -->
+                  Win32 type, api and programming.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part23 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part23</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part23' %}">Win32 Seg.2</a></strong>
+                  <!-- description -->
+                  Introduction to WinMain and Windows, and reversing analysis.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Part24 -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Part24</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'backward' 'part24' %}">Win32 Seg.3</a></strong>
+                  <!-- description -->
+                  
+              </p>
+            </div>
+          </li>
+              </ul name="backwardEnd">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+   
+    <!-- Linux -->
+    <div
+      class="carousel-item carousel-background"
+    >
+      <div class="container" role="linux section">
+        <div class="row justify-content-end" name="linux section">
+          <div class="col-8">
+            <div class="my-3 mt-5 p-3 bg-white rounded shadow-sm">
+              <h3 class="border-bottom border-gray pb-3 mb-0 text-center">
+                Linux
+              </h3>
+              <ul>
+ 
+          <!-- Directory-management -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Directory Management</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'directory-management' %}">Directory Management</a></strong>
+                  <!-- description -->
+                  Introduction to linux files and common knowledge of directory management
+              </p>
+            </div>
+          </li>
+ 
+ 
+          <!-- Disk-and-file-system -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Disk and File System</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'disk-and-file-system' %}">Disk and File System</a></strong>
+                  <!-- description -->
+                  Introduction to the file system, disk partition and formatting disk
+              </p>
+            </div>
+          </li>
+ 
+          <!-- File-compression-and-packaging -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>File-compression-and-packaging</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'file-compression-and-packaging' %}">File Compression and Packaging</a></strong>
+                  <!-- description -->
+                  File compression, extraction and backup.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Vim -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Vim</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'vim' %}">Vim</a></strong>
+                  <!-- description -->
+                  Introduction to vim editor and shortcuts
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Bash -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Bash</title>
+                <rect width="100%" height="100%" fill="#6f42c1" />
+                <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'bash' %}">Bash</a></strong>
+                  <!-- description -->
+                  What is bash and some basic and usefulcommands in bash environment
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Regular-expression -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Regular-expression</title>
+                <rect width="100%" height="100%" fill="#e83e8c" />
+                <text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'regular-expression' %}">Regular Expression</a></strong>
+                  <!-- description -->
+                  Regular expression and file formatting automatically.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Shell-script -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Shell-script</title>
+                <rect width="100%" height="100%" fill="#007bff" />
+                <text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'shell-script' %}">Shell Script</a></strong>
+                  <!-- description -->
+                  Basic syntax of shell-script, control follow and looping.
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Account-management -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Account Management</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'account-management' %}">Account Management</a></strong>
+                  <!-- description -->
+                  user management and special permission like ACL setting
+              </p>
+            </div>
+          </li>
+ 
+          <!-- Periodic-task -->
+          <li>
+            <div class="media text-muted pt-3">
+              <svg
+                class="bd-placeholder-img mr-2 rounded"
+                width="32"
+                height="32"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="xMidYMid slice"
+                focusable="false"
+                role="img"
+                aria-label="3Sum: 32x32"
+              >
+                <title>Periodic-task</title>
+                <rect width="100%" height="100%" fill="#D783FF" />
+                <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+              </svg>
+              <p
+                class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+              >
+                <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'linux' 'periodic-task' %}">Periodic Task</a></strong>
+                  <!-- description -->
+                  How to set periodic task in linux.
+              </p>
+            </div>
+          </li>
+              </ul name="linuxEnd">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Others -->
+    <div
+      class="carousel-item carousel-background"
+    >
+      <div class="container" role="tutorial section">
+        <div class="row justify-content-end" name="tutorial section">
+          <div class="col-8">
+            <div class="my-3 mt-5 p-3 bg-white rounded shadow-sm">
+              <h3 class="border-bottom border-gray pb-3 mb-0 text-center">
+                Tutorial Collections
+              </h4>
+              <ul>
+      
+                <!-- Git -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>Git</title>
+                      <rect width="100%" height="100%" fill="#D783FF" />
+                      <text x="50%" y="50%" fill="#D783FF" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'tutorial' 'git' %}">Git</a></strong>
+                        <!-- description -->
+                        Basic knowledge on git
+                    </p>
+                  </div>
+                </li>
+       
+                <!-- FTPServer -->
+                <li>
+                  <div class="media text-muted pt-3">
+                    <svg
+                      class="bd-placeholder-img mr-2 rounded"
+                      width="32"
+                      height="32"
+                      xmlns="http://www.w3.org/2000/svg"
+                      preserveAspectRatio="xMidYMid slice"
+                      focusable="false"
+                      role="img"
+                      aria-label="3Sum: 32x32"
+                    >
+                      <title>FTPServer</title>
+                      <rect width="100%" height="100%" fill="#6f42c1" />
+                      <text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text>
+                    </svg>
+                    <p
+                      class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                    >
+                      <strong class="d-block text-gray-dark"><a href="{% url 'notepage' 'tutorial' 'ftpserver' %}">FTPServer</a></strong>
+                        <!-- description -->
+                        Basic knowledge of FTP communication and configuration on Ali ESC
+                    </p>
+                  </div>
+                </li>
+              </ul name="tutorialEnd">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Section -->
+    <!-- <div
+      class="carousel-item carousel-background"
+    >
+      <div class="container" role="xxx section">
+        <div class="row justify-content-end" name="xxx section">
+          <div class="col-8">
+            <div class="my-3 mt-5 p-3 bg-white rounded shadow-sm">
+              <h3 class="border-bottom border-gray pb-3 mb-0 text-center">
+                Linux
+              </h3>
+              <ul>
+
+              </ul name="xxxEnd">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> -->
+    
+  </div>
+
+  <!-- pagination button -->
+  <button
+    class="paginate left carousel-control-prev"
+    href="#carouselExampleIndicators"
+    data-slide="prev"
+  >
+    <i></i><i></i>
+  </button>
+  <button
+    class="paginate right carousel-control-next"
+    href="#carouselExampleIndicators"
+    data-slide="next"
+  >
+    <i></i><i></i>
+  </button>
+</div>
+</main>
+
+{% endblock %}

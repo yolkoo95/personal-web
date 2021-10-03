@@ -1,0 +1,621 @@
+{% load static %}
+
+<!-- Insert title here -->
+
+<h1 id="directorymanagement">Directory Management</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#introductiontolinux">Introduction to Linux</a></li>
+<li><a href="#generalcommandform">General Command Form</a></li>
+<li><a href="#linuxfilesanddirectorymanagement">Linux Files and Directory Management</a>
+
+<ul>
+<li><a href="#commonoperationofdirectory">Common Operation of Directory</a></li>
+<li><a href="#pathvariable">PATH Variable</a>
+
+<ul>
+<li><a href="#environmentvariables">Environment Variables</a></li>
+<li><a href="#path">PATH</a></li>
+</ul></li>
+<li><a href="#managementoffiles">Management of Files</a>
+
+<ul>
+<li><a href="#fileoperations">File Operations</a></li>
+<li><a href="#getpathoffile">Get Path of File</a></li>
+<li><a href="#accessthecontentoffiles">Access the Content of Files</a></li>
+<li><a href="#modifyattributesoffiles">Modify Attributes of Files</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#accesscontrolmanagement">Access Control Management</a>
+
+<ul>
+<li><a href="#umask">UMASK</a></li>
+<li><a href="#hiddenattributesoffiles">Hidden Attributes of Files</a></li>
+<li><a href="#specialpermissionoffiles">Special Permission of Files</a>
+
+<ul>
+<li><a href="#set-useridentificationsuid">Set-user Identification(SUID)</a></li>
+<li><a href="#set-groupidentificationsgid">Set-group identification(SGID)</a></li>
+<li><a href="#stickybitsbit">Sticky Bit(SBIT)</a></li>
+</ul></li>
+<li><a href="#getthetypeofafile">Get the Type of a File</a></li>
+</ul></li>
+<li><a href="#searchcommandsandfiles">Search Commands and Files</a>
+
+<ul>
+<li><a href="#searchforcommand">Search for Command</a></li>
+<li><a href="#searchbyfilename">Search by Filename</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+<!-- Insert content here -->
+
+<section	id="introductiontolinux">
+<h2>Introduction to Linux</h2>
+
+<p>Linux is a family of open source Unix-like operating systems based on the Linux kernel, an operating system kernel first released on September 17, 1991, by Linus Torvalds. Linux is typically packaged in a Linux distribution.</p>
+
+<p>Distributions include the Linux kernel and supporting system software and libraries, many of which are provided by the GNU Project. Many Linux distributions use the word &#8220;Linux&#8221; in their name, but the Free Software Foundation uses the name GNU/Linux to emphasize the importance of GNU software, causing some controversy.</p>
+
+<p>Linux was originally developed for personal computers based on the Intel x86 architecture, but has since been ported to more platforms than any other operating system. Linux also runs on embedded systems, i.e. devices whose operating system is typically built into the firmware and is highly tailored to the system. This includes routers, automation controls, smart home technology.</p>
+
+<p>Linux is one of the most prominent examples of free and open-source software collaboration. The source code may be used, modified and distributed—commercially or non-commercially—by anyone under the terms of its respective licenses, such as the GNU General Public License.</p>
+
+</section>
+<section	id="generalcommandform">
+<h2>General Command Form</h2>
+
+<p>The form of linux commands is as follow,</p>
+<pre><code class="bash">[root@localhost ~]# 
+# where,
+# root: current user
+# localhost: the name of host machine
+# ~: home directory of current user
+# #: command symbol of superuser
+# $: command symbol of common user
+
+# general form of linux commands
+[root@localhost ~]$ command [option] [argument]</code></pre>
+
+</section>
+<section	id="linuxfilesanddirectorymanagement">
+<h2>Linux Files and Directory Management</h2>
+
+<section	id="directoryandfilepath">
+<h4>Directory and File Path</h4>
+
+<p>The first important conception of file path is <strong>relative path</strong> and <strong>absolute path</strong>, relative path is the path relative to the location where the user is, yet absolute path is the path which starts from <code>/</code> (root directory, not the home directory of root <code>/root</code>).</p>
+<pre><code class="bash"># absolute directory 
+[root@localhost ~]$ pwd
+/Users/MinzhiQu/Documents/webDevelopment/webApp
+
+# relative directory
+[root@localhost ~]$ cd ../../python
+
+# NOTE:
+# &apos;.&apos;: where i am in
+# &apos;..&apos;: my parent directory
+# &apos;-&apos;: where i was in
+# &apos;~&apos;: where my home is
+# &apos;~username&apos;: where the home of username is</code></pre>
+
+</section>
+<section	id="commonoperationofdirectory">
+<h3>Common Operation of Directory</h3>
+
+<ul>
+<li><code>cd</code> command<br/>
+<code>cd</code> means <em>change directory</em>, which allows us to jump into other directory.</li>
+</ul>
+<pre><code class="bash">cd [absolute path / relative path]</code></pre>
+
+<ul>
+<li><code>pwd</code> command<br/>
+<code>pwd</code> means <em>print name of current/working directory</em></li>
+</ul>
+<pre><code class="bash"># a useful argument -P, which will print the path of original file, not link file. 
+[root@localhost ~]$ cd /var/mail
+[root@localhost /var/mail]$ pwd
+/var/mail
+[root@localhost /var/mail]$ pwd -P
+/var/spool/mail
+[root@localhost /var/mail]$ ls -ld /var/mail
+# /var/mail is a link file which links to /var/spool/mail
+lrwxrwxrwx. 1 root root 10 Nov 29  2018 /var/mail -&gt; spool/mail</code></pre>
+
+<ul>
+<li><code>mkdir</code> command<br/>
+<code>mkdir</code> means <em>make directories</em></li>
+</ul>
+<pre><code class="bash"> mkdir -[mp] (directory name)
+ # where, 
+ # -m --mode=MODE: set file mode (as in chmod), not a=rwx - umask
+ # -p, --parents: no error if existing, make parent directories as needed
+
+[root@localhost ~]$ mkdir -m 711 test
+[root@localhost ~]$ mkdir --mode=711 test1 
+[root@localhost ~]$ ls -l
+drwx--x--x 2 root    root 4.0K Aug 10 11:31 test
+drwx--x--x 2 root    root 4.0K Aug 10 11:32 test1</code></pre>
+
+<ul>
+<li><code>rmdir</code> command<br/>
+<code>rmdir</code> means <em>remove the DIRECTORY(ies), if they are empty.</em></li>
+</ul>
+<pre><code class="bash">rmdir [-p] (directory name)
+# where,
+# -p, --parents: remove  DIRECTORY  and  its  ancestors;</code></pre>
+
+</section>
+<section	id="pathvariable">
+<h3>PATH Variable</h3>
+
+<p>Before we talk about <code>$PATH</code>, let&#8217;s discuss what Environment Variables are.</p>
+
+<section	id="environmentvariables">
+<h4>Environment Variables</h4>
+
+<p>Environment variables hold values related to the current environment, like the Operating System or user sessions.</p>
+
+</section>
+<section	id="path">
+<h4>PATH</h4>
+
+<p>One of the most well-known is called <code>PATH</code> on Windows, Linux and Mac OS X. It specifies the directories in which executable programs* are located on the machine that can be started without knowing and typing the whole path to the file on the command line. </p>
+
+<blockquote>
+<p>PATH is an environment variable on Unix-like operating systems, DOS, OS/2, and Microsoft Windows, specifying a set of directories where executable programs are located. In general, each executing process or user session has its own PATH setting.<br/>
+- Wikipedia.org</p>
+</blockquote>
+<pre><code class="bash">[root@localhost ~]$ echo $PATH
+/bin:/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin     
+[root@localhost ~]$ /bin/ls
+# which is equal to
+[root@localhost ~]$ ls</code></pre>
+
+<ul>
+<li><code>$PATH</code> is different from user to user, so that Linux is able to give different users limited access permission to files.</li>
+<li>DO NOT add <code>.</code> (current directory) to <code>$PATH</code>.</li>
+</ul>
+
+<h5 id="relatedreading">Related Reading</h5>
+
+<p>On Linux and Mac OS X, it usually holds all <code>bin</code> and <code>sbin</code> directories relevant for the current user. On Windows, it contains at least the <code>C:\Windows</code> and <code>C:\Windows\system32</code> directories — that&#8217;s why you can run <code>calc.exe</code> or <code>notepad.exe</code> from the command line or Run dialog.</p>
+
+<p>Environment Variables in Linux are prefixed with a dollar sign <code>$</code> such as <code>$HOME</code> or <code>$HOSTNAME</code>. Many well-known and standard variables are spelled out in capital letters to signify just that. Keep in mind that variable names are case-sensitive, meaning that <code>$User</code> and <code>$USER</code> are entirely unrelated from the shell&#8217;s point of view.</p>
+
+<p>Unix derivatives define system wide variables in shell scripts located mostly in the <code>/etc</code> folder, but user-specific values may be given to those variables in scripts located in the home folder (e.g., <code>/etc/profile</code>, <code>$HOME/.bash_profile</code>). The <code>.profile</code> file in the home folder is a common place to define user variables.</p>
+
+</section>
+</section>
+<section	id="managementoffiles">
+<h3>Management of Files</h3>
+
+<section	id="fileoperations">
+<h4>File Operations</h4>
+
+<ul>
+<li><code>ls</code> command<br/>
+<code>ls</code> means <strong>list directory contents</strong>, lists information about the FILEs (the current directory by default) and sorts entries alphabetically if none of -cftuvSUX nor &#8211;sort is specified.</li>
+</ul>
+<pre><code class="bash">ls [-adhli] (directory name)
+# where,
+# -a, --all: do not ignore entries starting with &apos;.&apos;.
+# -d, --directory: list directories themselves, not their contents.
+# -h, --human-readable: with -l, print sizes in human readable format (e.g., 1K 234M 2G).
+# -l: use a long listing format.
+# -i, --inode: print the index number of each file.</code></pre>
+
+<ul>
+<li><code>cp</code> command<br/>
+<code>cp</code> command means <em>copy files and directories</em></li>
+</ul>
+<pre><code class="bash">cp [-adiprsu] (source) (destination)
+cp [options] (source1 source2 source3 ...) (destination)
+# where,
+# -a, --archive: same as -dR --preserve=all
+# -d: same as --no-dereference --preserve=links, copy link file per se.
+# -p: same as --preserve=mode,ownership,timestamps, copy the attributes of the file too, used for backup.
+# -R, -r, --recursive: copy directories recursively.
+# -i, --interactive: prompt before overwrite (overrides a previous -n option)
+# -s, --symbolic-link: make symbolic links instead of copying, like `ln -s` command.
+# -u, --update: copy only when the SOURCE file is newer than the destination file or when  the destination file is missing</code></pre>
+
+<ul>
+<li><code>rm</code> command<br/>
+<code>rm</code> means <em>remove files or directories</em>.</li>
+</ul>
+<pre><code class="bash">rm [-fir] (file or directory)
+# where,
+# -f, --force: ignore nonexistent files and arguments, never prompt.
+# -i: prompt before every removal.
+# -r, -R, --recursive: remove directories and their contents recursively.</code></pre>
+
+<ul>
+<li><code>mv</code> command<br/>
+<code>mv</code> means <em>move (rename) files</em>.</li>
+</ul>
+<pre><code class="bash">mv [-fiu] (source) (destination)
+mv [options] (source1 source2 source3) (destination)
+# where,
+# -f, --force: do not prompt before overwriting.
+# -i, --interactive: prompt before overwrite.
+# -u, --update: move  only when the SOURCE file is newer than the destination file or when the destination file is missing.</code></pre>
+
+</section>
+<section	id="getpathoffile">
+<h4>Get Path of File</h4>
+
+<ul>
+<li><code>basename</code> command: return the basename of path</li>
+<li><code>dirname</code> command: return the directory path<br/>
+which is often used with <code>pwd</code>.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~]$ basename $(pwd)
+[root@localhost ~]$ dirname $(pwd)</code></pre>
+
+</section>
+<section	id="accessthecontentoffiles">
+<h4>Access the Content of Files</h4>
+
+<h5 id="accessdirectly">Access Directly</h5>
+
+<ul>
+<li><code>cat</code> command<br/>
+<code>cat</code> means <em>concatenate files and print on the standard output</em>.</li>
+</ul>
+<pre><code class="bash">cat [-AbEnTv] (filename)
+# where,
+# -A, --show-all: equivalent to -vET.
+# -b, --number-nonblank: number nonempty output lines, overrides -n.
+# -E, --show-ends: display $ at end of each line. Noting that end notation in Windows is ^M$.
+# -n, --number: number all output lines.
+# -T, --show-tabs: display TAB characters as &apos;^I&apos;.
+# -v, --show-nonprinting: use ^ and M- notation, except for LFD and TAB. </code></pre>
+
+<ul>
+<li><p><code>tac</code> command<br/>
+<code>tac</code> means <em>concatenate and print files in reverse</em>.</p></li>
+<li><p><code>nl</code> command<br/>
+<code>nl</code> means <em>number lines of files</em>.</p></li>
+</ul>
+<pre><code class="bash">nl [-bw] (filename)
+# -b, --body-numbering=STYLE: use STYLE for numbering body lines.
+# `-b a` equals to `cat -n`
+# `-b t` equals to `cat -b`, default.
+# -w, --number-width=NUMBER: use NUMBER columns for line numbers.
+
+[root@localhost ~]$ nl -w 3 /etc/issue
+  1     \S
+  2     Kernel \r on an \m</code></pre>
+
+<h5 id="advancedaccessmethod">Advanced Access Method</h5>
+
+<ul>
+<li><code>more</code> command<br/>
+<code>more</code> is <em>a filter for paging through text one screenful at a time</em>.</li>
+</ul>
+
+<p>Interactive commands for more are based on <code>vi</code>, </p>
+
+<ul>
+<li><p><code>h or ?</code>: display a summary of these commands. </p></li>
+<li><p><code>RETURN</code>: display next k lines of text, defaults to 1. </p></li>
+<li><p><code>q or Q or INTERRUPT</code>: exit. </p></li>
+<li><p><code>f</code>: skip forward k screenfuls of text. </p></li>
+<li><p><code>b</code>: skip backwards k screenfuls of text, defaults to 1. </p></li>
+<li><p><code>=</code>: display current line number. </p></li>
+<li><p><code>/pattern</code>: search for kth occurrence of regular expression, defaults to 1. </p></li>
+<li><p><code>:f</code>: display current file name and line number.</p></li>
+<li><p><code>less</code> command, which is similar to more but more common to use.</p></li>
+</ul>
+
+<h5 id="contentselection">Content Selection</h5>
+
+<ul>
+<li><code>head</code> command<br/>
+<code>head</code> is used to <em>print the first 10 lines of each FILE to standard output</em>.</li>
+</ul>
+<pre><code class="bash">head [-n number] (filename)
+# where,
+# -n: print the first K lines instead of the first 10;</code></pre>
+
+<ul>
+<li><code>tail</code> command<br/>
+<code>tail</code> is used to <em>print the last 10 lines of each FILE to standard output</em>.</li>
+</ul>
+
+<h5 id="accesstobinaryfiles">Access to Binary Files</h5>
+
+<ul>
+<li><code>od</code> command<br/>
+<code>od</code> is used to <em>write an unambiguous representation, octal bytes by default, of FILE to standard output</em>.</li>
+</ul>
+<pre><code class="bash">od [-t TYPE] (filename)
+# where,
+# -t, --format=TYPE: select output format or formats.
+# TYPE:
+# a: default format
+# c: ASCII character
+# d/f/o/x[size]</code></pre>
+
+</section>
+<section	id="modifyattributesoffiles">
+<h4>Modify Attributes of Files</h4>
+
+<h5 id="timeattributesoffiles">Time Attributes of Files</h5>
+
+<p>There are three time attributes in linux file system,</p>
+
+<ul>
+<li><code>mtime</code>: modification time, which means the time when the content of the file has been modified, default.</li>
+<li><code>ctime</code>: status time, which means the time when the attributes of the file has been changed.</li>
+<li><code>atime</code>: access time, meaning the time when the file has been accessed.</li>
+</ul>
+<pre><code class="bash"># default value of --time argument is mtime
+[root@localhost ~]$ ls -l /etc/man_db.conf 
+-rw-r--r--. 1 root root 5171 Jun 10  2014 /etc/man_db.conf
+[root@localhost ~]$ ls -l --time=atime /etc/man_db.conf
+-rw-r--r--. 1 root root 5171 Aug 10 03:49 /etc/man_db.conf
+[root@localhost ~]$ ls -l --time=ctime /etc/man_db.conf 
+-rw-r--r--. 1 root root 5171 Nov 29  2018 /etc/man_db.conf</code></pre>
+
+<h5 id="changetimeattributes">Change Time Attributes</h5>
+
+<ul>
+<li><code>touch</code> command<br/>
+<code>touch</code> is used to change file timestamps.</li>
+</ul>
+<pre><code class="bash">touch [-acdmt] (filename)
+# where,
+# -a: change only the access time.
+# -c, --no-create: only change the timestamp of the file to current time and do not create any files.
+# -d, --date=STRING: parse STRING and use it instead of current time.
+# -m: change only the modification time.
+# -t STAMP: use [[CC]YY]MMDDhhmm[.ss] instead of current time.
+
+[root@localhost ~]$ touch -d &quot;2 days ago&quot; bashrc
+# change timestamp of bashrc to 2020/12/24 12:12, IMPORTANT, ctime will be current time, but mtime and atime will be assigned time.
+[root@localhost ~]$ touch -t 2012241212 bashrc</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="accesscontrolmanagement">
+<h2>Access Control Management</h2>
+
+<section	id="umask">
+<h3>UMASK</h3>
+
+<p>UMASK in Linux and Unix systems is actually known as User Mask or it is also called User File creation MASK. This is a kind of base permission or <em>default permission</em> given when a new file or folder is created in the Linux box. Most of the distribution of Linux gives 022 as default UMASK.</p>
+
+<p><code>umask 0022</code> would make the new mask <code>0644 (0666-0022=0644)</code> meaning that group and others have read (no write or execute) permissions. The &#8220;extra&#8221; digit (the first number = 0), specifies that there are no special modes. If mode begins with a digit it will be interpreted as octal otherwise its meant to be symbolic.</p>
+<pre><code class="bash">[root@localhost ~]$ umask
+022
+[root@localhost ~]$ umask -S
+u=rwx,g=rx,o=rx</code></pre>
+
+<ul>
+<li>Note: the maximum number of user permission to file is <strong>666(-rw-rw-rw-)</strong>, and that to directory is <strong>777(-rwxrwxrwx)</strong>. Therefore, given <code>umask=0022</code>, when user create a file, the default permission of the file is <strong>(-rw-r--r--)</strong>, and default permission of the directory is <strong>(-rwxr-xr-x)</strong>.</li>
+</ul>
+
+</section>
+<section	id="hiddenattributesoffiles">
+<h3>Hidden Attributes of Files</h3>
+
+<ul>
+<li><code>chattr</code> command<br/>
+<code>chattr</code> is a file system command which is used for changing the attributes of a file in a directory. The primary use of this command is to make several files unable to alter for users other than the superuser. As we know Linux is a multi-user operating system, there exist a chance that a user can delete a file that is of much concern to another user, say the administrator. To avoid such kinds of scenarios, Linux provides ‘chattr‘. In short, ‘chattr’ can make a file immutable, undeletable, only appendable and many more!</li>
+</ul>
+<pre><code class="bash">chattr [+-=] [-ai] (filename)
+# &apos;+&apos;: adds selected attributes to the existing attributes of the files.
+# &apos;&ndash;&apos; : causes selected attributes to be removed.
+# &apos;=&apos;: causes selected attributes to be the only attributes that the files have.
+# -a: file can only be opened in append mode for writing.
+# -i: file cannot be modified (immutable), the only superuser can unset the attribute.</code></pre>
+
+<ul>
+<li><code>lsattr</code> command<br/>
+<code>lsattr</code> is used to see the attributes of files in a directory.</li>
+</ul>
+<pre><code class="bash">lsattr [-adR] (filename or directoryname)
+# where,
+# -a: list all files in directories, including files that start with &apos;.&apos;.
+# -d: list directories like other files, rather than listing their contents.
+# -R: recursively list attributes of directories and their contents.
+# which is similar to &apos;ls&apos;</code></pre>
+
+</section>
+<section	id="specialpermissionoffiles">
+<h3>Special Permission of Files</h3>
+
+<p>There are 3 special permission that are available for executable files and directories. These are :</p>
+
+<ul>
+<li>SUID permission</li>
+<li>SGID permission</li>
+<li>Sticky bit</li>
+</ul>
+
+<section	id="set-useridentificationsuid">
+<h4>Set-user Identification(SUID)</h4>
+<pre><code class="bash">[root@localhost ~]$ ls -lrt /usr/bin/passwd
+-rwsr-sr-x. 1 root root 27832 Jun 10  2014 /usr/bin/passwd</code></pre>
+
+<p>If you check carefully, you would find the 2 S’s in the permission field. The first s stands for the SUID and the second one stands for SGID.</p>
+
+<p>When a command or script with SUID bit set is run, its effective UID becomes that of the owner of the file, rather than of the user who is running it.</p>
+
+<p>Another good example of SUID is the su command :</p>
+<pre><code class="bash">[root@localhost ~]$ ls -l /bin/su
+-rwsr-xr-x 1 root root 32184 Aug 17  2018 /bin/su</code></pre>
+
+<p>The setuid permission displayed as an “s” in the owner’s execute field.</p>
+
+<h5 id="howtosetsuidonafile">How to set SUID on a file</h5>
+<pre><code class="bash">[root@localhost ~]$ chmod 4555 [path_to_file]</code></pre>
+
+<p>NOTE: If a capital “S” appears in the owner’s execute field, it indicates that the setuid bit is on, and the execute bit “x” for the owner of the file is off or denied.</p>
+
+</section>
+<section	id="set-groupidentificationsgid">
+<h4>Set-group identification(SGID)</h4>
+
+<p>SGID permission is similar to the SUID permission, only difference is – when the script or command with SGID on is run, it runs as if it were a member of the same group in which the file is a member.</p>
+<pre><code class="bash">[root@localhost ~]$ ls -l /usr/bin/write 
+-rwxr-sr-x 1 root tty 19624 Aug 17  2018 /usr/bin/write</code></pre>
+
+<p>The setgid permission displays as an “s” in the group’s execute field.</p>
+
+<p>NOTE: If a lowercase letter “l” appears in the group’s execute field, it indicates that the setgid bit is on, and the execute bit for the group is off or denied.</p>
+
+<h5 id="howtosetguidonafile">How to Set GUID on a File</h5>
+<pre><code class="bash">[root@localhost ~]$ chmod 2555 [path_to_file]</code></pre>
+
+<h5 id="sgidonadirectory">SGID on a Directory</h5>
+
+<p>When SGID permission is set on a directory, files created in the directory belong to the group of which the directory is a member.</p>
+
+<p>For example if a user having write permission in the directory creates a file there, that file is a member of the same group as the directory and not the user’s group.</p>
+
+<p>This is very useful in creating shared directories.</p>
+
+<h5 id="howtosetsgidonadirectory">How to Set SGID on a Directory</h5>
+<pre><code class="bash">[root@localhost ~]$ chmod g+s [path_to_directory]</code></pre>
+
+</section>
+<section	id="stickybitsbit">
+<h4>Sticky Bit(SBIT)</h4>
+
+<p>The sticky bit is primarily used on shared directories.</p>
+
+<ul>
+<li>It is useful for shared directories such as <code>/var/tmp</code> and <code>/tmp</code> because users can create files, read and execute files owned by other users, but are not allowed to remove files owned by other users.</li>
+<li>For example if user bob creates a file named <code>/tmp/bob</code>, other user tom can not delete this file even when the <code>/tmp</code> directory has permission of 777. If sticky bit is not set then tom can delete <code>/tmp/bob</code>, as the <code>/tmp/bob</code> file inherits the parent directory permissions.</li>
+<li>root user (Off course!) and owner of the files can remove their own files.</li>
+</ul>
+
+<h5 id="exampleofstickybit">Example of Sticky Bit</h5>
+<pre><code class="bash">[root@localhost ~]$ ls -ld /var/tmp
+drwxrwxrwt. 3 root root 4096 Aug  6 23:16 /var/tmp
+# T refers to when the execute permissions are off.
+# t refers to when the execute permissions are on.</code></pre>
+
+<h5 id="howtosetstickybitpermission">How to Set Sticky Bit Permission</h5>
+<pre><code class="bash">[root@localhost ~]$ chmod +t [path_to_directory]
+# or 
+[root@localhost ~]$ chmod 1777 [path_to_directory]</code></pre>
+
+</section>
+</section>
+<section	id="getthetypeofafile">
+<h3>Get the Type of a File</h3>
+
+<ul>
+<li><code>file</code> command</li>
+</ul>
+<pre><code class="bash">[root@localhost ~]$ file ~/.zshrc
+.zshrc: ASCII text</code></pre>
+
+</section>
+</section>
+<section	id="searchcommandsandfiles">
+<h2>Search Commands and Files</h2>
+
+<section	id="searchforcommand">
+<h3>Search for Command</h3>
+
+<ul>
+<li><code>which</code> command<br/>
+<code>which</code> is used to <em>show the full path of (shell) commands</em>.</li>
+</ul>
+<pre><code class="bash">which [-a] command
+# where,
+# -a, --all: print all matching executables in PATH, not just the first.
+
+[root@localhost ~]$ which ifconfig
+/usr/sbin/ifconfig
+
+# cd is a intergrated command in shell, so which cannot find it
+[root@localhost ~]$ which cd
+/usr/bin/which: no cd in (/root/anaconda3/bin:/root/anaconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)</code></pre>
+
+<p>NOTE: compared with <code>whereis</code>, <code>which</code> is able to find alias of a command, and is executed on binary files(command).</p>
+
+</section>
+<section	id="searchbyfilename">
+<h3>Search by Filename</h3>
+
+<ul>
+<li><code>whereis</code> command<br/>
+<code>whereis</code> locates the binary, source and manual files for the specified command names.</li>
+</ul>
+<pre><code class="bash">whereis [-bmsu] (filename)
+# where,
+# -b: search only for binaries.
+# -m: search only for manuals.
+# -s: search only for sources.
+# -u: only show the command names that have unusual entries.</code></pre>
+
+<ul>
+<li><code>locate</code> command<br/>
+<code>locate</code> allows us to find files by name.</li>
+</ul>
+
+<p><code>locate</code> reads one or more databases prepared by <code>updatedb</code> and writes file names matching at least one of the PATTERNs to standard output, one per line.</p>
+<pre><code class="bash">locate [-ir] patterns
+# where,
+# -i, --ignore-case: ignore case distinctions when matching patterns.
+# -r, --regexp: search  for  a basic regexp, No PATTERNs are allowed if this option is used.</code></pre>
+
+<p>Database of <code>locate</code> command is at <code>/var/lib/mlocate/</code> and <code>/etc/updatedb.conf</code> is its configuration file.</p>
+
+<ul>
+<li><code>find</code> command<br/>
+<code>find</code> searches the directory tree rooted at each given file name by evaluating the given expression from left to right, according to the rules of precedence, until the outcome is known.</li>
+</ul>
+<pre><code class="bash">find [PATH] [option] [expression]
+
+# arguments about time
+# -atime, -ctime, -mtime; take -mtime for example,
+# -mtime n: search the file that was modified n days ago.
+# -mtime -n: search the file that was modified within n days.
+# -mtime +n: search the file that was modified longer than n days.
+
+# arguments about users and groups
+# -uid/-gid: search by uid/gid.
+# -user name: search for files owned by username.
+# -group name: search for files belonging to the group.
+# -nouser: search for files without a owner.
+# -nogroup: search for files without a group.
+
+# arguments about permission and name
+# -name: search by name.
+# -size [+-]SIZE: search for files bigger or smaller than given SIZE.
+# -type TYPE: search by TYPE.
+# -perm MODE: search for files with exectly the same mode as MODE. (mode = MODE)
+# -perm -MODE: search for files with mode including MODE. (mode &gt; MODE)
+# -perm -MODE: search for files with mode included in MODE. (mode &lt; MODE) 
+
+# the following command will operate on the result of executing find command
+find / -perm +7000 -exec ls -l {}\;
+# where,
+# {}: the result of find
+# -exec ... \;: keywords, &apos;;&apos; in bash has special meaning, so use &apos;\;&apos; to tell shell that we want &apos;;&apos; itself. </code></pre>
+</section>
+</section>
+
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><span class="button">1. Directory Management</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'disk-and-file-system' %}" class="button primary icon solid fa-forward">Next: 2. Disk and File System</a></li> 
+                 </ul> 
+             </div> 
+         </div>

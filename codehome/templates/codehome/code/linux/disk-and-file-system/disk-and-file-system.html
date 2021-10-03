@@ -1,0 +1,742 @@
+{% load static %}
+
+<h1 id="diskandfilesystem">Disk and File System</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#ext2filesystem">Ext2 File System</a>
+
+<ul>
+<li><a href="#filesystem">File System</a>
+
+<ul>
+<li><a href="#fatandext2">FAT and Ext2</a></li>
+<li><a href="#thedifferencebetweentwofss">The Difference Between Two FSs</a></li>
+</ul></li>
+<li><a href="#ext2anddirectory">Ext2 and Directory</a></li>
+<li><a href="#ext2andfiles">Ext2 and Files</a></li>
+<li><a href="#locationofafile">Location of a File</a></li>
+<li><a href="#ext2ext3journalingfilesystem">Ext2/Ext3 Journaling File System</a></li>
+<li><a href="#mountpoint">Mount Point</a></li>
+</ul></li>
+<li><a href="#relatedcommand">Related Command</a>
+
+<ul>
+<li><a href="#hardlink">Hard Link</a></li>
+<li><a href="#symbolicklink">Symbolick Link</a></li>
+<li><a href="#partitionandformat">Partition and Format</a></li>
+<li><a href="#mountcommand">Mount Command</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="overview">
+<h2>Overview</h2>
+
+<ul>
+<li>Devices and their filename in Linux</li>
+</ul>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Device</th>
+	<th style="text-align:center;">Filename in Lniux</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">IDE Hard Disk</td>
+	<td style="text-align:center;"><code>/dev/hd[a-d]</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">SCSI/SATA/USB Hard Disk</td>
+	<td style="text-align:center;"><code>/dev/sd[a-p]</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">U-disk</td>
+	<td style="text-align:center;"><code>/dev/sd[a-p]</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">Soft Drive</td>
+	<td style="text-align:center;"><code>/dev/fd[0-1]</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">Printer</td>
+	<td style="text-align:center;"><code>/dev/usb/lp[0-15]</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">Mouse</td>
+	<td style="text-align:center;">USB: <code>/dev/usb/mouse[0-15]</code>, PS2: <code>/dev/psaux</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">CD ROM</td>
+	<td style="text-align:center;"><code>/dev/cdrom</code></td>
+</tr>
+<tr>
+	<td style="text-align:center;">Current Mouse</td>
+	<td style="text-align:center;"><code>/dev/mouse</code></td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>The composition of hard disk
+
+<ul>
+<li><code>Tracks</code>: a platter is divided into many rings, which is called track.</li>
+<li><code>Heads</code>: is used to fetch data from platters.</li>
+<li><code>Cylinder</code>: All of the same tracks on each platter are collectively known as a cylinder. the # of tracks equals that of cylinders. <strong>The minimum unit of partition is cylinder.</strong></li>
+<li><code>Sector</code>: is the minimum unit of hard disk, usually 512 bytes.</li>
+<li>Size of a hard disk = <code>heads * tracks * sectors</code>. Any sector could be located as <code>(head, sector, track)</code>, which can be thought as <code>(z, x, y)</code> if you wish.</li>
+</ul></li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/linux/harddisk.png' %}" alt="Hard Disk" />
+<figcaption>Hard Disk</figcaption>
+</figure>
+
+<ul>
+<li>The first sector is super important for it has <code>Master Boot Record(MBR)</code>, which has the size of 446 bytes, and <code>Partition Table(PT)</code>, which is able to record only 4 records.</li>
+</ul>
+<pre><code class="bash"># the composition of first sector, which consist of the first sectors of cylinders from 1~100
+|--------|----------|------------|------------|-------------|
+| MBR&amp;PT | 1 -- 100 | 101 -- 200 | 201 -- 300 | 301 -- 400  |
+|________|__________|____________|____________|_____________|
+
+PT(64 bytes) -&gt; P1: 1 -- 100, P2: 101 -- 200,
+                P3: 201 -- 300, P4: 301 -- 400.
+
+# Given filename of device is /dev/hda, then
+P1: /dev/hda1    P2: /dev/hda2
+P3: /dev/hda3    P4: /dev/hda4</code></pre>
+
+<ul>
+<li><code>Partitions</code>: there are three partitions, <code>primary partition</code>, <code>extented partitions</code> and <code>logical partitions</code>. # of primary and extended partitions is no more than 4, and there is 1 extended partition at most.</li>
+</ul>
+<pre><code class="bash">         | Primary  | &lt;---------     Extended     --------&gt; |
+|--------|----------|------------|------------|-------------|
+| MBR&amp;PT | 1 -- 100 | 101 -- 200 | 201 -- 300 | 301 -- 400  |
+|________|__________|____________|____________|_____________|
+             P1          P2           P3            P4
+
+# also we could divide extended partition into more than 3 partitions by using one of a sector in P2 as a extended partition table,
+| &lt;--- Primary ---&gt; | &lt;---------     Extended     --------&gt; |
+|--------|----------|----|----------------------------------|
+| MBR&amp;PT | 1 -- 100 | PT |          101 -- 400              |
+|________|__________|____|__________________________________|
+             P1                      P2
+P3 = P4 = NULL
+
+# then P2 could be divided into 5 logical partition,
+         | Primary  | &lt;---------     Extended     --------&gt; |
+|--------|----------|----|------|------|------|------|------|
+| MBR&amp;PT | 1 -- 100 | PT |  L1  |  L2  |  L3  |  L4  |  L5  |
+|________|__________|____|______|______|______|______|______|
+                                 Logic Partition
+             P1                       P2
+P1: /dev/hda1   P2: /dev/hda2   # hda[3-4] is reserved for P3/4
+L1: /dev/hda5   L2: /dev/hda6
+L3: /dev/hda7   L4: /dev/hda8   L5: /dev/hda9</code></pre>
+
+<ul>
+<li>The startup of a computer consists of
+
+<ul>
+<li><code>Basic I/O System(BIOS)</code>: BIOS is firmware used to perform hardware initialization during the booting process.</li>
+<li><code>MBR</code>: is a special type of boot sector at the very beginning of partitioned computer mass storage devices like fixed disks or removable drives.</li>
+<li><code>Boot Loader</code>: loads programs of operation system.</li>
+<li><code>Shell</code>: loads shell programs.</li>
+</ul></li>
+</ul>
+
+</section>
+<section	id="ext2filesystem">
+<h2>Ext2 File System</h2>
+
+<section	id="filesystem">
+<h3>File System</h3>
+
+<p>In computing, a file system controls how data is stored or retrieved. Without a file system, data placed in a storage medium would be one large body of data with no way to tell where one piece of data stops and the next begins. By separating the data into pieces and giving each piece a name, the data is easily isolated and identified. </p>
+
+<section	id="fatandext2">
+<h4>FAT and Ext2</h4>
+
+<p>The family of <code>FAT</code> file systems is supported by almost all operating systems for personal computers, including all versions of Windows and PC-DOS. </p>
+
+<p>The <code>Ext2</code>(Second Extended File System) is a file system for the Linux kernel. The space in Ext2 is split up into <code>blocks</code>. These blocks are grouped into block groups, analogous to cylinder groups in the Unix File System. There are typically thousands of blocks on a large file system. Data for any given file is typically contained within a single <code>block group</code> where possible. This is done to minimize the number of disk seeks when reading large amounts of contiguous data.</p>
+
+<p>Each block group contains a copy of <code>the superblock</code> and <code>block group descriptor table</code>, and all block groups contain <code>a block bitmap</code>, <code>an inode bitmap</code>, <code>an inode table</code>, and finally <code>the actual data blocks</code>.</p>
+
+<ul>
+<li><code>Super Block</code>: contains important information that is crucial to the booting of the operating system, which record the status of blocks and inodes, used and remained, the size of inode and block and so on.</li>
+<li><code>Inode</code>: every file or directory is represented by an inode. The term &#8220;inode&#8221; comes from &#8220;index node&#8221;. The inode includes data about the size, permission, ownership, and location on disk of the file or directory.</li>
+<li><code>Block</code>: is the minimum unit that the data will be stored, usually 1K, 2K or 4K. When using 1K as the size of unit, the total number of block will be too large, so slowing down the speed of read and write. While using 4K, storage could be wasted when there are too many files smaller than 4K given <strong>one block only saves one file</strong>. Therefore the size of block is the matter of trade off between the use of storage and the speed of R/W.</li>
+<li><code>File System Description</code>: describes the beginning and end of a block group, and important information of that group(superblock, bitmap, inodemap, datablock).</li>
+<li><code>Block Bitmap</code>: records which block is used or unused.</li>
+<li><code>Inode Bitmap</code>: records which inode is used or unused.</li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/linux/ext2.png' %}" alt="Ext2: Indexed Allocation File System" />
+<figcaption>Ext2: Indexed Allocation File System</figcaption>
+</figure>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Block Size</th>
+	<th style="text-align:center;">Maximum Size of a File</th>
+	<th style="text-align:center;">Maximum Size of FS</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">1KB</td>
+	<td style="text-align:center;">16GB</td>
+	<td style="text-align:center;">2TB</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2KB</td>
+	<td style="text-align:center;">256GB</td>
+	<td style="text-align:center;">8TB</td>
+</tr>
+<tr>
+	<td style="text-align:center;">4KB</td>
+	<td style="text-align:center;">2TB</td>
+	<td style="text-align:center;">16TB</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>Noting: the size of inode is 128 bytes, including 12 direct records. So the system will use some block as the block pointers to indirect data blocks or double indirect ones. Assuming the size of block equals 1K, <code>12 * 1K + 256 * 1K + 256 * 256 * 1K = 16GB</code>, where a block is able to record information of 256 blocks given the size of a record is 4 bytes, <code>1K = 1024 bytes / 4 bytes = 256</code>.</li>
+</ul>
+
+</section>
+<section	id="thedifferencebetweentwofss">
+<h4>The Difference Between Two FSs</h4>
+
+<p><code>Ext2</code> is an <code>indexed allocation file system</code>, however <code>FAT</code> is a file system a little bit like link list.</p>
+<pre><code class="markdown"># In Ext2, inode is a data table recording where the data is stored.
+inode: |---|---|---|---|-----|-----|
+       |_1_|_2_|_3_|_4_|_..._|_100_|
+
+blocks: |---|---|---|---|-----|----|
+        |_1_|_2_|_3_|_4_|_..._|_50_|
+        |----|----|----|----|-----|-----|
+        |_51_|_52_|_53_|_54_|_..._|_100_|
+        ......
+
+inode(1): 2-37-48-79
+inode(2): 44-3-28-76-4
+....
+
+block(1): | data |
+block(2): | data |
+....
+#                     |- block(x)
+# so file == inode -&gt; |- block(y)
+#                     |- block(z)
+
+# However, in FAT, there is no inode, only blocks, and the blocks is organized as link list.
+
+blocks: |---|---|---|---|-----|----|
+        |_1_|_2_|_3_|_4_|_..._|_50_|
+        |----|----|----|----|-----|-----|
+        |_51_|_52_|_53_|_54_|_..._|_100_|
+        ......
+
+block(n): | current data | ptr to next data |
+# file == block(x) -&gt; block(y) -&gt; block(z)</code></pre>
+
+<p>Let&#8217;s have a try.</p>
+<pre><code class="bash">[root@localhost ~]$ df
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/vda1       41151808 2939012  36099364   8% /
+devtmpfs          930772       0    930772   0% /dev
+tmpfs             941368       0    941368   0% /dev/shm 
+
+[root@localhost ~]$ dumpe2fs /dev/vda1
+Filesystem volume name:    &lt;none&gt;              
+Last mounted on:          /
+Filesystem UUID:          b98386f1-e6a8-44e3-9ce1-a50e59d9a170
+Filesystem magic number:  0xEF53
+Filesystem revision #:    1 (dynamic)
+Filesystem features:      has_journal ext_attr resize_inode dir_index filetype needs_recovery extent flex_bg sparse_super large_file huge_file uninit_bg dir_nlink extra_isize
+Filesystem flags:         signed_directory_hash 
+Default mount options:    user_xattr acl
+Filesystem state:         clean
+Errors behavior:          Continue
+Filesystem OS type:       Linux
+Inode count:              2621440
+Block count:              10485248
+Reserved block count:     524262
+Free blocks:              8097464
+Free inodes:              2397705
+First block:              0
+Block size:               4096
+Fragment size:            4096
+Reserved GDT blocks:      1021
+Blocks per group:         32768
+Fragments per group:      32768
+Inodes per group:         8192
+Inode blocks per group:   512
+....
+Group 0: (Blocks 0-32767) [ITABLE_ZEROED]
+  Checksum 0x2ed9, unused inodes 2987
+  Primary superblock at 0, Group descriptors at 1-3
+  Reserved GDT blocks at 4-1024
+  Block bitmap at 1025 (+1025), Inode bitmap at 1041 (+1041)
+  Inode table at 1057-1568 (+1057)
+  20046 free blocks, 3004 free inodes, 885 directories, 2987 unused inodes
+  Free blocks: 10452, 12723-32767
+  Free inodes: 1166, 1169, 1171, 1173, 1176, 1179, 1182, 1184, 1186-1187, 1191, 3415-3420, 5206-8192
+Group 1: (Blocks 32768-65535) [INODE_UNINIT, ITABLE_ZEROED]
+  Checksum 0x2d79, unused inodes 8192
+  Backup superblock at 32768, Group descriptors at 32769-32771
+  Reserved GDT blocks at 32772-33792
+  Block bitmap at 1026 (bg #0 + 1026), Inode bitmap at 1042 (bg #0 + 1042)
+  Inode table at 1569-2080 (bg #0 + 1569)
+  0 free blocks, 8192 free inodes, 0 directories, 8192 unused inodes
+  Free blocks: 
+  Free inodes: 8193-16384</code></pre>
+
+</section>
+</section>
+<section	id="ext2anddirectory">
+<h3>Ext2 and Directory</h3>
+
+<p>When making a directory, Ext2 File System will allocate one inode and at least one block to the directory, where inode saves the attributes of that directory(permission, owner and so forth) and the number of allocated block. And the block will record the name of the file in that directory and its inode. </p>
+<pre><code class="markdown">inode: owner, permission, group, inode of allocated block ...
+block: filename1, inode1
+       filename2, inode2
+       filename3, inode3
+       ...</code></pre>
+
+<ul>
+<li>That&#8217;s why when rename a file, we must have write permission of the directory where the file is.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~]$ ll -d / /usr/bin /boot /home
+dr-xr-xr-x. 18 root root 4.0K Aug  6 22:34 /           # a 4K block
+dr-xr-xr-x.  5 root root 4.0K Nov 29  2018 /boot       # a 4K block
+drwxr-xr-x.  4 root root 4.0K Aug  7 10:15 /home       # a 4K block
+dr-xr-xr-x.  2 root root  20K Sep  8 15:23 /usr/bin    # 5 4K blocks</code></pre>
+
+</section>
+<section	id="ext2andfiles">
+<h3>Ext2 and Files</h3>
+
+<p>When creating a file, Ext2 File System will allocate one inode and <em>N</em> blocks corresponding to its size. Given a file with the size of 100KB, file system will give an inode and <code>25 + 1</code> blocks to store that file, where <code>1</code> block serves as a table recording the other 25 blocks which store data of the file.</p>
+
+</section>
+<section	id="locationofafile">
+<h3>Location of a File</h3>
+
+<p>Given the knowledge above, we will figure out how the system read a file,</p>
+<pre><code class="bash">[root@localhost ~]$ df
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/vda1       41151808 2939012  36099364   8% /
+devtmpfs          930772       0    930772   0% /dev
+tmpfs             941368       0    941368   0% /dev/shm 
+
+[root@localhost ~]$ ll -di / /etc/ /etc/passwd 
+      2 dr-xr-xr-x. 18 root root 4.0K Aug  6 22:34 /
+1048577 drwxr-xr-x. 81 root root 4.0K Sep  8 15:23 /etc/
+1066290 -rw-r--r--   1 root root 1.2K Aug  7 10:15 /etc/passwd  
+
+# 1. we are able to get the inode of `/` from mounting information from `/dev/vda1`, which is 2, so we get the number of `/`&apos;s block, given that we have `r,x` permission.
+# 2. in the block, we find the inode of directory `etc/`, 1048577.
+# 3. in the inode of `etc/`, user with `r,x` permission could read the content of `etc/`, that is `etc/`&apos;s block.
+# 4. in the block, we find the inode of file passwd, 1066290.
+# 5. then user could read the content of passwd, or in other word, access blocks of passwd, given the user has `r` permission.</code></pre>
+
+</section>
+<section	id="ext2ext3journalingfilesystem">
+<h3>Ext2/Ext3 Journaling File System</h3>
+
+<p>What happened when a user touch a file? </p>
+
+<ul>
+<li>check if the user has <code>w, x</code> permission of that directory.</li>
+<li>find available inode in inode bitmap, and write the permission of new file.</li>
+<li>access unused blocks in block bitmap and write data into them, meanwhile update inode information.</li>
+<li>update the status of inode bitmap and block bitmap.</li>
+</ul>
+
+<p>In general, inode table and data block are called <code>data storage area</code>, super block, block bitmap and inode bitmap are named <code>metadata</code>, which are likely to change.</p>
+
+<p>However, there is a scenario that something inconsistent happened. for example, for some reasons, in the final step, the inode bitmap and block bitmap have not been updated. Alas, that&#8217;s a crisis.</p>
+
+<p>So, computer scientist come up with an idea of <code>journaling file system</code>. They allocate some blocks to record the change of file system. There are mainly three steps,</p>
+
+<ul>
+<li>preparation: when writing a file, the system will write the information of new file into journal file.</li>
+<li>process: write the permission and data of a new file and update metadata.</li>
+<li>end: after finishing updating metadata, the system will record in the journal file.</li>
+</ul>
+
+<p>What a great idea.</p>
+<pre><code class="bash">[root@localhost ~]$ dumpe2fs /dev/vda1
+...
+Journal inode:            8
+First orphan inode:       660494
+Default directory hash:   half_md4
+Directory Hash Seed:      64c050c5-05fb-4ed0-9f92-f5abefc12cc4
+Journal backup:           inode blocks
+Journal features:         journal_incompat_revoke
+Journal size:             128M
+Journal length:           32768
+Journal sequence:         0x0002c351
+Journal start:            1952
+...
+
+# 32768 blocks * 4K = 128MB</code></pre>
+
+</section>
+<section	id="mountpoint">
+<h3>Mount Point</h3>
+
+<p><code>Mount</code> is the way of OS to link file system and directory tree. The point is that <strong>mount point must be a directory, which is the entrance of file system</strong>.</p>
+<pre><code class="bash">[root@localhost ~]$ ll -di /
+      2 dr-xr-xr-x. 18 root root 4.0K Aug  6 22:34 /
+
+# in general, # of inode of top directory is 2.</code></pre>
+
+<p>TIP: <code>/</code>, <code>/.</code> and <code>/..</code> are the same thing for they have the same inode number.</p>
+<pre><code class="bash">[root@localhost ~]$ ls -ild / /. /..                
+2 dr-xr-xr-x. 18 root root 4096 Aug  6 22:34 /
+2 dr-xr-xr-x. 18 root root 4096 Aug  6 22:34 /.  
+2 dr-xr-xr-x. 18 root root 4096 Aug  6 22:34 /..</code></pre>
+
+</section>
+</section>
+<section	id="relatedcommand">
+<h2>Related Command</h2>
+
+<ul>
+<li><code>df</code> or <code>du</code><br/>
+<code>df</code> and <code>du</code>, which can be seen as <em>disk free</em> and <em>disk usage</em> respectively, are used to report file system disk space usage.</li>
+</ul>
+<pre><code class="bash">df [-hi]
+# where,
+# -h: print sizes in human readable format (e.g., 1K 234M 2G)
+# -i: list inode information instead of block usage
+
+[root@localhost ~]$ df
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/vda1       41151808 2939196  36099180   8% /
+devtmpfs          930772       0    930772   0% /dev
+
+[root@localhost ~]$ df -h
+Filesystem      Size  Used Avail Use% Mounted on 
+/dev/vda1        40G  2.9G   35G   8% /
+devtmpfs        909M     0  909M   0% /dev  
+
+[root@localhost ~]$ df -i
+Filesystem      Inodes IUsed   IFree IUse% Mounted on 
+/dev/vda1      2621440 77295 2544145    3% / 
+devtmpfs        232693   327  232366    1% /dev
+</code></pre>
+<pre><code class="bash">du -[sm] (directory)
+# where,
+# -s: display only a total for each argument
+# -m: like --block-size=1M
+
+[root@localhost ~]$ du -sm /*
+0       /bin
+128     /boot
+0       /dev
+33      /etc
+1       /home
+0       /lib
+0       /lib64
+1       /lost+found
+1       /media
+1       /mnt
+1       /opt
+0       /proc
+404     /root
+1       /run
+0       /sbin
+1       /srv
+0       /sys
+78      /tmp
+1798    /usr
+356     /var
+
+# `/proc` is mounted in memory, so don&apos;t worry that it will show 0</code></pre>
+
+<ul>
+<li><code>ln</code> link file<br/>
+<code>ln</code> is used to make links between files.</li>
+</ul>
+
+<section	id="hardlink">
+<h3>Hard Link</h3>
+
+<p><code>hard link</code>: two files have the same inode. As the matter of fact, they are the same file. So the nature of making a hard link is to associate the inode of a file to other directory. Take <code>crontab</code> file for example. <code>/etc/crontab</code> and <code>/root/crontab</code> are the same file, but they have 2 records in directory <code>etc/</code> and <code>root/</code> respectively. In other word, there are 2 ways to access <code>crontab</code> through directory tree.</p>
+<pre><code class="bash">[root@localhost ~] ln /etc/crontab .  # in root directory
+[root@localhost ~] ll -i /etc/crontab /root/crontab
+1057705 -rw-r--r--. 2 root root 451 Jun 10  2014 /etc/crontab
+1057705 -rw-r--r--. 2 root root 451 Jun 10  2014 /root/crontab  
+
+# `/` -&gt; `etc/` -&gt; `crontab` or `/` -&gt; `root/` -&gt; `crontab`</code></pre>
+
+<p>When making a hard link, the number of inode and block won&#8217;t change, the ONLY thing change are <em>the content of directory block</em> and <em>index number(+1)</em>. <strong>All directory containing inode of that file have the same level of previlege.</strong></p>
+
+<p>What happened when filename is deleted? The answer is that the file is not deleted, what&#8217;s deleted is the record to the file in that directory block. <strong>Therefore, when index number &gt; 0, the file always exists</strong>.</p>
+<pre><code class="bash">[root@localhost ~] rm /root/crontab
+[root@localhost ~] ll -i /etc/crontab /root/crontab
+ls: cannot access /root/crontab: No such file or directory
+1057705 -rw-r--r--. 1 root root 451 Jun 10  2014 /etc/crontab</code></pre>
+
+</section>
+<section	id="symbolicklink">
+<h3>Symbolick Link</h3>
+
+<p><code>symbolic link</code> also termed <code>soft link</code>: is a special kind of file that points to another file, much like a shortcut in Windows or a Macintosh alias. Unlike a hard link, a symbolic link does not contain the data in the target file. It simply points to another entry somewhere in the file system. They are totally two different files since they have different inodes.</p>
+<pre><code class="bash">[root@localhost ~] ln -s /etc/crontab crontab-shortcut  # in root directory
+[root@localhost ~] ll -i /etc/crontab /root/crontab-shortcut
+1057705 -rw-r--r--. 1 root root 451 Jun 10  2014 /etc/crontab
+ 269698 lrwxrwxrwx  1 root root  12 Nov 22 15:07 /root/crontab-shortcut -&gt; /etc/crontab
+
+# why 12 bytes? the string of `/etc/crontab` contains 12 alphabets, each of which is 1 byte.
+# `/` -&gt; `root/` -&gt; `contab-shortcut` -&gt; `etc/` -&gt; `crontab`.</code></pre>
+<pre><code class="bash">ln -[sf] (origin) (destination)
+# where,
+# -s: make symbolic links instead of hard links.
+# -f, --force: remove existing destination files.</code></pre>
+
+<p>QUESTION: When making a directory, how does the index number change?<br/>
+ANSWER: Index number of new directory is 2 (new directory itself and <code>new-directory/.</code>), and index number of its parent directory plus 1 (<code>new-directory/..</code>).</p>
+<pre><code class="bash">[root@localhost ~] ll -di /root
+262145 dr-xr-x---. 13 root root 4.0K Nov 22 15:25 .
+[root@localhost ~] mkdir helloworld
+[root@localhost ~] ll -di /root /root/helloworld
+262145 dr-xr-x---. 14 root root 4.0K Nov 22 15:27 .      # plus 1 since `helloworld/..`
+658222 drwxr-xr-x   2 root root 4.0K Nov 22 15:26 ./helloworld</code></pre>
+
+</section>
+<section	id="partitionandformat">
+<h3>Partition and Format</h3>
+
+<ul>
+<li><code>fdisk</code><br/>
+<code>fdisk</code> is used to manipulate disk partition table.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] df /    # to find device filename
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/vda1       41151808 2939244  36099132   8% /
+
+[root@localhost ~] fdisk /dev/vda  # without number
+Welcome to fdisk (util-linux 2.23.2).
+
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Command (m for help): m
+
+Command action
+   a   toggle a bootable flag
+   b   edit bsd disklabel
+   c   toggle the dos compatibility flag
+   d   delete a partition
+   g   create a new empty GPT partition table
+   G   create an IRIX (SGI) partition table
+   l   list known partition types
+   m   print this menu
+   n   add a new partition
+   o   create a new empty DOS partition table
+   p   print the partition table
+   q   quit without saving changes
+   s   create a new empty Sun disklabel
+   t   change a partition system id
+   u   change display/entry units
+   v   verify the partition table
+   w   write table to disk and exit
+   x   extra functionality (experts only)</code></pre>
+<pre><code class="bash">Command (m for help): p
+
+Disk /dev/vda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000a57df
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/vda1   *        2048    83884031    41940992   83  Linux</code></pre>
+
+<p>Now let&#8217;s start to partition.</p>
+<pre><code class="bash"># deleted current partition
+Command (m for help): d
+Selected partition 1
+Partition 1 is deleted
+
+Command (m for help): p
+
+Disk /dev/vda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000a57df
+
+   Device Boot      Start         End      Blocks   Id  System
+
+# create a primary partition
+Command (m for help): n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+
+Select (default p): p
+Partition number (1-4, default 1): 2
+First sector (2048-83886079, default 2048): 
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-83886079, default 83886079): +512M
+Partition 2 of type Linux and of size 512 MiB is set
+
+Command (m for help): p
+
+Disk /dev/vda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000a57df
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/vda2            2048     1050623      524288   83  Linux
+
+# add an extended partition
+Command (m for help): n
+Partition type:
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p): e
+Partition number (1,3,4, default 1): 3
+First sector (1050624-83886079, default 1050624): 
+Using default value 1050624
+Last sector, +sectors or +size{K,M,G} (1050624-83886079, default 83886079): 
+Using default value 83886079
+Partition 3 of type Extended and of size 39.5 GiB is set
+
+Command (m for help): p
+
+Disk /dev/vda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000a57df
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/vda2            2048     1050623      524288   83  Linux
+/dev/vda3         1050624    83886079    41417728    5  Extended
+
+# add a logical partition
+Command (m for help): n
+Partition type:
+   p   primary (1 primary, 1 extended, 2 free)
+   l   logical (numbered from 5)
+Select (default p): l
+Adding logical partition 5
+First sector (1052672-83886079, default 1052672): 
+Using default value 1052672
+Last sector, +sectors or +size{K,M,G} (1052672-83886079, default 83886079): +2048M
+Partition 5 of type Linux and of size 2 GiB is set
+
+Command (m for help): p
+
+Disk /dev/vda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000a57df
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/vda2            2048     1050623      524288   83  Linux
+/dev/vda3         1050624    83886079    41417728    5  Extended
+/dev/vda5         1052672     5246975     2097152   83  Linux</code></pre>
+
+<ul>
+<li><code>mkfs</code><br/>
+<code>mkfs</code> is used to build a Linux filesystem on a device, usually a hard disk partition.</li>
+</ul>
+<pre><code class="bash">mkfs -t (file system) (device filename)
+# where,
+# -t: specify  the  type  of  filesystem to be built, ext3, ext2, vfat ...</code></pre>
+
+</section>
+<section	id="mountcommand">
+<h3>Mount Command</h3>
+
+<ul>
+<li><code>mount</code><br/>
+<code>mount</code> serves to attach the filesystem found on some device to the big file tree.</li>
+</ul>
+<pre><code class="bash">mount -t (file system) (device filename) (directory)
+# where,
+# -t: specify  the  type  of  filesystem to be built, ext3, ext2, vfat ...
+
+[root@localhost ~] mkdir /mnt/vda5
+[root@localhost ~] mount /dev/vda5 /mnt/vda5
+[root@localhost ~] df /dev/vda
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/vda1       41151808 2939244  36099132   8% /
+/dev/vda5       21251918  182738   4939117   2% /mnt/vda5</code></pre>
+
+<ul>
+<li><code>umount</code><br/>
+<code>umount</code> command detaches the file system(s) mentioned from the file hierarchy.</li>
+</ul>
+<pre><code class="bash">umount (device filename)
+
+[root@localhost ~] umount /dev/vda5</code></pre>
+
+<ul>
+<li><code>/etc/fstab</code> and <code>/etc/mtab</code><br/>
+These two files are reserved for configuring mount automatically.</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] cat /etc/fstab 
+# device  mount point   filesystem   parameters   dump    fsck             
+minzhq         /           ext4       defaults     1        1
+/dev/vda5  /mnt/vda5       ext3       defaults     1        2
+
+# dump means if backup, 1 for backup everyday, 0 for no backup.
+# fsck means filesystem check, 0 for no check, 1 check at the beginning, 2 check but later.  </code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'directory-management' %}" class="button primary icon solid fa-backward">Back: 1. Directory Management</a></li> 
+                     <li><span class="button">2. Disk and File System</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'file-compression-and-packaging' %}" class="button primary icon solid fa-forward">Next: 3. File Compression and Packaging</a></li> 
+                 </ul> 
+             </div> 
+         </div>

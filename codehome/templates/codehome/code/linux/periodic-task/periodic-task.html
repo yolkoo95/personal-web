@@ -1,0 +1,249 @@
+{% load static %}
+
+<h1 id="periodictask">Periodic Task</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#at">At</a></li>
+<li><a href="#cron">Cron</a>
+
+<ul>
+<li><a href="#permission">Permission</a></li>
+<li><a href="#crontab">Crontab</a></li>
+<li><a href="#systemschedulingtask">System Scheduling Task</a></li>
+<li><a href="#schedulingdirectory">Scheduling Directory</a></li>
+<li><a href="#anacron">Anacron</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="introduction">
+<h2>Introduction</h2>
+
+<p>Whenever using a UNIX-based operating system, certain tasks are to be performed repeatedly. Running them manually every single time is time-consuming and overall inefficient. To solve this issue, UNIX comes with its built-in task schedulers. These task schedulers act like a smart alarm clock. When the alarm goes off, the operating system will run the predefined task.</p>
+
+<p>In the case of Linux, it comes with two basic but powerful tools: Cron daemon (default task scheduler) and at (more suitable for one-time task scheduling).</p>
+
+</section>
+<section	id="at">
+<h2>At</h2>
+
+<ul>
+<li><code>at</code><br/>
+<code>at</code> offers the ability to run a command/script at a specific time or at a fixed interval, note that <code>at</code> will run the target job once whereas <code>cron</code> would re-run the job at the interval. The <code>at</code> tool is less popular compared to cron, but it’s relatively easier to use. You can use certain keywords like midnight or teatime</li>
+</ul>
+
+<p>Before our experiment, let&#8217;s start <code>atd</code> service.</p>
+
+<pre><code class="bash"># IF at service is installed, ignore following commands
+[root@localhost ~] yum install -y at
+[root@localhost ~] systemctl status atd
+   Loaded: loaded (/usr/lib/systemd/system/atd.service; enabled; vendor preset: enabled)
+   Active: inactive (dead)
+[root@localhost ~] systemctl start atd
+[root@localhost ~] systemctl status atd
+ Loaded: loaded (/usr/lib/systemd/system/atd.service; enabled; vendor preset: enabled)
+   Active: active (running) since Wed 2021-03-17 15:16:26 CST; 3s ago
+ Main PID: 2015 (atd)
+
+# time for syntax of at
+at [-mldvc] TIME
+# where,
+# -m: mail user after executing scheduling task
+# -l: display all at tasks, which is equal to `atq`
+# -d: delete a task in at queue, which is equal to `atrm`
+# -v: display in time format
+# -c: show detailed command of a task
+# TIME:
+# HH:MM     ex&gt; 04:00
+# HH:MM YYYY-MM-DD    ex&gt; 09:31 1995-12-21
+# HH:MM[am/pm] [Month] [Date]    ex&gt; 04pm March 17
+# HH:MM[am/pm] + number[minutes/hours/days/weeks]
+# ex&gt; now + 5 days
+</code></pre>
+
+<pre><code class="bash">[root@localhost ~] at now + 5 minutes
+at&gt; echo -e &quot;Hello world&quot;
+at&gt; &lt;EOT&gt; # Ctrl + d
+job 1 at Wed Mar 17 15:31:00 2021
+[root@localhost ~] at -c 1
+#!/bin/sh
+# atrun uid=0 gid=0
+# mail root 0
+umask 22
+...
+echo -e &quot;Hello world&quot;
+
+[root@localhost ~] atq
+1       Wed Mar 17 15:31:00 2021 a root
+[root@localhost ~] atrm 1
+[root@localhost ~] atq
+</code></pre>
+
+<p>When comes to <code>at</code>, we have to talk about <code>batch</code>.</p>
+
+<ul>
+<li><code>batch</code><br/>
+<code>batch</code> is a command based on <code>at</code>. It will execute scheduling tasks when CPU load is less than 0.8, that is when it is not too busy. It has the same usage of <code>at</code>.</li>
+</ul>
+
+<pre><code class="bash">[root@localhost ~] batch 23:00 2020-12-21
+at&gt; sync
+at&gt; sync
+at&gt; shutdown -h now
+at&gt; &lt;EOT&gt;
+[root@localhost ~] atq
+1       Wed Dec 21 23:00:00 2020 b root
+</code></pre>
+
+</section>
+<section	id="cron">
+<h2>Cron</h2>
+
+<ul>
+<li><code>cron</code><br/>
+<code>cron</code> is used to scheduling a task in linux, for example, regular backups that occur daily at 2 a.m.</li>
+</ul>
+
+<p>The <code>crond</code> daemon is the background service that enables <code>cron</code> functionality.</p>
+
+<p>The cron service checks for files in the <code>/var/spool/cron</code> and <code>/etc/cron.d</code> directories and the <code>/etc/anacrontab</code> file. The contents of these files define cron jobs that are to be run at various intervals. The individual user cron files are located in <code>/var/spool/cron</code>, and system services and applications generally add cron job files in the <code>/etc/cron.d</code> directory. The <code>/etc/anacrontab</code> is a special case that will be covered later.</p>
+
+<section	id="permission">
+<h3>Permission</h3>
+
+<p>The first question is who is able to use cron service. There are two files specify that.</p>
+
+<ul>
+<li><code>/etc/cron.allow</code>: if the file exists, only the users listed in the file will be allowed to use cron service.</li>
+<li><code>/etc/cron.deny</code>: if the file exists, the users listed in the file will be denied to access cron service. Its priority is lower than <code>cron.allow</code>.</li>
+</ul>
+
+</section>
+<section	id="crontab">
+<h3>Crontab</h3>
+
+<p>When a user use <code>crontab</code> to create a scheduling task, it will be recorded into <code>/var/spool/cron/</code> and the owner will be marked too. For example, if Brain use <code>crontab</code> to create a task, it will be recorded into <code>/var/spool/cron/brain</code>.</p>
+
+<p>WARNING: do NOT edit cron file with <code>vi</code>, syntax error will damage normal cron service.</p>
+
+<pre><code class="bash">crontab [-u username, -l | -e | -r]
+# where,
+# -u: used by root to schedule task for other users
+# -e: edit the content of crontab
+# -l: list the content of crontab
+# -r: clear the content of crontab
+</code></pre>
+
+<pre><code class="bash"># For root
+[root@localhost ~] cat /etc/crontab
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+
+# For details see man 4 crontabs
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name  command to be executed
+
+# execute sync every 30 minutes
+*/30 * * * * root /bin/sync
+
+
+# For normal user, notice that the user name is not needed
+[MinzhiQu@localhost ~] crontab -e
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  *  command to be executed
+
+# send message at 23:59 12-20 every year
+59 23 20 12 * echo -e &quot;Happy Birthday&quot;
+
+[MinzhiQu@localhost ~] crontab -r
+[MinzhiQu@localhost ~] crontab -l
+no crontab for MinzhiQu
+</code></pre>
+
+</section>
+<section	id="systemschedulingtask">
+<h3>System Scheduling Task</h3>
+
+<p>Notice that in <code>/etc</code> directory, there are some files and directories related to <code>cron</code> &#8211; <code>/etc/cron.hourly/</code>, <code>/etc/cron.daily/</code>, <code>/etc/cron.monthly/</code>, and <code>/etc/cron.weekly</code>. For scheduling system task, just put <code>*.sh</code> into responding directory.</p>
+
+<pre><code class="bash">[root@localhost ~] cat /etc/crontab
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root    # when error occurs, it will mail root
+...
+</code></pre>
+
+</section>
+<section	id="schedulingdirectory">
+<h3>Scheduling Directory</h3>
+
+<p>We are able to create a directory which has the same function as <code>cron.hourly</code> as a normal user with <code>run-parts</code> argument.</p>
+
+<pre><code class="bash">[MinzhiQu@localhost ~] mkdir /MinzhiQu/runcron
+[MinzhiQu@localhost ~] crontab -e
+*/10 * * * * root run-parts /MinzhiQu/runcron
+</code></pre>
+
+</section>
+<section	id="anacron">
+<h3>Anacron</h3>
+
+<p><code>anacron</code> is a computer program that performs periodic command scheduling, which is traditionally done by cron, but without assuming that the system is running continuously. Thus, it can be used to control the execution of daily, weekly, and monthly jobs (or anything with a period of n days) on systems that don&#8217;t run 24 hours a day. </p>
+
+<pre><code class="bash">[root@localhost ~] ll /etc/cron.*/*ana*
+-rwxr-xr-x. 1 root root 392 Aug  9  2019 /etc/cron.hourly/0anacron
+[root@localhost ~] cat /etc/cron.hourly/0anacron
+#!/bin/sh
+# Check whether 0anacron was run today already
+if test -r /var/spool/anacron/cron.daily; then
+    day=`cat /var/spool/anacron/cron.daily`
+fi
+if [ `date +%Y%m%d` = &quot;$day&quot; ]; then
+    exit 0;
+fi
+
+# Do not run jobs when on battery power
+if test -x /usr/bin/on_ac_power; then
+    /usr/bin/on_ac_power &gt;/dev/null 2&gt;&amp;1
+    if test $? -eq 1; then
+    exit 0
+    fi
+fi
+/usr/sbin/anacron -s
+</code></pre>
+
+<p>Notice that <code>0anacron</code> file appears in <code>/etc/cron.hourly</code>, hence it will be executed hourly.</p>
+
+<p>What <code>0anacron</code> does is just update timestamp. It serves as a benchmark for <code>anacrontab</code> to check if a scheduling task is executed normally, and if not, it will be added to jobs and be executed later.</p>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'account-management' %}" class="button primary icon solid fa-backward">Back: 8. Account Management</a></li> 
+                     <li><span class="button">9. Periodic Task</span></li> 
+                 </ul> 
+             </div> 
+         </div>

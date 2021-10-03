@@ -1,0 +1,469 @@
+{% load static %}
+
+<h1 id="souleditoroflinux">Soul Editor of Linux</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#whyvim">Why VIM</a></li>
+<li><a href="#operations">Operations</a>
+
+<ul>
+<li><a href="#solveconflict">Solve Conflict</a></li>
+<li><a href="#visualblock">Visual Block</a></li>
+<li><a href="#multifileedition">Multifile Edition</a></li>
+<li><a href="#multiviewedition">Multiview Edition</a></li>
+</ul></li>
+<li><a href="#vimenvironmentvariables">Vim Environment Variables</a></li>
+<li><a href="#dosandlinux">DOS and Linux</a></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="whyvim">
+<h2>Why VIM</h2>
+
+<p><code>Vim</code> (a contraction of <code>Vi IMproved</code>) is a clone, with additions, of Bill Joy&#8217;s vi text editor program for Unix. It is designed for use both from a command-line interface and as a standalone application in a graphical user interface. </p>
+
+<p><code>Vim</code> has a <code>vi</code> compatibility mode, but when that mode isn&#8217;t used, Vim has many enhancements over vi. Some of Vim&#8217;s enhancements include completion, comparison and merging of files (known as vimdiff), a comprehensive integrated help system, extended regular expressions, scripting languages (both native and through alternative scripting interpreters such as Perl, Python, Ruby, Tcl, etc.) including support for plugins, a graphical user interface (known as gvim). All in all, vim is going to be the most popular linux text editor nowadays.</p>
+
+</section>
+<section	id="operations">
+<h2>Operations</h2>
+
+<p>Shortcuts of common operation are concluded here,</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Shortcuts</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><kbd>←</kbd> or <kbd>h</kbd></td>
+	<td style="text-align:center;">move left by a character</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>↓</kbd> or <kbd>j</kbd></td>
+	<td style="text-align:center;">move down by a character</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>↑</kbd> or <kbd>k</kbd></td>
+	<td style="text-align:center;">move up by a character</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>→</kbd> or <kbd>l</kbd></td>
+	<td style="text-align:center;">move right by a character</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + any of <kbd>arrow</kbd></td>
+	<td style="text-align:center;">move somewhere by n characters, eg. 30h</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd> + <kbd>f</kbd></td>
+	<td style="text-align:center;">move to next page</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd> + <kbd>b</kbd></td>
+	<td style="text-align:center;">back to previous page</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd> + <kbd>d</kbd></td>
+	<td style="text-align:center;">move to next half page</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd> + <kbd>u</kbd></td>
+	<td style="text-align:center;">back to previous half page</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd> + <kbd>f</kbd></td>
+	<td style="text-align:center;">move to next page</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + <kbd>space</kbd></td>
+	<td style="text-align:center;">move forward by n characters</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>0</kbd> or <kbd>Home</kbd></td>
+	<td style="text-align:center;">move to the first place of a line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>$</kbd> or <kbd>End</kbd></td>
+	<td style="text-align:center;">move to the last place of a line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>G</kbd></td>
+	<td style="text-align:center;">go to the last line of a text</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + <kbd>G</kbd></td>
+	<td style="text-align:center;">go to the n-th line of a text</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>g</kbd> <kbd>g</kbd></td>
+	<td style="text-align:center;">go to the first line of a text</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + <kbd>Enter</kbd></td>
+	<td style="text-align:center;">move to next n line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>/</kbd> + word</td>
+	<td style="text-align:center;">look for the string with the keyword &#8216;word&#8217; below current line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>?</kbd> + word</td>
+	<td style="text-align:center;">look for the string with the keyword &#8216;word&#8217; above current line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>n</kbd></td>
+	<td style="text-align:center;">repeat previous searching operation</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>N</kbd></td>
+	<td style="text-align:center;">repeat previous searching operation in opposite direction</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:n1,n2s/word1/word2/g</code></td>
+	<td style="text-align:center;">search word1 and replace it with word2 between lines with number n1 or n2</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:1,$s/word1/word2/g</code></td>
+	<td style="text-align:center;">search word1 and replace it with word2 within the whole text</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:1,$s/word1/word2/gc</code></td>
+	<td style="text-align:center;">compared with command above, system will ask for user&#8217;s confirmation</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>x</kbd> or <kbd>X</kbd></td>
+	<td style="text-align:center;">delete a character forward or backward</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + <kbd>d</kbd> <kbd>d</kbd></td>
+	<td style="text-align:center;">delete current line and n&#8211;1 following lines</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>d</kbd> <kbd>1</kbd> <kbd>G</kbd></td>
+	<td style="text-align:center;">delete lines ranging from current line to the first line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>d</kbd> <kbd>G</kbd></td>
+	<td style="text-align:center;">delete lines ranging from current line to the last line</td>
+</tr>
+<tr>
+	<td style="text-align:center;">n + <kbd>y</kbd> <kbd>y</kbd></td>
+	<td style="text-align:center;">copy current line and n&#8211;1 following lines</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>y</kbd> <kbd>1</kbd> <kbd>G</kbd></td>
+	<td style="text-align:center;">copy lines ranging from current line to the first line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>y</kbd> <kbd>G</kbd></td>
+	<td style="text-align:center;">copy lines ranging from current line to the last line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>d</kbd> <kbd>1</kbd> <kbd>G</kbd></td>
+	<td style="text-align:center;">delete lines ranging from current line to the first line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>p</kbd> or <kbd>P</kbd></td>
+	<td style="text-align:center;">paste on the line below current line or above</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>u</kbd></td>
+	<td style="text-align:center;">undo last operation</td>
+</tr>
+</tbody>
+</table>
+
+<p>and file operation,</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Shortcuts</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>w</kbd></td>
+	<td style="text-align:center;">write content into the file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>w</kbd> <kbd>!</kbd></td>
+	<td style="text-align:center;">for read only file, force to write</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>q</kbd></td>
+	<td style="text-align:center;">quit from Vim</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>q!</kbd></td>
+	<td style="text-align:center;">force to quit without saving changes</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>w</kbd> <kbd>q</kbd></td>
+	<td style="text-align:center;">write content and quit</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>w</kbd> (filename)</td>
+	<td style="text-align:center;">save as a new file named filename, eg. :w helloworld.md</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>r</kbd> (filename)</td>
+	<td style="text-align:center;">read content of the file into the line below current line</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:n1,n2w (filename)</code></td>
+	<td style="text-align:center;">save the content of the line with number from n1 to n2 as filename</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>!</kbd> command</td>
+	<td style="text-align:center;">execute command in vim editor</td>
+</tr>
+</tbody>
+</table>
+
+<section	id="solveconflict">
+<h3>Solve Conflict</h3>
+
+<p>Let&#8217;s take an experience.</p>
+<pre><code class="bash">[root@localhost ~] vim testfile
+# then type in ctrl + z, to put the file into background
+[1]  + 13259 suspended  vim testfile
+
+[root@localhost ~] ls -al
+-rw-r--r--   1 root root         17 Nov 30 09:11 testfile
+-rw-r--r--   1 root root      12288 Nov 30 09:11 .testfile.swp # &lt;== here
+
+# simulate that the machine has been shutdown unexpectedly
+# which will cause vim editor to quit abnormally
+[root@localhost ~] kill -9 %1
+[root@localhost ~] vim testfile
+
+E325: ATTENTION                                                                                
+Found a swap file by the name &quot;.testfile.swp&quot;
+          owned by: root   dated: Mon Nov 30 09:11:37 2020
+         file name: ~root/testfile
+          modified: no
+         user name: root   host name: iZ2zei99okbo7v4d6fma9eZ
+        process ID: 13259 (still running)
+While opening file &quot;testfile&quot;
+             dated: Mon Nov 30 09:11:11 2020
+
+(1) Another program may be editing the same file.  If this is the case,
+    be careful not to end up with two different instances of the same
+    file when making changes.  Quit, or continue with caution.
+(2) An edit session for this file crashed.
+    If this is the case, use &quot;:recover&quot; or &quot;vim -r testfile&quot;
+    to recover the changes (see &quot;:help recovery&quot;).
+    If you did this already, delete the swap file &quot;.testfile.swp&quot;
+    to avoid this message.
+
+Swap file &quot;.testfile.swp&quot; already exists!
+[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:</code></pre>
+
+<p>There are two senario that will cause this problem in general: 1. more than 1 user open the file in the same time. 2. the file edited is aborted unexpectedly.</p>
+
+<p>Therefore, the right way to do that is to (1) tell your friends who use the file to close the file, (2) find <code>.filename.swp</code> and delete it if you don&#8217;t want save the change that you made before abortion. </p>
+
+</section>
+<section	id="visualblock">
+<h3>Visual Block</h3>
+
+<p>Visual block operation allows user to select a block they want to manipulate.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Shortcuts</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd>+<kbd>v</kbd></td>
+	<td style="text-align:center;">activate block selection</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>v</kbd></td>
+	<td style="text-align:center;">select by characters</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>V</kbd></td>
+	<td style="text-align:center;">select by lines</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>y</kbd></td>
+	<td style="text-align:center;">copy content of selected place</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>d</kbd></td>
+	<td style="text-align:center;">delete content of selected place</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="multifileedition">
+<h3>Multifile Edition</h3>
+
+<p>Open more than one file by <code>vim file1 file2 file3</code></p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Shortcuts</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>n</kbd></td>
+	<td style="text-align:center;">toggle to next file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>N</kbd></td>
+	<td style="text-align:center;">toggle to previous file</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>:</kbd> <kbd>files</kbd></td>
+	<td style="text-align:center;">show all opened files</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="multiviewedition">
+<h3>Multiview Edition</h3>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Shortcuts</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>:sp [filename]</code></td>
+	<td style="text-align:center;">open a file and split the window into 2 windows</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd>+<kbd>w</kbd>+<kbd>↓</kbd></td>
+	<td style="text-align:center;">the cursor will jump to de window below</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd>+<kbd>w</kbd>+<kbd>↑</kbd></td>
+	<td style="text-align:center;">the cursor will jump to de window above</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><kbd>Ctrl</kbd>+<kbd>w</kbd>+<kbd>q</kbd></td>
+	<td style="text-align:center;">quit the window where the cursor is</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+</section>
+<section	id="vimenvironmentvariables">
+<h2>Vim Environment Variables</h2>
+
+<p>All settings could be found and configured in <code>~/.vimrc</code>.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Commands</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;"><code>:set nu</code> or <code>set nonu</code></td>
+	<td style="text-align:center;">turn line number on/off</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:set autoindent</code></td>
+	<td style="text-align:center;">turn autoindent on</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:syntax on/off</code></td>
+	<td style="text-align:center;">turn syntax on/off</td>
+</tr>
+<tr>
+	<td style="text-align:center;"><code>:set all</code></td>
+	<td style="text-align:center;">show all arguments</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="dosandlinux">
+<h2>DOS and Linux</h2>
+
+<p>DOS and Linux system have different <strong>end symbol</strong>, <code>^M$</code> and <code>$</code> respectively. there are two useful command to transform the end symbol between DOS and Linux.</p>
+<pre><code class="bash">dos2UNIX [-kn] file [newfile]
+UNIX2dos [-kn] file [newfile]
+# where,
+# -k: keep modification time of original file.
+# -n: keep origin and output the result to a new file.
+
+[root@localhost ~] dos2UNIX -k -n man.config man.config.linux</code></pre>
+
+<p>TIP: <code>yum install dos2unix</code> to install the command.</p>
+
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'file-compression-and-packaging' %}" class="button primary icon solid fa-backward">Back: 3. File Compression and Packaging</a></li> 
+                     <li><span class="button">4. Vim</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'bash' %}" class="button primary icon solid fa-forward">Next: 5. Bash</a></li> 
+                 </ul> 
+             </div> 
+         </div>

@@ -1,0 +1,955 @@
+{% load static %}
+
+<h1 id="accountmanagement">Account Management</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#accountandgroup">Account and Group</a>
+
+<ul>
+<li><a href="#uidandgid">UID and GID</a></li>
+<li><a href="#useraccount">User Account</a>
+
+<ul>
+<li><a href="#passwd">passwd</a></li>
+<li><a href="#shadow">shadow</a></li>
+</ul></li>
+<li><a href="#group">Group</a>
+
+<ul>
+<li><a href="#effectivegroup">Effective Group</a></li>
+<li><a href="#gshadow">gshadow</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#usermanagement">User Management</a>
+
+<ul>
+<li><a href="#createanaccount">Create an Account</a></li>
+<li><a href="#settingpassword">Setting Password</a></li>
+<li><a href="#modification">Modification</a></li>
+<li><a href="#deleteanaccount">Delete an Account</a></li>
+<li><a href="#usertools">User Tools</a></li>
+</ul></li>
+<li><a href="#groupmanagement">Group Management</a>
+
+<ul>
+<li><a href="#createagroup">Create a Group</a></li>
+<li><a href="#modifygroup">Modify Group</a></li>
+<li><a href="#deleteagroup">Delete a group</a></li>
+<li><a href="#manager">Manager</a></li>
+</ul></li>
+<li><a href="#accesscontrollist">Access Control List</a></li>
+<li><a href="#identity">Identity</a>
+
+<ul>
+<li><a href="#su">su</a></li>
+<li><a href="#sudo">sudo</a></li>
+<li><a href="#visudo">visudo</a>
+
+<ul>
+<li><a href="#asingleuser">a single user</a></li>
+<li><a href="#agroup">a group</a></li>
+<li><a href="#alias">alias</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#pam">PAM</a>
+
+<ul>
+<li><a href="#nologin">Nologin</a></li>
+<li><a href="#pammodules">PAM Modules</a></li>
+</ul></li>
+<li><a href="#others">Others</a>
+
+<ul>
+<li><a href="#logfile">Log File</a></li>
+<li><a href="#message">Message</a></li>
+<li><a href="#mail">Mail</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="accountandgroup">
+<h2>Account and Group</h2>
+
+<section	id="uidandgid">
+<h3>UID and GID</h3>
+
+<p>When comes to account management of Linux, the first question is how the system distinguish users or accounts? The answer is by UID(User Identity Document) or GID(Group Identity Document).</p>
+<pre><code class="bash">[root@localhost ~] grep &apos;root&apos; /etc/passwd
+root:*:0:0:System Administrator:/var/root:/bin/sh
+# notice that
+# the UID and GID of root is 0</code></pre>
+
+</section>
+<section	id="useraccount">
+<h3>User Account</h3>
+
+<p>When a user logins into a system, the system will do following things:</p>
+
+<ul>
+<li>check if the user name is found in <code>/etc/passwd</code>. If so, record its UID, GID, password, home directory, and shell settings.</li>
+<li>check if recorded password matches that in <code>/etc/shadow</code>. If so, then the user will login into the system.</li>
+</ul>
+
+<section	id="passwd">
+<h4>passwd</h4>
+
+<p>In <code>/etc/passwd</code>, each line records information of an account.</p>
+<pre><code class="bash">[root@localhost ~] head -n 4 /etc/passwd
+root:x:0:0:root:/root:/bin/zsh
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin</code></pre>
+
+<p>Now let&#8217;s specify what the meaning is of each part.</p>
+
+<ul>
+<li><p>User Name: the name of account, which is responding to UID, the third part of an account.</p></li>
+<li><p>Password: which often appears as &#8216;x&#8217;, since the password is saved into <code>/etc/shadow</code> for security reasons.</p></li>
+<li><p>UID: user identity document.</p></li>
+</ul>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Range of UID</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0 (admin)</td>
+	<td style="text-align:center;">When UID is 0, the account is for root, who has the most significant permission in the system.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">1 ~ 499 (system)</td>
+	<td style="text-align:center;">The system User IDs from 0 to 99 should be statically allocated by the system, and shall not be created by applications. The system User IDs from 100 to 499 should be reserved for dynamic allocation by system administrators.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">500 ~ 65535</td>
+	<td style="text-align:center;">The UID in this range is reserved for common account.</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="bash">[root@localhost ~] cat /etc/passwd | grep &apos;MinzhiQu&apos;
+MinzhiQu:x:1000:1000::/home/MinzhiQu:/bin/zsh</code></pre>
+
+<p>Notice that in my machine, the common account is allocated UID starting from 1000. Therefore, different machines may have various starting number for the UID of common users.</p>
+
+<ul>
+<li><p>GID: Group Identity Document, whose detailed information is recorded in <code>/etc/group</code>.</p></li>
+<li><p>Description: the description of an account.</p></li>
+<li><p>Home Directory: the home directory of an account.</p></li>
+<li><p>Shell: specify the default shell which is used when user logins in.</p></li>
+</ul>
+
+</section>
+<section	id="shadow">
+<h4>shadow</h4>
+
+<p>In <code>/etc/shadow</code>, the passwords of users is saved here.</p>
+<pre><code class="bash">[root@localhost ~] head -n 4 /etc/shadow
+root:$6$QWzNeeKXx7EpBzeU$8UV8.hqqapj5b3w1Wlzt4Hzt4FSEd5xE0hTfXdree2dN/7PJ5xUnKvkHQUUt3toR7EYS1p7RpiTcmlCsBzTRr.::0:99999:7:::
+bin:*:18353:0:99999:7:::
+daemon:*:18353:0:99999:7:::
+adm:*:18353:0:99999:7:::</code></pre>
+
+<ul>
+<li><p>User Name: the name of user.</p></li>
+<li><p>Password: records encrypted password.</p></li>
+<li><p>Modified Time: the date when the password is changed last time. (for password)</p></li>
+<li><p>Unchangeable Time: the length of time when the password is not allowed to change. (for password)</p></li>
+<li><p>Change Time: the length of time when the password needs to be changed. 99999 days (or 273 years) means no requirement of changing password. (for password)</p></li>
+<li><p>Notification Time: the system will notify users that the password is going to be expired <em>n</em> days before password expiration. 7 means 7 days before expiration day. (for password)</p></li>
+<li><p>Extended Time: means the account is still available <em>n</em> days after expiration day. (for password)</p></li>
+<li><p>Expiration day: when an account is disabled. The start time is 1970 by default. (for account)</p></li>
+</ul>
+
+</section>
+</section>
+<section	id="group">
+<h3>Group</h3>
+
+<p>Now let&#8217;s talk about GID.</p>
+<pre><code class="bash">[root@localhost ~] head -n 4 /etc/group
+root:x:0:
+bin:x:1:          
+daemon:x:2:          
+sys:x:3: </code></pre>
+
+<p>There are 4 segments in each line.</p>
+
+<ul>
+<li><p>Group Name: the name of a group.</p></li>
+<li><p>Group Password: the password of a group, which often appears as &#8216;x&#8217;. The encrypted password is recorded in &#8216;/etc/gshadow&#8217;.</p></li>
+<li><p>GID: group identity document.</p></li>
+<li><p>Members: all members of the group, noting that the member whose initial group is the group is not recorded in the segment. For example, for group &#8216;yolkoo&#8217;, it has 3 members - yolkoo, brain, laser. The record would be as follows,</p></li>
+</ul>
+<pre><code class="bash">yolkoo:x:1001:brain,laser</code></pre>
+
+<section	id="effectivegroup">
+<h4>Effective Group</h4>
+
+<p>As we discussed above, each account has a group with the same name, which is termed <em>Initial Group</em>. Different from initial group, effective group specifies which group identity the user acts currently.</p>
+
+<p>Take an example,</p>
+<pre><code class="bash"># add yolkoo to group root with root identity
+[root@localhost ~] usermod -G root yolkoo
+
+# log in system as yolkoo
+# use &apos;groups&apos; command to show groups the user belongs to
+# the first group is effective group
+[yolkoo@localhost ~] groups
+yolkoo root
+[yolkoo@localhost ~] touch test &amp;&amp; ll
+-rw-r--r--. 1 yolkoo yolkoo 0 Feb 24 22:42 test  
+
+# change effective group to root with &apos;newgrp&apos; command
+[yolkoo@localhost ~] newgrp root
+[yolkoo@localhost ~] groups
+root yolkoo
+[yolkoo@localhost ~] touch test &amp;&amp; ll
+-rw-r--r--. 1 yolkoo root 0 Feb 24 22:42 test </code></pre>
+
+<ul>
+<li><code>newgrp</code><br/>
+newgrp allows users to log in to a new group, which will create a new shell which copy all environment from father process except group information.</li>
+</ul>
+<pre><code class="bash">   yolkoo            yolkoo
+  --------|        |--------&gt;   father process
+   newgrp |  root  | exit
+          |--------|            child process</code></pre>
+
+</section>
+<section	id="gshadow">
+<h4>gshadow</h4>
+
+<p><code>/etc/gshadow</code> is somewhat similar to <code>/etc/group</code>,</p>
+<pre><code class="bash">[root@localhost ~] head -n 4 /etc/gshadow
+root:::  
+bin:::          
+daemon:::              
+sys:::  </code></pre>
+
+<p>The only difference from <code>group</code> are the second and third segments, if &#8216;!&#8217; appears on the second segment, it means that there is no group password and no group administrator.</p>
+
+<p>On the third segment, it records the name of group administrator.</p>
+
+</section>
+</section>
+</section>
+<section	id="usermanagement">
+<h2>User Management</h2>
+
+<section	id="createanaccount">
+<h4>Create an Account</h4>
+
+<ul>
+<li><code>useradd</code><br/>
+<code>useradd</code> is used to create a new user or update default new user information.</li>
+</ul>
+<pre><code class="bash">useradd [-ugcdrsef] (username)
+# where,
+# -u: specify the numerical value of the user&apos;s ID.
+# -g: the group name or number of the user&apos;s initial login group. The group name must exist. A group number must refer to an already existing group.
+# -c: add description.
+# -d: specify home directory.
+# -r: create a system account.
+# -s: specify the login shell.
+# -e: specify the expiration time of account, &apos;YYYY-MM-DD&apos;. The 8th segment in /etc/shadow.
+# -f: specify extended time when the password is expired, 0 for disable immediately, -1 for never disable. The 7th segment in /etc/shadow.</code></pre>
+
+<p>There is a reference file for default setting of <code>useradd</code>, which is in <code>/etc/default/useradd</code>. We can visit the content of that file by <code>vi</code> or following command,</p>
+<pre><code class="bash">[yolkoo@localhost ~] useradd -D
+GROUP=100         # =&gt; initial group                   
+HOME=/home        # =&gt; home directory     
+INACTIVE=-1       # =&gt; password disabled time, -1 never      
+EXPIRE=           # =&gt; account expiration time      
+SHELL=/bin/bash   # =&gt; default shell       
+SKEL=/etc/skel    # =&gt; benchmark for home directory     
+CREATE_MAIL_SPOOL=yes  # =&gt; if create a mail for users</code></pre>
+
+<p>Some configuration need to be explained more specifically,</p>
+
+<ul>
+<li><p>GROUP: there are two different kind of mechanism, private and public. In private one, the system will create a new group whose name is same as username, thereby GROUP is useless. This mechanism is often used in RHEL, Fedora, and CentOS. In public one, the system will add new user to the group whose UID is 100. The mechanism is used in SuSE for example.</p></li>
+<li><p>SKEL: when creating a home directory, the system will copy the content of &#8216;/etc/skel&#8217; to new home directory. Hence, if we want to give a bunch of users same environment settings, we are able to create a <code>.bashrc</code> in <code>/etc/skel</code>, and edit it. If we want there is a <code>www</code> directory in home directory of new users, just make a <code>www</code> directory in <code>/etc/skel</code>.</p></li>
+</ul>
+
+<p>For more default settings, we are able to find them in <code>/etc/login.defs</code>.</p>
+<pre><code class="bash">[yolkoo@localhost ~] cat /etc/login.defs
+...
+MAIL_DIR        /var/spool/mail
+...
+PASS_MAX_DAYS   99999   # Maximum number of days a password may be used.
+PASS_MIN_DAYS   0       # Minimum number of days allowed between password changes.
+PASS_MIN_LEN    5       # Minimum acceptable password length.
+PASS_WARN_AGE   7       # Number of days warning given before a password expires.
+...
+UID_MIN                  1000
+UID_MAX                 60000
+# System accounts
+SYS_UID_MIN               201
+SYS_UID_MAX               999
+...
+
+CREATE_HOME     yes
+# The permission mask is initialized to this value. If not specified, 
+# the permission mask will be initialized to 022.
+UMASK           077</code></pre>
+
+</section>
+<section	id="settingpassword">
+<h4>Setting Password</h4>
+
+<ul>
+<li><code>passwd</code><br/>
+<code>passwd</code> is used to update user&#8217;s authentication tokens.</li>
+</ul>
+<pre><code class="bash">passwd [--stdin, -luS] (username)
+# where,
+# -stdin: passwd should read password from standard input, which can be a pipe.
+# -l: will lock the password of a specific account.
+# -u: will unlock the password of a specific account.
+# -S, --status: will output a short information about the status of the password for a given account.</code></pre>
+<pre><code class="bash">[root@localhost ~] passwd -S MinzhiQu
+MinzhiQu PS 2021-02-08 0 99999 7 -1 (Password set, SHA512 crypt.) 
+[root@localhost ~] passwd -l MinzhiQu
+Locking password for user MinzhiQu.    
+passwd: Success
+[root@localhost ~] passwd -u MinzhiQu
+Unlocking password for user MinzhiQu. 
+passwd: Success </code></pre>
+
+<p>Notice that: if no username follows <code>passwd</code>, then the instruction will change the password of root. Resetting the password of root doesn&#8217;t need old password of root.</p>
+
+<ul>
+<li><code>chage</code><br/>
+<code>chage</code> is used to change user password expiry information, and to get detailed information of the password for a specific account.</li>
+</ul>
+<pre><code class="bash">chage [-ld] (username)
+# where,
+# -l: will list detailed information about the password.
+# -d: sets the number of days since January 1st, 1970 when the password was last changed.</code></pre>
+<pre><code class="bash">[root@localhost ~] chage -l MinzhiQu
+Last password change                              : Feb 09, 2021 
+Password expires                                  : never 
+Password inactive                                 : never
+Account expires                                   : never 
+Minimum number of days between password change    : 0     
+Maximum number of days between password change    : 99999
+Number of days of warning before password expires : 7   
+
+# create an account whose password is same as its name, and the password
+# has to be reset after login.
+[root@localhost ~] useradd test
+[root@localhost ~] passwd test
+Changing password for user test.      
+New password:          
+Retype new password:                                
+passwd: all authentication tokens updated successfully.
+# set the time when changing password last time as Jan 1st, 1970.  
+[root@localhost ~] chage -d 0 test
+
+# now when I log in as test
+You are required to change your password immediately (root enforced)
+Last login: Sat Feb 27 20:35:58 2021
+WARNING: Your password has expired.
+You must change your password now and login again!
+Changing password for user test.
+Changing password for test.
+(current) UNIX password: 
+# after resetting password, the user is able to login.</code></pre>
+
+</section>
+<section	id="modification">
+<h4>Modification</h4>
+
+<ul>
+<li><code>usermod</code><br/>
+<code>usermod</code> is used to modify a user account.</li>
+</ul>
+<pre><code class="bash">usermod [-cdegGlsuLU] (username)
+# where,
+# -c: change the description of an account.
+# -d: change the home directory of a given account.
+# -e: + &quot;YYYY-MM-DD&quot; change the expiry time  of an account.
+# -g: set the primary group.
+# -G: set the secondary group.
+# -l: change the name of an account.
+# -s: chage the shell of an account.
+# -u: chage the uid of an account.
+# -L/U: lock/unlock an account.</code></pre>
+<pre><code class="bash">[root@localhost ~] cat /etc/shadow | grep test 
+test:$6$1iJqcrPP$IBU8WFSjRvqtC2Grlw1QZ.zd1xSMlpW/46kpzunWPwxisCxZcTqtSl5GtQCPoAOpRTLjq/Anu00zartwYUWzc/:18686:0:99999:7:::
+[root@localhost ~] usermod -e &quot;2020-12-24&quot; test
+[root@localhost ~] cat /etc/shadow | grep test  
+test:$6$1iJqcrPP$IBU8WFSjRvqtC2Grlw1QZ.zd1xSMlpW/46kpzunWPwxisCxZcTqtSl5GtQCPoAOpRTLjq/Anu00zartwYUWzc/:18686:0:99999:7::18620:</code></pre>
+
+<ul>
+<li><code>chown</code><br/>
+<code>chown</code> is used to change file owner and group.</li>
+</ul>
+<pre><code class="bash">chown [-R] (filename)
+# where,
+# -R: recursive modification.</code></pre>
+<pre><code class="bash">[root@localhost ~] chown -R test:test /home/test</code></pre>
+
+</section>
+<section	id="deleteanaccount">
+<h4>Delete an Account</h4>
+
+<ul>
+<li><code>userdel</code><br/>
+<code>userdel</code> is used to delete an account.</li>
+</ul>
+<pre><code class="bash">userdel [-r] (username)
+# where,
+# -r: also delete home directory.</code></pre>
+<pre><code class="bash">[root@localhost ~] userdel -r test</code></pre>
+
+</section>
+<section	id="usertools">
+<h4>User Tools</h4>
+
+<ul>
+<li><code>finger</code><br/>
+<code>finger</code> is used to display information about the system users.</li>
+</ul>
+<pre><code class="bash">finger [-s] (username)
+# where,
+# -s: displays the user&apos;s login name, real name, terminal name and write status.</code></pre>
+<pre><code class="bash">[root@localhost ~] finger MinzhiQu
+Login: MinzhiQu                         Name:  
+Directory: /home/MinzhiQu               Shell: /bin/zsh  
+On since Sat Feb 27 21:26 (EST) on pts/0 from gateway 
+   7 seconds idle                  
+No mail.                                                    
+No Plan.
+# Name: the content of description.
+# Mail: get information from /var/spool/mail.
+# Plan: get information from ~/.plan.
+
+# Also we can edit our plans
+[root@localhost ~] echo &quot;This is my plan.&quot; &gt;  ~/.plan
+[root@localhost ~] finger MinzhiQu
+Login: MinzhiQu                         Name:  
+Directory: /home/MinzhiQu               Shell: /bin/zsh  
+On since Sat Feb 27 21:26 (EST) on pts/0 from gateway 
+   7 seconds idle                  
+No mail.                                                    
+Plan:
+This is my plan.</code></pre>
+
+<ul>
+<li><code>chfn</code><br/>
+<code>chfn</code> is used to change your finger information.</li>
+</ul>
+<pre><code class="bash">chfn (username)</code></pre>
+<pre><code class="bash">[root@localhost ~] chfn MinzhiQu
+Changing finger information for MinzhiQu. 
+Name []: Minzhi Qu                                
+Office []: Unicorn Inc. Xian                          
+Office Phone []: 13309285508                           
+Home Phone []: 13309285508
+                                                                     
+Finger information changed.
+
+# In fact, it adds some information to the 5th segment in passwd file.
+[root@localhost ~] grep MinzhiQu /etc/passwd
+MinzhiQu:x:1000:1000:Minzhi Qu,Unicorn Inc. Xian,13309285508,13309285508:/home/MinzhiQu:/bin/zsh  </code></pre>
+
+<ul>
+<li><code>chsh</code><br/>
+<code>chsh</code> is used to change user&#8217;s login shell.</li>
+</ul>
+<pre><code class="bash">chsh [-ls] 
+# where,
+# -l: list all available shells.
+# -s: set user&apos;s shell.</code></pre>
+<pre><code class="bash">[root@localhost ~] chsh -s /bin/csh &amp;&amp; grep root /etc/passwd
+root:x:0:0:root:/root:/bin/csh</code></pre>
+
+<ul>
+<li><code>id</code><br/>
+<code>id</code> is used to list user&#8217;s information about UID, GID.</li>
+</ul>
+<pre><code class="bash">id (username)</code></pre>
+<pre><code class="bash">[root@localhost ~] id
+uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 </code></pre>
+
+</section>
+</section>
+<section	id="groupmanagement">
+<h2>Group Management</h2>
+
+<section	id="createagroup">
+<h4>Create a Group</h4>
+
+<ul>
+<li><code>groupadd</code><br/>
+<code>groupadd</code> is used to add a new group.</li>
+</ul>
+<pre><code class="bash">groupadd [-g gid, -r] (group_name)
+# where,
+# -g: specify a gid
+# -r: create a system group</code></pre>
+
+</section>
+<section	id="modifygroup">
+<h4>Modify Group</h4>
+
+<ul>
+<li><code>groupmod</code><br/>
+<code>groupmod</code> is used to modify attributes of a group.</li>
+</ul>
+<pre><code class="bash">groupmod [-g gid, -n name] (group_name)
+# where,
+# -g: change gid
+# -n: change name</code></pre>
+
+</section>
+<section	id="deleteagroup">
+<h4>Delete a group</h4>
+
+<ul>
+<li><code>groupdel</code><br/>
+<code>groupdel</code> is used to delete a given group.</li>
+</ul>
+<pre><code class="bash">groupdel (group_name)</code></pre>
+<pre><code class="bash">[root@localhost ~] groupdel MinzhiQu
+groupdel: cannot remove users primary group
+# there are two ways to solve the problem:
+# 1. delete user whose primary group is the group.
+# 2. change users primary group (aka. change gid)</code></pre>
+
+</section>
+<section	id="manager">
+<h4>Manager</h4>
+
+<ul>
+<li><code>gpasswd</code><br/>
+<code>gpasswd</code> is used to manage a group.</li>
+</ul>
+<pre><code class="bash"># sets group password
+gpasswd (group_name)
+
+gpasswd [-A user1, ...; -M user2, ...] (group_name)
+# where,
+# -A: assign administration power to users
+# -M: add a group of users to the group
+
+gpasswd [-rR] (group_name)
+# where,
+# -r: remove the password of a group
+# -R: make the password of a group disabled
+
+gpasswd [-ad] (group_name)
+# where,
+# -a: add users to the group
+# -d: delete users from the group</code></pre>
+<pre><code class="bash"># create a system group testgroup
+[root@localhost ~] groupadd -r testgroup
+
+# set group password
+[root@localhost ~] gpasswd testgroup
+Changing the password for group testgroup
+New password:
+Re-enter new password:
+
+# set user MinzhiQu as group manager
+[root@localhost ~] gpasswd -A MinzhiQu testgroup
+[root@localhost ~] grep testgroup /etc/group /etc/gshadow
+/etc/group:testgroup:x:1002: 
+/etc/gshadow:testgroup:$6$.xLNe/ZE5Ka/qnF$LnqOx27DuhBsnx3nUVWZkaEPub9QdUOXFr2aIsNMsGSEdDsnk9rJ4DWRIUztz4yVIpi7bhYu3B92B0elA6Ypc/:MinzhiQu:</code></pre>
+
+</section>
+</section>
+<section	id="accesscontrollist">
+<h2>Access Control List</h2>
+
+<p>In computer security, an access-control list (ACL) is a list of permissions associated with a system resource (object). An ACL specifies which users or system processes are granted access to objects, as well as what operations are allowed on given objects.</p>
+
+<p>Each entry in a typical ACL specifies a subject and an operation. For instance, if a file object has an ACL that contains (Alice: read,write; Bob: read), this would give Alice permission to read and write the file and Bob to only read it.</p>
+
+<ul>
+<li><code>setfacl</code><br/>
+<code>setfacl</code> is used to set file access control lists.</li>
+</ul>
+<pre><code class="bash">setfacl [-bRd; {-m | -x} acl args] (filename)
+# where,
+# -m: set acl args to a file.
+# -x: delete acl args to a file.
+# -b: clear all acl settings.
+# -R: set acl args recursively for existed files.
+# -d: only works for directory, similar to -R, but the acl will be inherited.</code></pre>
+
+<ul>
+<li><code>getfacl</code><br/>
+<code>getfacl</code> is used to display file access control lists.</li>
+</ul>
+<pre><code class="bash">getfacl (filename)</code></pre>
+<pre><code class="bash"># case 1: give a user acl permission
+[root@localhost ~] touch acl_test
+[root@localhost ~] ll acl_test
+-rw-r--r--. 1 root root    0 Mar  3 19:52 acl_test
+[root@localhost ~] setfacl -m u:MinzhiQu:rx acl_test
+[root@localhost ~] ll acl_test
+-rw-r-xr--+ 1 root root 0 Mar  3 19:52 acl_test 
+
+[root@localhost ~] getfacl acl_test
+# file: acl_test
+# owner: root
+# group: root
+user::r-x
+user:MinzhiQu:r-x
+group::r--
+mask::r-x
+other::r--
+
+# if the segment of user is blank, it will be the owner of the file by default
+[root@localhost ~] setfacl -m u::rwx acl_test
+[root@localhost ~] ll acl_test
+-rwxr-xr--+ 1 root root 0 Mar  3 19:52 acl_test
+[root@localhost ~] getfacl acl_test
+# file: acl_test
+# owner: root
+# group: root
+user::rwx
+user:MinzhiQu:r-x
+group::r--
+mask::r-x
+other::r--
+
+# case 2: give a group acl permission
+[root@localhost ~] setfacl -m g:project:rx acl_test
+[root@localhost ~] getfacl acl_test
+# file: acl_test
+# owner: root
+# group: root
+user::rwx
+user:MinzhiQu:r-x
+group::r--
+group:project:r-x
+mask::r-x
+other::r--
+
+# case 3: mask
+[root@localhost ~] setfacl -m m:r acl_test
+[root@localhost ~] getfacl acl_test
+# file: acl_test
+# owner: root
+# group: root
+user::rwx
+user:MinzhiQu:r-x               #effective:r--
+group::r--
+group:project:r-x               #effective:r--
+mask::r--
+other::r--</code></pre>
+
+<p>IMPORTANT: for files with acl settings, the true permission should be found in acl, not by <code>ll</code> command.</p>
+<pre><code class="bash"># case 4: inherit
+# if we want the new files in a directory will inherit acl from the directory,
+[root@localhost ~] setfacl -m d:u:MinzhiQu:rx /srv/tencent</code></pre>
+
+</section>
+<section	id="identity">
+<h2>Identity</h2>
+
+<section	id="su">
+<h3>su</h3>
+
+<ul>
+<li><code>su</code><br/>
+<code>su</code> is used when running a command with substitute user and group ID.</li>
+</ul>
+<pre><code class="bash">su [-lm; -c cmd] (username)
+# where,
+# -l, -: starts shell as login shell with an environment similar to a real login
+# -m: preserves the whole environment, ie does not set HOME, SHELL, USER nor LOG-NAME
+# -c: pass command  to the shell </code></pre>
+<pre><code class="bash"># case 1: change to root as no-login shell
+[MinzhiQu@localhost ~] su
+Password:
+[root@localhost ~] id
+uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+# the environment is still MinzhiQu&apos;s
+[root@localhost ~] env | grep &apos;Minzhi&apos;
+USER=MinzhiQu    
+LOGNAME=MinzhiQu        
+PATH=/usr/local/bin:/usr/bin:/home/MinzhiQu/bin:/usr/local/sbin:/usr/sbin                      
+MAIL=/var/spool/mail/MinzhiQu                
+PWD=/home/MinzhiQu             
+OLDPWD=/home/MinzhiQu 
+[root@localhost ~] exit
+
+# case 2: change to root as login shell
+[MinzhiQu@localhost ~] su -
+Password:
+[root@localhost ~] env | grep &apos;root&apos;
+HOME=/root        
+USER=root            
+LOGNAME=root          
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin 
+PWD=/root    
+OLDPWD=/root 
+MAIL=/var/spool/mail/root       
+ZSH=/root/.oh-my-zsh 
+[root@localhost ~] exit
+
+# case 3: just execute a command with root identity
+[MinzhiQu@localhost ~] head -n 3 /etc/shadow
+head: cannot open &apos;/etc/shadow&apos; for reading: Permission denied
+[MinzhiQu@localhost ~] su - -c &quot;head -n 3 /etc/shadow&quot;
+root:$6$QWzNeeKXx7EpBzeU$8UV8.hqqapj5b3w1Wlzt4Hzt4FSEd5xE0hTfXdree2dN/7PJ5xUnKvkHQUUt3toR7EYS1p7RpiTcmlCsBzTRr.::0:99999:7:::      
+bin:*:18353:0:99999:7:::   
+daemon:*:18353:0:99999:7::: </code></pre>
+
+</section>
+<section	id="sudo">
+<h3>sudo</h3>
+
+<p>What is <code>sudo</code>? Let&#8217;s start with how to use it.</p>
+<pre><code class="bash">sudo [-b, -u username]
+# where,
+# -b: execute in system, which will not affect current shell env.
+# -u: change identity to a user, blank means root.</code></pre>
+<pre><code class="bash"># case 1: create a file as the user sshd
+[root@localhost ~] sudo -u sshd touch /tmp/mysshd
+[root@localhost ~] ll /tmp/mysshd
+-rw-r--r--. 1 sshd sshd   0 Mar  3 20:47 mysshd
+
+# case 2: make a folder and create a file in it as the user MinzhiQu
+[root@localhost ~] sudo -u MinzhiQu sh -c &quot;mkdir ~MinzhiQu/www; cd ~MinzhiQu/www; echo &apos;This is index.html file.&apos; &gt; index.html&quot;
+[root@localhost ~] ll -a ~MinzhiQu/www
+drwxr-xr-x. 2 MinzhiQu MinzhiQu   24 Mar  3 20:52 .                
+drwx------. 6 MinzhiQu MinzhiQu 4.0K Mar  3 20:54 ..    
+-rw-r--r--. 1 MinzhiQu MinzhiQu   25 Mar  3 20:52 index.html </code></pre>
+
+<p>TIPS: <code>sh -c</code> allows us to execute a sequence of instructions.</p>
+
+<p>But how does <code>sudo</code> work?</p>
+
+<ul>
+<li>when <code>sudo</code> is executed, the system will find in <code>/etc/sudoers</code> if the user has sudo power.</li>
+<li>If so, type in password to confirm.</li>
+<li>If the password is correct, the command is going to be executed.</li>
+</ul>
+
+<p>BTW, if the user is same as the one who is going to be sudo-ed to, the password is unnecessary.</p>
+
+</section>
+<section	id="visudo">
+<h3>visudo</h3>
+
+<p>As we talked about above, <code>/etc/sudoers</code> is a very important file for <code>sudo</code>.</p>
+
+<p>There are several ways to set sudoers.</p>
+
+<section	id="asingleuser">
+<h4>a single user</h4>
+<pre><code class="bash"># case 1: give MinzhiQu root&apos;s power
+[root@localhost ~] visudo
+...
+## Allow root to run any commands anywhere 
+root    ALL=(ALL)       ALL  
+MinzhiQu    ALL=(ALL)   ALL
+...</code></pre>
+
+<ul>
+<li>1st col: user&#8217;s account.</li>
+<li>2nd col: allowed host origins.</li>
+<li>3rd col: the users that can be changed to.</li>
+<li>4th col: the commands that are allowed to be executed.</li>
+</ul>
+<pre><code class="bash">[MinzhiQu@localhost ~] head -n 3 /etc/shadow
+head: cannot open &lsquo;/etc/shadow&rsquo; for reading: Permission denied
+[MinzhiQu@localhost ~] sudo head -n 3 /etc/shadow
+[sudo] password for MinzhiQu:                     
+root:$6$QWzNeeKXx7EpBzeU$8UV8.hqqapj5b3w1Wlzt4Hzt4FSEd5xE0hTfXdree2dN/7PJ5xUnKvkHQUUt3toR7EYS1p7RpiTcmlCsBzTRr.::0:99999:7:::
+bin:*:18353:0:99999:7:::  
+daemon:*:18353:0:99999:7::: </code></pre>
+
+</section>
+<section	id="agroup">
+<h4>a group</h4>
+<pre><code class="bash"># case 2: give project group root&apos;s power
+[root@localhost ~] visudo
+...
+## Allow group project to run any commands anywhere 
+%project    ALL=(ALL)       ALL  
+...
+
+# add MinzhiQu to project group
+[root@localhost ~] usermod -a -G project MinzhiQu</code></pre>
+<pre><code class="bash"># case 3: no password needed
+[root@localhost ~] visudo
+...
+## Allow group project to run any commands anywhere 
+%project    ALL=(ALL)      NOPASSWD: ALL  
+...
+
+# case 4: add a password manager
+[root@localhost ~] visudo
+...
+## Allow password manager to manage password
+# following settings will give manager power to change root&apos;s password!
+manager    ALL=(root)      /usr/bin/passwd  # DANGEROUS! 
+...
+
+# a more secure way
+[root@localhost ~] visudo
+...
+## Allow password manager to manage password
+manager    ALL=(root)     !/usr/bin/passwd, !/usr/bin/passwd root, /usr/bin/passwd [A-Za-z]*
+...</code></pre>
+
+</section>
+<section	id="alias">
+<h4>alias</h4>
+
+<p>Also we are able to use alias to make code clear.</p>
+<pre><code class="bash">[root@localhost ~] visudo
+...
+User_Alias ADMPW = david, MinzhiQu, alex
+Cmnd_Alias ADMPWCMD = !/usr/bin/passwd, !/usr/bin/passwd root, /usr/bin/passwd [A-Za-z]*
+AMDPW     ALL=(root)     AMDPWCMD
+...
+
+# sets administrator accounts, so that every administrator is able to su
+# root with their own passwords.
+[root@localhost ~] visudo
+...
+User_Alias ADMIN = MinzhiQu
+ADMIN    ALL=(root)     /bin/su -</code></pre>
+
+</section>
+</section>
+</section>
+<section	id="pam">
+<h2>PAM</h2>
+
+<section	id="nologin">
+<h3>Nologin</h3>
+
+<p>In general, nologin shell is not allowed to login linux. Many system accounts acts as nologin shell.</p>
+
+<p>We are able to edit <code>/etc/nologin.txt</code> to tell nologin users why they are not allowed to login.</p>
+<pre><code>[root@localhost ~] echo &quot;We are maintaining our server, please login later.&quot; &gt; /etc/nologin.txt
+[root@localhost ~] su - sshd
+We are maintaining our server, please login later.</code></pre>
+
+</section>
+<section	id="pammodules">
+<h3>PAM Modules</h3>
+
+<p>Pluggable Authentication Modules(PAM) is a bundle of modules for Linux to verify the authentication of a user, password, and so on.</p>
+
+<p>To give us a intuition what pam looks like, let&#8217;s see <code>/etc/pam.d/passwd</code></p>
+<pre><code class="bash">[root@localhost ~] cat /etc/pam.d/passwd
+#%PAM-1.0 
+auth       include      system-auth
+account    include      system-auth 
+password   substack     system-auth   
+-password   optional    pam_gnome_keyring.so use_authtok     
+password   substack     postlogin </code></pre>
+
+<ul>
+<li>1st col: verification type, including <code>auth</code>, <code>account</code>, <code>session</code>, and <code>password</code> in general.</li>
+<li>2nd col: control flag, including <code>required</code>, <code>requisite</code>, <code>sufficient</code>, and <code>optional</code>
+
+<ul>
+<li>required: return success/failure, and pass data blob to the next pam module.</li>
+<li>requisite: if return success, pass data blob to the next pam module, or stop verification and return failure.</li>
+<li>sufficient: if return failure, pass data blob to the next pam module, or stop verification and return success.</li>
+<li>optional: is not a true module to verify something, which is often used to echo tip info.</li>
+</ul></li>
+<li>3rd col: name of pam modules.</li>
+</ul>
+
+</section>
+</section>
+<section	id="others">
+<h2>Others</h2>
+
+<section	id="logfile">
+<h3>Log File</h3>
+
+<p>There are several commands used for accessing log of login info, such as <code>w</code>, <code>who</code>, <code>last</code>, <code>lastlog</code>.</p>
+<pre><code class="bash">[root@localhost ~] w
+ 04:16:42 up 11:25,  1 user,  load average: 0.01, 0.03, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    gateway          04:12    2.00s  0.08s  0.02s w
+[root@localhost ~] lastlog
+root             pts/0    gateway          Thu Mar  4 04:12:54 -0500 2021  
+bin                                        **Never logged in** 
+daemon                                     **Never logged in** 
+adm                                        **Never logged in**
+...  
+sshd                                       **Never logged in**
+postfix                                    **Never logged in**
+chrony                                     **Never logged in**
+MinzhiQu         pts/1    gateway          Wed Mar  3 21:15:39 -0500 2021
+test             pts/2    gateway          Sat Feb 27 20:41:29 -0500 2021
+alex                                       **Never logged in**
+david            pts/1                     Tue Mar  2 22:33:49 -0500 2021</code></pre>
+
+</section>
+<section	id="message">
+<h3>Message</h3>
+
+<ul>
+<li><code>write</code><br/>
+<code>write</code> is used to say something to other users.</li>
+</ul>
+<pre><code class="bash">write (username) (terminal)</code></pre>
+<pre><code class="bash">[root@localhost ~] write MinzhiQu pts/1
+Hello world.
+EOF</code></pre>
+
+<ul>
+<li><code>mesg</code><br/>
+<code>mesg</code> controls write access to your terminal.</li>
+</ul>
+<pre><code class="bash"># open message
+[root@localhost ~] mesg y
+# close message
+[root@localhost ~] mesg n</code></pre>
+
+</section>
+<section	id="mail">
+<h3>Mail</h3>
+
+<ul>
+<li><code>mail</code><br/>
+<code>mail</code> is used to send and receive Internet mail</li>
+</ul>
+<pre><code class="bash">[root@localhost ~] mail MinzhiQu -s &quot;Greeting&quot;
+Nice to meet you.
+.
+Cc:   # meaning whether forward to other mails
+[root@localhost ~]</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'linux' 'shell-script' %}" class="button primary icon solid fa-backward">Back: 7. Shell Script</a></li> 
+                     <li><span class="button">8. Account Management</span></li> 
+                     <li><a href="{% url 'notepage' 'linux' 'periodic-task' %}" class="button primary icon solid fa-forward">Next: 9. Periodic Task</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

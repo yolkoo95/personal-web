@@ -1,0 +1,52 @@
+body {
+    background-image: url(../img/design-h-06.jpg);
+    background-size: 100vw;
+}
+
+#code ul {
+    position: relative;
+    max-height: 70vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    list-style: none !important;
+
+    -webkit-perspective: 400px;
+    -moz-perspective: 400px;
+    -ms-perspective: 400px;
+    -o-perspective: 400px;
+    perspective: 400px;
+}
+
+#code ul li {
+    position: relative;
+    padding: 4px;
+    font-size: 18px;
+    z-index: 2;
+
+    -webkit-transform: translateZ(0px);
+    -moz-transform: translateZ(0px);
+    -ms-transform: translateZ(0px);
+    -o-transform: translateZ(0px);
+    transform: translateZ(0px);
+}
+
+.carousel-item {
+    height: 100vh;
+    min-height: 350px;
+    background: no-repeat center center scroll;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.carousel-background {
+    background-color: rgba(0, 0, 0, 0);
+    background-size: 100vw;
+}
+
+.carousel-indicators li {
+    background-color: #009cea !important;
+}

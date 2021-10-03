@@ -1,0 +1,339 @@
+{% load static %}
+
+<h1 id="ftpserver">FTPServer</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#workingprinciples">Working Principles</a></li>
+<li><a href="#ftpinstallationandconfiguration">FTP installation and configuration</a>
+
+<ul>
+<li><a href="#preparations">Preparations</a>
+
+<ul>
+<li><a href="#installvsftpdthroughyum">Install vsftpd through yum</a></li>
+<li><a href="#relatedconfigurationfiles">Related configuration files</a></li>
+</ul></li>
+<li><a href="#basicconfigurationofanonymousftp">Basic Configuration of Anonymous FTP</a>
+
+<ul>
+<li><a href="#additionalanonymousftpconfiguration">Additional anonymous FTP configuration</a></li>
+</ul></li>
+<li><a href="#configurationofsecuritygroup">Configuration of Security Group</a>
+
+<ul>
+<li><a href="#addsecuritygrouprulesforftpserver">Add Security Group Rules for FTPServer</a></li>
+</ul></li>
+<li><a href="#configurelocaluserlogin">Configure Local User Login</a>
+
+<ul>
+<li><a href="#additionalvsftpd.confparameters">Additional vsftpd.conf Parameters</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="introduction">
+<h2>Introduction</h2>
+
+<p>FTP is an acronym for File Transfer Protocol which is used for controlling two-way file transfer over the Internet. It is also an application. There are various FTP applications based on different operating systems, but all these applications utilize the same protocol for transferring files.Computers provide file storage and access services on the Internet through FTP. An FTP server is a server that supports FTP. FTP provides storage and transfer services.Download and Upload Downloading files is tantamount to duplicating files from the remote host to the client; and uploading files is duplicating files from the client to the remote host. In Internet language, a user can upload to and download from a remote host via a client program.</p>
+
+</section>
+<section	id="workingprinciples">
+<h2>Working Principles</h2>
+
+<p>FTP utilizes a client/server model (C/S architecture) to build a connection between a client and a server via TCP. Unlike most other application protocols, FTP builds two communication links: a control link and a data link, between a client and a server respectively. The control link is responsible for sending and receiving FTP commands during FTP sessions, and the data link is responsible for transferring data. An FTP session includes two channels: a control channel and a data channel. FTP has two working modes: the <code>active mode</code> and the <code>passive mode</code>. When in active mode, the server connects to the client actively. When in passive mode, the server waits for client connections.(For both active mode and passive mode, the control channel is built first, the difference lies in the transfer methods.)</p>
+
+</section>
+<section	id="ftpinstallationandconfiguration">
+<h2>FTP installation and configuration</h2>
+
+<section	id="preparations">
+<h3>Preparations</h3>
+
+<p>Vsftpd is a light, safe and easy-to-use FTP server in Linux, and is the most popular FTP server across all Linux releases.</p>
+
+<section	id="installvsftpdthroughyum">
+<h4>Install vsftpd through yum</h4>
+<pre><code class="shell">yum install -y vsftpd</code></pre>
+
+</section>
+<section	id="relatedconfigurationfiles">
+<h4>Related configuration files</h4>
+
+<h5 id="1.changedirectorytovsftpd">1. Change directory to vsftpd</h5>
+<pre><code class="shell">cd /etc/vsftpd</code></pre>
+
+<p>There are three configuration files that we are concerned about</p>
+
+<ul>
+<li><code>/etc/vsftpd/vsftpd.conf</code>: main configuration file, which is the core configuration file.</li>
+<li><code>/etc/vsftpd/ftpusers</code>: blacklist, which prevents users on it from accessing the FTP server.</li>
+<li><code>/etc/vsftpd/user_list</code>: Whitelist, which allows users on it to access the FTP server.</li>
+</ul>
+
+<h5 id="2.startserviceincentos7">2. Start service (in CentOS 7+)</h5>
+<pre><code class="shell">systemctl enable vsftpd.service # set automatically start on startup
+systemctl start vsftpd.service # start FTP service
+netstat -antup | grep ftp # view FTP service port</code></pre>
+
+</section>
+</section>
+<section	id="basicconfigurationofanonymousftp">
+<h3>Basic Configuration of Anonymous FTP</h3>
+
+<p>With anonymous FTP, a user can log in to the FTP without entering a user name and password. Anonymous FTP is enabled by default after installing vsftpd, a user can log in to the FTP server anonymously without further configuration.</p>
+
+<p>Anonymous FTP configuration is set in <code>/etc/vsftpd/vsftpd.conf</code>.</p>
+<pre><code class="shell"># YES by default
+anonymous_enable=YES </code></pre>
+
+<p>At this time, all users can log in to the FTP server anonymously. They can view and download directories and files in the root folder, but cannot upload files or create directories.</p>
+
+<section	id="theinstallationoflftp">
+<h4>The installation of lftp</h4>
+
+<p>We can install <code>lftp</code> to test, which is a ftp application in Linux.</p>
+<pre><code class="shell">yum -y install lftp</code></pre>
+
+<p>When lftp connects to the FTP server from a public IP address, you can only view and download files, but you cannot upload files. (Try yourself)</p>
+
+</section>
+<section	id="additionalanonymousftpconfiguration">
+<h4>Additional anonymous FTP configuration</h4>
+
+<p>For safety reasons, in vsftpd, users are not allowed to perform modifying operations such as uploading files or creating directories through anonymous FTP, but the vsftpd.conf configuration file can be modified to grant additional permissions.</p>
+
+<h5 id="allowuploadingfilesthroughanonymousftp.">Allow uploading files through anonymous FTP.</h5>
+
+<p>Modify <code>/etc/vsftpd/vsftpd.conf</code></p>
+<pre><code class="shell">write_enable=YES
+anon_upload_enable=YES</code></pre>
+
+<p>Change permissions of the <code>/var/ftp/pub</code> directory, granting write permission to FTP users, and reload the configuration file.</p>
+<pre><code class="shell"># add write permission to others
+chmod o+w /var/ftp/pub  
+# restart service
+systemctl restart vsftpd.service  </code></pre>
+
+<p>Now anonymous users are able to write or read files in remote host.</p>
+
+</section>
+</section>
+<section	id="configurationofsecuritygroup">
+<h3>Configuration of Security Group</h3>
+
+<section	id="addsecuritygrouprulesforftpserver">
+<h4>Add Security Group Rules for FTPServer</h4>
+
+<h5 id="background">Background</h5>
+
+<p>Security groups control access to or from public or internal networks. For security purposes, most security groups use deny policies for inbound traffic. If you use the default security group, or you select a Web Server Linux template or a Web Server Windows template when creating a security group, security group rules are automatically added to some communication ports. </p>
+
+<h5 id="attributesofsecurityrules">Attributes of Security Rules</h5>
+
+<p>Security rules mainly describe different access permissions with the following attributes:</p>
+
+<ul>
+<li>Policy: authorization policies. The parameter value can be accept or drop.</li>
+<li>Priority: priority levels. The priority levels are sorted by creation time in descending order. The rule priority ranges from 1 to 100. The default value is 1, which is the highest priority. A greater value indicates a lower priority.</li>
+<li>NicType: network type. In security group authorization (namely SourceGroupId is specified while SourceCidrIp is not), you must specify NicType as intranet.</li>
+<li>Description:
+
+<ul>
+<li>IpProtocol: IP protocol. Values: tcp, udp, icmp, gre or all. The value &#8220;all&#8221; indicates all the protocols.</li>
+<li>PortRange: the range of port numbers related to the IP protocol:
+
+<ul>
+<li>When the value of IpProtocol is tcp or udp, the port range is 1&#8211;65535. The format must be &#8220;starting port number/ending port number&#8221;. For example, &#8220;1/200&#8221; indicates that the port range is 1&#8211;200. If the input value is &#8220;200/1&#8221;, an error will be reported when the interface is called.</li>
+<li>When the value of IpProtocol is icmp, gre or all, the port range is &#8211;1/&#8211;1, indicating no restriction on ports.</li>
+</ul></li>
+<li>If security group authorization is adopted, the SourceGroupId (namely the source security group ID) should be specified. In this case, you can choose to set SourceGroupOwnerAccount based on whether it is cross-account authorization. SourceGroupOwnerAccount indicates the account to which the source security group belongs.</li>
+<li>If CIDR authorization is adopted, SourceCidrIp should be specified. SourceCidrIp is the source IP address segment, which must be in the CIDR format.</li>
+</ul></li>
+</ul>
+
+</section>
+<section	id="add2021portforftp">
+<h4>Add 20/21 Port for FTP</h4>
+
+<p>To enable port 21 on the Internet to provide FTP services for external applications, do not impose any restrictions on IP network segments but set it to 0.0.0.0/0 in order to allow all inbound requests. For this purpose, you can refer to the following properties where console parameters are outside of brackets and OpenAPI parameters are within brackets (no difference is made if both parameters are the same).</p>
+
+<ul>
+<li>NIC Type (NicType): Internet (internet). For VPCs, simply enter intranet to implement Internet access through EIP.</li>
+<li>Action (Policy): allow (accept).</li>
+<li>Rule Direction (NicType): inbound.</li>
+<li>Protocol Type (IpProtocol): TCP (tcp).</li>
+<li>Port Range (PortRange): 20/21.</li>
+<li>Authorized Objects (SourceCidrIp): 0.0.0.0/0.</li>
+<li>Priority (Priority): 1.</li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/tutorial/securityGroup.png' %}" alt="securityGroup" />
+<figcaption>securityGroup</figcaption>
+</figure>
+
+</section>
+<section	id="configurationofpasvmodeforftp">
+<h4>Configuration of PASV Mode for FTP</h4>
+
+<p>20 port is used for data transfer, so we need to open PASV mode for client to get data from host passively. To do that, we have to open a limit range of ports to ensure the communication between clients and hosts.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/tutorial/PASVMode.png' %}" alt="PASVMode" />
+<figcaption>PASVMode</figcaption>
+</figure>
+
+<p>Meanwhile, make some changes to <code>vsftpd.conf</code></p>
+<pre><code class="shell"># allow local users change directory to those of others
+chroot_local_user=YES       
+# only users in /etc/vsftpd/chroot_list are allowed to change directory to root directory
+chroot_list_enable=YES      
+# white user list
+chroot_list_file=/etc/vsftpd/chroot_list    
+
+# root directory for local users is home directory
+# local_root=${HOME_DIR}    
+
+# PASV Mode
+pasv_enable=YES
+pasv_min_port=40000
+pasv_max_port=40080
+pasv_promiscuous=YES</code></pre>
+
+</section>
+</section>
+<section	id="configurelocaluserlogin">
+<h3>Configure Local User Login</h3>
+
+<p>Local user login refers to logging in to the FTP server with the Linux user name and password. Only anonymous FTP login is supported after vsftp is installed, if a user tries to log in to the server with the Linux user name, vsftp will deny access.</p>
+
+<p>Now let&#8217;s configure local user login.</p>
+
+<p>Create user ftpUser</p>
+<pre><code class="shell"># create user ftpUser
+useradd ftpUser 
+# set password of ftpUser
+passwd ftpUser </code></pre>
+
+<h5 id="modifyvsftpd.conf">Modify vsftpd.conf</h5>
+<pre><code class="shell"># shutdown permission of anonymous users
+anonymous enable=NO 
+# open ftp channel to local users
+local_enable=YES </code></pre>
+
+<p>Login with user ftpUser,</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/tutorial/ftpUser.png' %}" alt="ftpUser" />
+<figcaption>ftpUser</figcaption>
+</figure>
+
+<section	id="additionalvsftpd.confparameters">
+<h4>Additional vsftpd.conf Parameters</h4>
+<pre><code class="shell">cat /etc/vsftpd/vsftpd.conf</code></pre>
+
+<h5 id="userlogincontrol">User Login Control</h5>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Parameter</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">anonymous_enable=YES</td>
+	<td style="text-align:center;">Anonymous users are accepted</td>
+</tr>
+<tr>
+	<td style="text-align:center;">no_anon_password=YES</td>
+	<td style="text-align:center;">Password is not requested when anonymous users log in</td>
+</tr>
+<tr>
+	<td style="text-align:center;">anon_root=(none)</td>
+	<td style="text-align:center;">Anonymous user root</td>
+</tr>
+<tr>
+	<td style="text-align:center;">local_enable=YES</td>
+	<td style="text-align:center;">Local users are accepted</td>
+</tr>
+<tr>
+	<td style="text-align:center;">local_root=(none)</td>
+	<td style="text-align:center;">Local root user</td>
+</tr>
+</tbody>
+</table>
+
+<h5 id="userpermissioncontrol">User Permission Control</h5>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Parameter</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">write_enable=YES</td>
+	<td style="text-align:center;">upload is enabled (global control)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">local_umask=022</td>
+	<td style="text-align:center;">umask for local user to upload files</td>
+</tr>
+<tr>
+	<td style="text-align:center;">file_open_mode=0666</td>
+	<td style="text-align:center;">Use umask for uploaded file permissions</td>
+</tr>
+<tr>
+	<td style="text-align:center;">anon_upload_enable=YES</td>
+	<td style="text-align:center;">upload is enabled for anonymous users</td>
+</tr>
+<tr>
+	<td style="text-align:center;">anon_mkdir_write_enable=YES</td>
+	<td style="text-align:center;">creating directories is enabled for anonymous users</td>
+</tr>
+<tr>
+	<td style="text-align:center;">anon_other_write_enable=YES</td>
+	<td style="text-align:center;">modifying and deleting are enabled for anonymous users</td>
+</tr>
+<tr>
+	<td style="text-align:center;">chown_username=lightwiter</td>
+	<td style="text-align:center;">owner user name of uploaded files by anonymous users</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'tutorial' 'git' %}" class="button primary icon solid fa-backward">Back: 1. Git</a></li> 
+                     <li><span class="button">2. FTPServer</span></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 
+

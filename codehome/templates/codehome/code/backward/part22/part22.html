@@ -1,0 +1,691 @@
+{% load static %}
+
+<h1 id="win32seg.1">Win32 Seg.1</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#codestandard">Code Standard</a>
+
+<ul>
+<li><a href="#ascii">ASCII</a></li>
+<li><a href="#gb2312">GB2312</a></li>
+<li><a href="#unicode">Unicode</a></li>
+</ul></li>
+<li><a href="#widechar">Wide Char</a></li>
+<li><a href="#win32api">Win32 API</a>
+
+<ul>
+<li><a href="#tchar">TChar</a></li>
+</ul></li>
+<li><a href="#win32main">Win32 Main</a></li>
+<li><a href="#win32debug">Win32 Debug</a></li>
+<li><a href="#program">Program</a>
+
+<ul>
+<li><a href="#createawindow">Create a Window</a></li>
+<li><a href="#windowmessages">Window Messages</a></li>
+<li><a href="#windowprocedure">Window Procedure</a></li>
+<li><a href="#painting">Painting</a></li>
+<li><a href="#closingthewindow">Closing the Window</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="codestandard">
+<h2>Code Standard</h2>
+
+<p>As we all know, computer stores symbols as binary form. The question is how many mapping a symbol has? To solve that problem, we have to discuss coding standard.</p>
+
+<section	id="ascii">
+<h3>ASCII</h3>
+
+<p>ASCII, abbreviated from American Standard Code for Information Interchange, is a character encoding standard for electronic communication. ASCII codes represent text in computers, telecommunications equipment, and other devices. Most modern character-encoding schemes are based on ASCII, although they support many additional characters.</p>
+
+<p>For standard ASCII, it takes 7 bits, ranging from 0 ~ 128. In memory, it takes 1 byte block. For example, <code>65</code> (<code>0x41</code> or <code>0x01000001</code>) for <code>A</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/ascii-table.png' %}" alt="Standard ASCII Table" />
+<figcaption>Standard ASCII Table</figcaption>
+</figure>
+
+<p>To store more symbols, programmers take use of the most significant bit, ranging from 128 ~ 255, which is called ANSI encoding. For example, <code>128</code> (<code>0x80</code> or <code>0x10000000</code>) for <code>?</code>.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/ascii-table-extended.png' %}" alt="Extended ASCII Table" />
+<figcaption>Extended ASCII Table</figcaption>
+</figure>
+
+<p>ANSI encoding is a slightly generic term used to refer to the standard code page on a system, usually Windows. It is more properly referred to as Windows&#8211;1252 on Western/U.S. systems. (It can represent certain other Windows code pages on other systems.) This is essentially an extension of the ASCII character set in that it includes all the ASCII characters with an additional 128 character codes. This difference is due to the fact that &#8220;ANSI&#8221; encoding is 8-bit rather than 7-bit as ASCII is (ASCII is almost always encoded nowadays as 8-bit bytes with the MSB set to 0).</p>
+
+</section>
+<section	id="gb2312">
+<h3>GB2312</h3>
+
+<p>To code Chinese symbols, Chinese genius designed code standard called GB2312, which is based on ASCII. It use 2 bytes to save a Chinese symbol, each of which takes 1 as the most significant bit. In other words, it takes two extended ascii code and combines them to save a Chinese symbol.</p>
+
+<p>For example, <code>B0A1</code> for <code>啊</code>, <code>B0A2</code> for <code>阿</code>.</p>
+
+</section>
+<section	id="unicode">
+<h3>Unicode</h3>
+
+<p>Many programers, however, from different countries will conflict with each other in designing code standard for their mother languages. Each symbol takes 2 bytes. For example, <code>B0A1</code> for <code>啊</code> in Chinese, however for <code>こん</code> in Japanese.</p>
+
+<p>To solve that problem, experts from all over the world discuss and design a general code standard called unicode. Since unicode only includes Chinese symbols that is frequently used, we are not able to output some less-frequent words with unicode.</p>
+
+<p>BTW, <code>utf-8</code> is a variant of unicode. It takes 1 or 2 bytes for each symbol according to the frequency of symbol to be used.</p>
+
+</section>
+</section>
+<section	id="widechar">
+<h2>Wide Char</h2>
+
+<p>With the background of code standard, now we will discuss wide char.</p>
+
+<p>Notice that <code>中</code> in ASCII is <code>0xD6D0</code>, and in unicode is <code>0x4E2D</code>. </p>
+<pre><code class="cpp">char ch = &apos;中&apos;;
+// D0 FF EF FF  only get one byte
+wchar_t ch_ascii = &apos;中&apos;;
+// D0 D6 00 FF  use ascii code, end with 00
+wchar_t ch_unicode = L&apos;中&apos;;
+// 2D 4E 00 00 FF  use unicode, end with 00 00</code></pre>
+
+<p><code>wchar_t</code> is what we call wide character. Different from <code>char</code>, it takes 2 bytes of memory.</p>
+
+<p>How to print <code>wchar_t</code> with unicode?</p>
+<pre><code class="cpp">#include &lt;locale.h&gt;
+
+setlocale(LC_ALL, &quot;&quot;); // set location
+wprintf(L&quot;%s\n&quot;, ch_unicode);
+
+// strlen of wide char
+printf(&quot;the length of string: %d\n&quot;, wcslen(ch_unicode));
+// output: 1
+
+// strcpy of wide char
+wchar_t s[] = L&quot;中国&quot;;
+wchar_t s1[] = L&quot;你好&quot;;
+wcscpy(s, s1);</code></pre>
+
+</section>
+<section	id="win32api">
+<h2>Win32 API</h2>
+
+<p>The Windows API, informally WinAPI, is Microsoft&#8217;s core set of application programming interfaces (APIs) available in the Microsoft Windows operating systems.</p>
+
+<p>Most of api is saved in <code>*.dll</code> files under <code>C:\WINDOWS\system32\</code> for 32-bit system, such as <code>Kernel32.dll</code>, <code>User32.dll</code>, <code>GDI32.dll</code>.</p>
+
+<section	id="tchar">
+<h3>TChar</h3>
+
+<p>Back when applications needed to support both Windows NT as well as Windows 95, Windows 98, and Windows Me, it was useful to compile the same code for either ANSI or Unicode strings, depending on the target platform. To this end, the Windows SDK provides macros that map strings to Unicode or ANSI, depending on the platform.</p>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Macro</th>
+	<th style="text-align:center;">Unicode</th>
+	<th style="text-align:center;">ANSI</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">TCHAR</td>
+	<td style="text-align:center;">wchar_t</td>
+	<td style="text-align:center;">char</td>
+</tr>
+<tr>
+	<td style="text-align:center;">TEXT(&#8220;x&#8221;)</td>
+	<td style="text-align:center;">L&#8220;x&#8221;</td>
+	<td style="text-align:center;">&#8220;x&#8221;</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="cpp">char           CHAR
+wchar_t        WCHAR
+[macro name]   TCHAR</code></pre>
+<pre><code class="cpp">// whether it is coded with ascii or unicode is
+// decided by system settings.
+TCHAR cht[] = TEXT(&quot;中国&quot;);
+PTSTR str_t = TEXT(&quot;中国&quot;);</code></pre>
+
+<p>There are two kinds of api for users, one for ascii and the other for unicode. For example, <code>MessageBoxA</code> and <code>MessageBoxW</code>, and <code>MessageBox</code> is just a macro name.</p>
+<pre><code class="cpp">int main(int argc, char* argv[]) {
+    MessageBox(0, 0, 0, 0);
+
+    return 0;
+}
+
+// find the declaration of MessageBox
+MessageBoxW(
+    HWND hWnd ,
+    LPCWSTR lpText,
+    LPCWSTR lpCaption,
+    UINT uType);
+#ifdef UNICODE
+#define MessageBox  MessageBoxW
+#else
+#define MessageBox  MessageBoxA
+#endif // !UNICODE</code></pre>
+
+<p>Internally, the ANSI version translates the string to Unicode. The Windows headers also define a macro that resolves to the Unicode version when the preprocessor symbol <code>UNICODE</code> is defined or the ANSI version otherwise.</p>
+
+<p>New applications should always call the Unicode versions. Many world languages require Unicode. If you use ANSI strings, it will be impossible to localize your application. The ANSI versions are also less efficient, because the operating system must convert the ANSI strings to Unicode at run time. Depending on your preference, you can call the Unicode functions explicitly, such as SetWindowTextW, or use the macros. The example code on MSDN typically calls the macros, but the two forms are exactly equivalent. Most newer APIs in Windows have just a Unicode version, with no corresponding ANSI version.</p>
+
+</section>
+</section>
+<section	id="win32main">
+<h2>Win32 Main</h2>
+
+<p><code>WinMain</code> is sort of like <code>main</code> in console application. Every Windows program includes an entry-point function that is named either WinMain or wWinMain. Here is the signature for wWinMain.</p>
+<pre><code class="cpp">int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+                     int       nCmdShow)
+{
+ 	// TODO: Place code here.
+
+	return 0;
+}</code></pre>
+
+<p>The four parameters are:</p>
+
+<ul>
+<li><code>hInstance</code> is something called a &#8220;handle to an instance&#8221; or &#8220;handle to a module.&#8221; The operating system uses this value to identify the executable (EXE) when it is loaded in memory. The instance handle is needed for certain Windows functions —- for example, to load icons or bitmaps.</li>
+<li><code>hPrevInstance</code> has no meaning. It was used in 16-bit Windows, but is now always zero.</li>
+<li><code>pCmdLine</code> contains the command-line arguments as a Unicode string.</li>
+<li><code>nCmdShow</code> is a flag that says whether the main application window will be minimized, maximized, or shown normally.</li>
+</ul>
+
+<p>The function returns an int value. The return value is not used by the operating system, but you can use the return value to convey a status code to some other program that you write.</p>
+
+<p>WINAPI is the calling convention. A calling convention defines how a function receives parameters from the caller. For example, it defines the order that parameters appear on the stack. </p>
+<pre><code class="cpp">#define WINAPI __stdcall</code></pre>
+
+</section>
+<section	id="win32debug">
+<h2>Win32 Debug</h2>
+
+<p>There is a trick for debug in win32 application.</p>
+<pre><code class="cpp">// tools.h
+void __cdecl OutputDebugStringF(const char *format, ...); 
+
+// this is a trick for debug
+#ifdef _DEBUG  
+#define DbgPrintf   OutputDebugStringF  
+#else  
+#define DbgPrintf  
+#endif </code></pre>
+<pre><code class="cpp">// tools.cpp
+void __cdecl OutputDebugStringF(const char *format, ...)  
+{  
+    va_list vlArgs;  
+    char    *strBuffer = (char*)GlobalAlloc(GPTR, 4096);  
+
+    va_start(vlArgs, format);  
+    _vsnprintf(strBuffer, 4096 - 1, format, vlArgs);  
+    va_end(vlArgs);  
+    strcat(strBuffer, &quot;\n&quot;);  
+    OutputDebugStringA(strBuffer);  
+    GlobalFree(strBuffer);  
+    return;  
+}  </code></pre>
+<pre><code class="cpp">// main.cpp:
+#include &quot;stdafx.h&quot; // which include &lt;stdio.h&gt; and &lt;windows.h&gt;
+#include &quot;tools.h&quot;
+
+int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+                     int       nCmdShow)
+{	
+	DbgPrintf(&quot;Hello %s!\n&quot;, &quot;Win32&quot;);
+
+	return 0;
+} </code></pre>
+
+<ul>
+<li><code>GetLastError</code><br/>
+The <code>GetLastError</code> function retrieves the calling thread&#8217;s last-error code value.</li>
+</ul>
+<pre><code class="cpp">DWORD err_code = GetLastError();</code></pre>
+
+</section>
+<section	id="program">
+<h2>Program</h2>
+
+<p>Before starting to program, we will abbreviate how a win32 application works as follows,</p>
+<pre><code class="bash">an event --&gt; a message --&gt; system queue --&gt; application queue
+--&gt; func: GetMessage() --&gt; func: DispatchMessage() --&gt; system operations 
+--&gt; call WindowProc() </code></pre>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/message-flow.png' %}" alt="Message Flow" />
+<figcaption>Message Flow</figcaption>
+</figure>
+
+<section	id="createawindow">
+<h3>Create a Window</h3>
+
+<p>A window class defines a set of behaviors that several windows might have in common. For example, in a group of buttons, each button has a similar behavior when the user clicks the button. Of course, buttons are not completely identical; each button displays its own text string and has its own screen coordinates. Data that is unique for each window is called instance data.</p>
+
+<p>Every window must be associated with a window class, even if your program only ever creates one instance of that class. It is important to understand that a window class is not a &#8220;class&#8221; in the C++ sense. Rather, it is a data structure used internally by the operating system. Window classes are registered with the system at run time. To register a new window class, start by filling in a WNDCLASS structure:</p>
+<pre><code class="cpp">// Register the window class.
+// design class style of window
+TCHAR CLASS_NAME[]  = L&quot;Sample Window Class&quot;;
+
+WNDCLASS wc = {0};
+wc.lpfnWndProc = WindowProc;
+wc.hInstance = hInstance;
+wc.lpszClassName = CLASS_NAME;</code></pre>
+
+<p>You must set the following structure members:</p>
+
+<ul>
+<li><code>lpfnWndProc</code> is a pointer to an application-defined function called the window procedure or &#8220;window proc.&#8221; The window procedure defines most of the behavior of the window. We&#8217;ll examine the window procedure in detail later. For now, just treat this as a forward reference.</li>
+<li><code>hInstance</code> is the handle to the application instance. Get this value from the hInstance parameter of wWinMain.</li>
+<li><code>lpszClassName</code> is a string that identifies the window class.</li>
+</ul>
+
+<p>Class names are local to the current process, so the name only needs to be unique within the process. However, the standard Windows controls also have classes. If you use any of those controls, you must pick class names that do not conflict with the control class names. For example, the window class for the button control is named &#8220;Button&#8221;.</p>
+
+<p>Next, pass the address of the WNDCLASS structure to the RegisterClass function. This function registers the window class with the operating system.</p>
+<pre><code class="cpp">RegisterClass(&amp;wc);</code></pre>
+
+<p>To create a new instance of a window, call the <code>CreateWindowEx</code> function:</p>
+<pre><code class="cpp">HWND hwnd = CreateWindowEx(
+    0,			// Extended window style
+    CLASS_NAME,                     // Window class
+    TEXT(&quot;Learn to Program Windows&quot;),    // Window text
+    WS_OVERLAPPEDWINDOW,            // Window style
+
+    // Size and position
+    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+
+    NULL,       // Parent window    
+    NULL,       // Menu
+    hInstance,  // Instance handle
+    NULL        // Additional application data
+    );
+
+if (hwnd == NULL)
+{
+    return 0;
+}</code></pre>
+
+<p>You can read detailed parameter descriptions on MSDN, but here is a quick summary:</p>
+
+<ul>
+<li>The first parameter lets you specify some optional behaviors for the window (for example, transparent windows). Set this parameter to zero for the default behaviors.</li>
+<li><code>CLASS_NAME</code> is the name of the window class. This defines the type of window you are creating.</li>
+<li>The window text is used in different ways by different types of windows. If the window has a title bar, the text is displayed in the title bar.</li>
+<li>The window style is a set of flags that define some of the look and feel of a window. The constant <code>WS_OVERLAPPEDWINDOW</code> is actually several flags combined with a bitwise OR. Together these flags give the window a title bar, a border, a system menu, and Minimize and Maximize buttons. This set of flags is the most common style for a top-level application window.</li>
+<li>For position and size, the constant <code>CW_USEDEFAULT</code> means to use default values.</li>
+<li>The next parameter sets a parent window or owner window for the new window. Set the parent if you are creating a child window. For a top-level window, set this to NULL.</li>
+<li>For an application window, the next parameter defines the menu for the window. This example does not use a menu, so the value is NULL.</li>
+<li><code>hInstance</code> is the instance handle, described previously.</li>
+<li>The last parameter is a pointer to arbitrary data of type void*. You can use this value to pass a data structure to your window procedure.</li>
+</ul>
+
+<p><code>CreateWindowEx</code> returns a handle to the new window, or zero if the function fails. To show the window—that is, make the window visible —- pass the window handle to the ShowWindow function:</p>
+<pre><code class="cpp">ShowWindow(hwnd, nCmdShow);</code></pre>
+
+<p>The <code>hwnd</code> parameter is the window handle returned by CreateWindowEx. The <code>nCmdShow</code> parameter can be used to minimize or maximize a window. The operating system passes this value to the program through the <code>WinMain</code> function.</p>
+
+<p>Here is the complete code to create the window. Remember that WindowProc is still just a forward declaration of a function.</p>
+<pre><code class="cpp">#include &quot;stdafx.h&quot;
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+int APIENTRY WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
+                     int       nCmdShow)
+{
+	// Register the window class.s
+ 	TCHAR CLASS_NAME[]  = &quot;Sample Window Class&quot;;
+
+	WNDCLASS wc = {0};
+	wc.lpfnWndProc = WindowProc;
+	wc.hInstance = hInstance;
+	wc.lpszClassName = CLASS_NAME;
+
+	RegisterClass(&amp;wc);
+
+	// Create the window.
+	HWND hwnd = CreateWindowEx(
+        0,			// Extended window style
+		CLASS_NAME,                     // Window class
+		TEXT(&quot;Learn to Program Windows&quot;),    // Window text
+		WS_OVERLAPPEDWINDOW,            // Window style
+
+		// Size and position
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+
+		NULL,       // Parent window    
+		NULL,       // Menu
+		hInstance,  // Instance handle
+		NULL        // Additional application data
+    );
+
+	if (hwnd == NULL)
+	{
+		return 0;
+	}
+
+	ShowWindow(hwnd, nCmdShow);
+	
+	// message loop: we we discuss later
+	MSG msg;
+	while (GetMessage(&amp;msg, NULL, 0, 0)) {
+		TranslateMessage(&amp;msg);
+		DispatchMessage(&amp;msg);
+	}
+
+	return 0;
+} 
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	
+	return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}</code></pre>
+
+</section>
+<section	id="windowmessages">
+<h3>Window Messages</h3>
+
+<p>A GUI application must respond to events from the user and from the operating system.</p>
+
+<ul>
+<li>Events from the user include all the ways that someone can interact with your program: mouse clicks, key strokes, touch-screen gestures, and so on.</li>
+<li>Events from the operating system include anything &#8220;outside&#8221; of the program that can affect how the program behaves. For example, the user might plug in a new hardware device, or Windows might enter a lower-power state (sleep or hibernate).</li>
+</ul>
+
+<p>These events can occur at any time while the program is running, in almost any order. How do you structure a program whose flow of execution cannot be predicted in advance?</p>
+
+<p>To solve this problem, Windows uses a message-passing model. The operating system communicates with your application window by passing messages to it. A message is simply a numeric code that designates a particular event. For example, if the user presses the left mouse button, the window receives a message that has the following message code.</p>
+<pre><code class="cpp">define WM_LBUTTONDOWN    0x0201</code></pre>
+
+<p>Some messages have data associated with them. For example, the <code>WM_LBUTTONDOWN</code> message includes the x-coordinate and y-coordinate of the mouse cursor.</p>
+
+<p>To pass a message to a window, the operating system calls the window procedure registered for that window.</p>
+
+<h5 id="themessageloop">The Message Loop</h5>
+
+<p>An application will receive thousands of messages while it runs. (Consider that every keystroke and mouse-button click generates a message.) Additionally, an application can have several windows, each with its own window procedure. How does the program receive all these messages and deliver them to the correct window procedure? The application needs a loop to <em>retrieve the messages and dispatch them</em> to the correct windows.</p>
+
+<p>For each thread that creates a window, the operating system creates a queue for window messages. This queue holds messages for all the windows that are created on that thread. The queue itself is hidden from your program (As shown before). You cannot manipulate the queue directly. However, you can pull a message from the queue by calling the <code>GetMessage</code> function.</p>
+<pre><code class="cpp">MSG msg;
+GetMessage(&amp;msg, NULL, 0, 0);</code></pre>
+
+<p>This function removes the first message from the head of the queue. If the queue is empty, the function blocks until another message is queued. The fact that <code>GetMessage</code> blocks will not make your program unresponsive. If there are no messages, there is nothing for the program to do. If you have to perform background processing, you can create additional threads that continue to run while GetMessage waits for another message. </p>
+
+<p>The first parameter of <code>GetMessage</code> is the address of a <code>MSG</code> structure. If the function succeeds, it fills in the MSG structure with information about the message. This includes the target window and the message code. The other three parameters let you filter which messages you get from the queue. In almost all cases, you will set these parameters to zero.</p>
+
+<p>Although the MSG structure contains information about the message, you will almost never examine this structure directly. Instead, you will pass it directly to two other functions.</p>
+<pre><code class="cpp">TranslateMessage(&amp;msg); 
+DispatchMessage(&amp;msg);</code></pre>
+
+<p>The <code>TranslateMessage</code> function is related to keyboard input. It translates keystrokes (key down, key up) into characters. You do not really have to know how this function works; just remember to call it before <code>DispatchMessage</code>. </p>
+
+<p>The <code>DispatchMessage</code> function tells the operating system to call the window procedure of the window that is the target of the message. In other words, the operating system looks up the window handle in its table of windows, finds the function pointer associated with the window, and invokes the function.</p>
+
+<p>For example, suppose that the user presses the left mouse button. This causes a chain of events:</p>
+
+<ol>
+<li>The operating system puts a <code>WM_LBUTTONDOWN</code> message on the message queue.</li>
+<li>Your program calls the <code>GetMessage</code> function.</li>
+<li><code>GetMessage</code> pulls the <code>WM_LBUTTONDOWN</code> message from the queue and fills in the <code>MSG</code> structure.</li>
+<li>Your program calls the <code>TranslateMessage</code> and <code>DispatchMessage</code> functions.</li>
+<li>Inside <code>DispatchMessage</code>, the operating system calls your window procedure.</li>
+<li>Your window procedure can either respond to the message or ignore it (relay it to the system function <code>DefWindowProc()</code>).</li>
+</ol>
+
+<p>When the window procedure returns, it returns back to <code>DispatchMessage</code>. This returns to the message loop for the next message. As long as your program is running, messages will continue to arrive on the queue. Therefore, you must have a loop that continually pulls messages from the queue and dispatches them. You can think of the loop as doing the following:</p>
+<pre><code class="cpp">// WARNING: Don&apos;t actually write your loop this way.
+while (1)      
+{
+    GetMessage(&amp;msg, NULL, 0,  0);
+    TranslateMessage(&amp;msg); 
+    DispatchMessage(&amp;msg);
+}</code></pre>
+
+<p>As written, of course, this loop would never end. That is where the return value for the <code>GetMessage</code> function comes in. Normally, <code>GetMessage</code> returns a nonzero value. When you want to exit the application and break out of the message loop, call the <code>PostQuitMessage</code> function.</p>
+<pre><code class="cpp">PostQuitMessage(0);</code></pre>
+
+<p>The <code>PostQuitMessage</code> function puts a <code>WM_QUIT</code> message on the message queue. <code>WM_QUIT</code> is a special message: It causes <code>GetMessage</code> to return zero, signaling the end of the message loop. Here is the revised message loop.</p>
+<pre><code class="cpp">// Correct
+MSG msg = { };
+while (GetMessage(&amp;msg, NULL, 0, 0) &gt; 0)
+{
+    TranslateMessage(&amp;msg);
+    DispatchMessage(&amp;msg);
+}</code></pre>
+
+<p>As long as <code>GetMessage</code> returns a nonzero value, the expression in the while loop evaluates to <code>true</code>. After you call <code>PostQuitMessage</code>, the expression becomes false and the program breaks out of the loop. (One interesting result of this behavior is that your window procedure never receives a <code>WM_QUIT</code> message. Therefore, you do not have to have a case statement for this message in your window procedure.)</p>
+
+<p>The next obvious question is when to call <code>PostQuitMessage</code>. We&#8217;ll return to this question in the topic <em>Closing the Window</em>, but first we have to write our window procedure.</p>
+
+<h5 id="postversussend">Post versus Send</h5>
+
+<p>The previous section talked about messages going onto a queue. Sometimes, the operating system will call a window procedure directly, bypassing the queue.</p>
+
+<p>The terminology for this distinction can be confusing:</p>
+
+<ul>
+<li><em>Posting a message</em> means the message goes on the message queue, and is dispatched through the message loop (<code>GetMessage</code> and <code>DispatchMessage</code>).</li>
+<li><em>Sending a message</em> means the message skips the queue, and the operating system calls the window procedure directly.</li>
+</ul>
+
+<p>For now, the difference is not very important. The window procedure handles all messages. However, some messages bypass the queue and go directly to your window procedure. However, it can make a difference if your application communicates between windows.</p>
+
+</section>
+<section	id="windowprocedure">
+<h3>Window Procedure</h3>
+
+<h5 id="userprocedure">User Procedure</h5>
+
+<p>The <code>DispatchMessage</code> function calls the window procedure of the window that is the target of the message. The window procedure has the following signature.</p>
+<pre><code class="cpp">LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);</code></pre>
+
+<p>There are four parameters:</p>
+
+<ul>
+<li><code>hwnd</code> is a handle to the window.</li>
+<li><code>uMsg</code> is the message code; for example, the <code>WM_SIZE</code> message indicates the window was resized.</li>
+<li><code>wParam</code> and <code>lParam</code> contain additional data that pertains to the message. The exact meaning depends on the message code.</li>
+</ul>
+
+<p><code>LRESULT</code> is an integer value that your program returns to Windows. It contains your program&#8217;s response to a particular message. The meaning of this value depends on the message code. <code>CALLBACK</code> is the calling convention for the function.</p>
+
+<p>A typical window procedure is simply a large switch statement that switches on the message code. Add cases for each message that you want to handle.</p>
+<pre><code class="cpp">switch (uMsg)
+{
+    case WM_SIZE: // Handle window resizing
+
+    // etc
+}</code></pre>
+
+<p>Additional data for the message is contained in the lParam and wParam parameters. Both parameters are integer values the size of a pointer width (32 bits or 64 bits). The meaning of each depends on the message code (<code>uMsg</code>). For each message, you will need to look up the message code on MSDN and cast the parameters to the correct data type. Usually the data is either a numeric value or a pointer to a structure. Some messages do not have any data.</p>
+
+<p>For example, the documentation for the <code>WM_SIZE</code> message states that:</p>
+
+<ul>
+<li><code>wParam</code> is a flag that indicates whether the window was minimized, maximized, or resized.</li>
+<li><code>lParam</code> contains the new width and height of the window as 16-bit values packed into one 32- or 64-bit number. You will need to perform some bit-shifting to get these values. Fortunately, the header file <code>WinDef.h</code> includes helper macros that do this.</li>
+</ul>
+
+<p>A typical window procedure handles dozens of messages, so it can grow quite long. One way to make your code more modular is to put the logic for handling each message in a separate function. In the window procedure, cast the <code>wParam</code> and <code>lParam</code> parameters to the correct data type, and pass those values to the function. For example, to handle the WM_SIZE message, the window procedure would look like this:</p>
+<pre><code class="cpp">LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_SIZE:
+        {
+            int width = LOWORD(lParam);  // Macro to get the low-order word.
+            int height = HIWORD(lParam); // Macro to get the high-order word.
+
+            // Respond to the message:
+            OnSize(hwnd, (UINT)wParam, width, height);
+        }
+        break;
+    }
+}
+
+void OnSize(HWND hwnd, UINT flag, int width, int height)
+{
+    // Handle resizing
+}</code></pre>
+
+<p>The <code>LOWORD</code> and <code>HIWORD</code> macros get the 16-bit width and height values from lParam. (You can look up these kinds of details in the MSDN documentation for each message code.) The window procedure extracts the width and height, and then passes these values to the <code>OnSize</code> function.</p>
+
+<h5 id="defaultmessagehandling">Default Message Handling</h5>
+
+<p>If you don&#8217;t handle a particular message in your window procedure, pass the message parameters directly to the <code>DefWindowProc</code> function. This function performs the default action for the message, which varies by message type.</p>
+<pre><code class="cpp">return DefWindowProc(hwnd, uMsg, wParam, lParam);</code></pre>
+
+<p>TIPS:<br/>
+Avoiding Bottlenecks in Your Window Procedure: While your window procedure executes, it blocks any other messages for windows created on the same thread. Therefore, avoid lengthy processing inside your window procedure. For example, suppose your program opens a TCP connection and waits indefinitely for the server to respond. If you do that inside the window procedure, your UI will not respond until the request completes. During that time, the window cannot process mouse or keyboard input, repaint itself, or even close.</p>
+
+<p>Instead, you should move the work to another thread, using one of the multitasking facilities that are built into Windows:</p>
+
+<ul>
+<li>Create a new thread.</li>
+<li>Use a thread pool.</li>
+<li>Use asynchronous I/O calls.</li>
+<li>Use asynchronous procedure calls.</li>
+</ul>
+
+</section>
+<section	id="painting">
+<h3>Painting</h3>
+
+<p>You&#8217;ve created your window. Now you want to show something inside it. In Windows terminology, this is called painting the window. To mix metaphors, a window is a blank canvas, waiting for you to fill it.</p>
+
+<p>Sometimes your program will initiate painting to update the appearance of the window. At other times, the operating system will notify you that you must repaint a portion of the window. When this occurs, the operating system sends the window a <code>WM_PAINT</code> message. The portion of the window that must be painted is called the <em>update region</em>.</p>
+
+<p>The first time a window is shown, the entire client area of the window must be painted. Therefore, you will always receive at least one <code>WM_PAINT</code> message when you show a window.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/painting-01.png' %}" alt="Client Area" />
+<figcaption>Client Area</figcaption>
+</figure>
+
+<p>You are only responsible for painting the client area. The surrounding frame, including the title bar, is automatically painted by the operating system. After you finish painting the client area, you clear the update region, which tells the operating system that it does not need to send another <code>WM_PAINT</code> message until something changes.</p>
+
+<p>Now suppose the user moves another window so that it obscures a portion of your window. When the obscured portion becomes visible again, that portion is added to the update region, and your window receives another <code>WM_PAINT</code> message.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/painting-02.png' %}" alt="Update Region" />
+<figcaption>Update Region</figcaption>
+</figure>
+
+<p>The update region also changes if the user stretches the window. In the following diagram, the user stretches the window to the right. The newly exposed area on the right side of the window is added to the update region:</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/painting-03.png' %}" alt="Stretch" />
+<figcaption>Stretch</figcaption>
+</figure>
+
+<p>In our first example program, the painting routine is very simple. It just fills the entire client area with a solid color. Still, this example is enough to demonstrate some of the important concepts.</p>
+<pre><code class="cpp">switch (uMsg)
+{
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &amp;ps);
+
+        // All painting occurs here, between BeginPaint and EndPaint.
+
+        FillRect(hdc, &amp;ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+
+        EndPaint(hwnd, &amp;ps);
+    }
+    return 0;
+}</code></pre>
+
+<p>Start the painting operation by calling the BeginPaint function. This function fills in the <code>PAINTSTRUCT</code>structure with information on the repaint request. The current update region is given in the <code>rcPaint</code> member of <code>PAINTSTRUCT</code>. This update region is defined relative to the client area:</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/painting-04.png' %}" alt="Location" />
+<figcaption>Location</figcaption>
+</figure>
+
+<p>In your painting code, you have two basic options:</p>
+
+<ul>
+<li>Paint the entire client area, regardless of the size of the update region. Anything that falls outside of the update region is clipped. That is, the operating system ignores it.</li>
+<li>Optimize by painting just the portion of the window inside the update region.</li>
+</ul>
+
+<p>If you always paint the entire client area, the code will be simpler. If you have complicated painting logic, however, it can be more efficient to skip the areas outside of the update region.</p>
+
+<p>The following line of code fills the update region with a single color, using the system-defined window background color (<code>COLOR_WINDOW</code>). The actual color indicated by <code>COLOR_WINDOW</code> depends on the user&#8217;s current color scheme.</p>
+<pre><code class="cpp">FillRect(hdc, &amp;ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));</code></pre>
+
+<p>The details of <code>FillRect</code> are not important for this example, but the second parameter gives the coordinates of the rectangle to fill. In this case, we pass in the entire update region (the <code>rcPaint</code> member of <code>PAINTSTRUCT</code>). On the first WM_PAINT message, the entire client area needs to be painted, so <code>rcPaint</code> will contain the entire client area. On subsequent WM_PAINT messages, <code>rcPaint</code> might contain a smaller rectangle.</p>
+
+<p>After you are done painting, call the <code>EndPaint</code> function. This function clears the update region, which signals to Windows that the window has completed painting itself.</p>
+
+</section>
+<section	id="closingthewindow">
+<h3>Closing the Window</h3>
+
+<p>When the user closes a window, that action triggers a sequence of window messages.</p>
+
+<p>The user can close an application window by clicking the Close button, or by using a keyboard shortcut such as ALT+F4. Any of these actions causes the window to receive a <code>WM_CLOSE</code> message. The <code>WM_CLOSE</code> message gives you an opportunity to prompt the user before closing the window. If you really do want to close the window, call the <code>DestroyWindow</code> function. Otherwise, simply return zero from the <code>WM_CLOSE</code> message, and the operating system will ignore the message and not destroy the window.</p>
+
+<p>Here is an example of how a program might handle <code>WM_CLOSE</code>.</p>
+<pre><code class="cpp">case WM_CLOSE:
+    if (MessageBox(hwnd, L&quot;Really quit?&quot;, L&quot;My application&quot;, MB_OKCANCEL) == IDOK)
+    {
+        DestroyWindow(hwnd);
+    }
+    // Else: User canceled. Do nothing.
+    return 0;</code></pre>
+
+<p>In this example, the <code>MessageBox</code> function shows a modal dialog that contains OK and Cancel buttons. If the user clicks OK, the program calls <code>DestroyWindow</code>. Otherwise, if the user clicks Cancel, the call to <code>DestroyWindow</code> is skipped, and the window remains open. In either case, return zero to indicate that you handled the message.</p>
+
+<p>If you want to close the window without prompting the user, you could simply call <code>DestroyWindow</code> without the call to <code>MessageBox</code>. However, there is a shortcut in this case. Recall that <code>DefWindowProc</code> executes the default action for any window message. In the case of <code>WM_CLOSE</code>, <code>DefWindowProc</code> automatically calls <code>DestroyWindow</code>. That means if you ignore the <code>WM_CLOSE</code> message in your switch statement, the window is destroyed by default.</p>
+
+<p>When a window is about to be destroyed, it receives a <code>WM_DESTROY</code> message. This message is sent after the window is removed from the screen, but before the destruction occurs (in particular, before any child windows are destroyed).</p>
+
+<p>In your main application window, you will typically respond to <code>WM_DESTROY</code> by calling <code>PostQuitMessage</code>.</p>
+<pre><code class="cpp">case WM_DESTROY:
+    PostQuitMessage(0);
+    return 0;</code></pre>
+
+<p>We saw in the <em>Window Messages</em> section that <code>PostQuitMessage</code> puts a <code>WM_QUIT</code> message on the message queue, causing the message loop to end.</p>
+
+<p>Here is a flow chart showing the typical way to process <code>WM_CLOSE</code> and<br/>
+<code>WM_DESTROY</code> messages:</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/wmclose-01.png' %}" alt="Close the Window" />
+<figcaption>Close the Window</figcaption>
+</figure>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part21' %}" class="button primary icon solid fa-backward">Back: 21. C++ Seg.2</a></li> 
+                     <li><span class="button">22. Win32 Seg.1</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part23' %}" class="button primary icon solid fa-forward">Next: 23. Win32 Seg.2</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 

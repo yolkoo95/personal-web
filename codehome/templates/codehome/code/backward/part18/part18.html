@@ -1,0 +1,664 @@
+{% load static %}
+
+<h1 id="peseg.9">PE Seg.9</h1>
+
+<h2 id="tableofcontents">Table of Contents</h2>
+
+<ul>
+<li><a href="#importdatasection">Import Data Section</a>
+
+<ul>
+<li><a href="#importdirectorytable">Import Directory Table</a></li>
+<li><a href="#importlookuptable">Import Lookup Table</a></li>
+<li><a href="#nametable">Name Table</a></li>
+<li><a href="#importaddresstable">Import Address Table</a></li>
+<li><a href="#relationship">Relationship</a></li>
+<li><a href="#traverseimporttables">Traverse Import Tables</a></li>
+</ul></li>
+<li><a href="#iat">IAT</a></li>
+<li><a href="#boundimport">Bound Import</a>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#structure">Structure</a></li>
+<li><a href="#traverseboundimporttable">Traverse Bound Import Table</a></li>
+</ul></li>
+</ul>
+
+<p><TableEndMark></p>
+
+<section	id="importdatasection">
+<h2>Import Data Section</h2>
+
+<p>Think from human perspective, if we want to offer some services for others, we have to let clients know what servers they are able to get. That&#8217;s what export directory does &#8211; providing function list. As a client, we also have to let clients know what our need is, so we have to offer a list to tell loader which function we have to use from server (i.e. dlls). This is the mission of import directory.</p>
+
+<p>All image files that import symbols, including virtually all executable (EXE) files, have an <code>.idata</code> section. The section contains some tables we will discuss in the following.</p>
+
+<section	id="importdirectorytable">
+<h3>Import Directory Table</h3>
+
+<p>The import information begins with the import directory table, which describes the remainder of the import information. The import directory table contains address information that is used to resolve fixup references to the entry points within a DLL image. The import directory table consists of an array of import directory entries, one entry for each DLL to which the image refers. The last directory entry is empty (filled with null values), which indicates the end of the directory table.</p>
+<pre><code class="c">typedef struct _IMAGE_IMPORT_DESCRIPTOR {				
+    union {				
+        DWORD   Characteristics;           				
+        DWORD   OriginalFirstThunk;         				
+    };				
+    DWORD   TimeDateStamp;               				
+    DWORD   ForwarderChain;              				
+    DWORD   Name;				
+    DWORD   FirstThunk;                 				
+} IMAGE_IMPORT_DESCRIPTOR;				
+typedef IMAGE_IMPORT_DESCRIPTOR* PIMAGE_IMPORT_DESCRIPTOR;</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Import Lookup Table RVA (Characteristics)</td>
+	<td style="text-align:center;">The RVA of the import lookup table. This table contains a name or ordinal for each import. (The name &#8220;Characteristics&#8221; is used in Winnt.h, but no longer describes this field.)</td>
+</tr>
+<tr>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Time/Date Stamp</td>
+	<td style="text-align:center;">The stamp that is set to zero until the image is bound. After the image is bound, this field is set to the time/data stamp of the DLL.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">8</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Forwarder Chain</td>
+	<td style="text-align:center;">The index of the first forwarder reference.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">12</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Name RVA</td>
+	<td style="text-align:center;">The address of an ASCII string that contains the name of the DLL. This address is relative to the image base.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">16</td>
+	<td style="text-align:center;">4</td>
+	<td style="text-align:center;">Import Address Table RVA (Thunk Table, IAT)</td>
+	<td style="text-align:center;">The RVA of the import address table. <em>The contents of this table are identical to the contents of the import lookup table until the image is bound.</em></td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="importlookuptable">
+<h3>Import Lookup Table</h3>
+
+<p>An import lookup table is an array of 32-bit numbers for PE32 or an array of 64-bit numbers for PE32+. Each entry uses the bit-field format that is described in the following table. In this format, bit 31 is the most significant bit for PE32 and bit 63 is the most significant bit for PE32+. The collection of these entries describes all imports from a given DLL. The last entry is set to zero (NULL) to indicate the end of the table.</p>
+<pre><code class="c">typedef struct _IMAGE_THUNK_DATA32 {				
+    union {				
+        PBYTE  ForwarderString;				
+        PDWORD Function;				
+        DWORD Ordinal;				
+        PIMAGE_IMPORT_BY_NAME  AddressOfData;				
+    } u1;				
+} IMAGE_THUNK_DATA32;				
+typedef IMAGE_THUNK_DATA32* PIMAGE_THUNK_DATA32;				</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Bit(s)</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Bit Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">31/63</td>
+	<td style="text-align:center;">1</td>
+	<td style="text-align:center;">Ordinal/Name Flag</td>
+	<td style="text-align:center;">If this bit is set, import by ordinal. Otherwise, import by name. Bit is masked as 0x80000000 for PE32.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">15&#8211;0</td>
+	<td style="text-align:center;">16</td>
+	<td style="text-align:center;">Ordinal Number</td>
+	<td style="text-align:center;">A 16-bit ordinal number. This field is used only if the Ordinal/Name Flag bit field is 1 (import by ordinal). Bits 30&#8211;15 or 62&#8211;15 must be 0.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">30&#8211;0</td>
+	<td style="text-align:center;">31</td>
+	<td style="text-align:center;">Hint/Name Table RVA</td>
+	<td style="text-align:center;">A 31-bit RVA of a hint/name table entry. This field is used only if the Ordinal/Name Flag bit field is 0 (import by name). For PE32+ bits 62&#8211;31 must be zero.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="nametable">
+<h3>Name Table</h3>
+
+<p>One name(hint) table suffices for the entire import section. Each entry in the name(hint) table has the following format:</p>
+<pre><code class="c">typedef struct _IMAGE_IMPORT_BY_NAME {			
+    WORD    Hint;			
+    BYTE    Name[1];			
+} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;			</code></pre>
+
+<table>
+<colgroup>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+<col style="text-align:center;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:center;">Offset</th>
+	<th style="text-align:center;">Size</th>
+	<th style="text-align:center;">Field</th>
+	<th style="text-align:center;">Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:center;">0</td>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Hint</td>
+	<td style="text-align:center;">An index into the export name pointer table. A match is attempted first with this value. If it fails, a binary search is performed on the DLL&#8217;s export name pointer table.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">2</td>
+	<td style="text-align:center;">Variable</td>
+	<td style="text-align:center;">Name</td>
+	<td style="text-align:center;">An ASCII string that contains the name to import. This is the string that must be matched to the public name in the DLL. This string is case sensitive and terminated by a null byte.</td>
+</tr>
+<tr>
+	<td style="text-align:center;">*</td>
+	<td style="text-align:center;">0 or 1</td>
+	<td style="text-align:center;">Pad</td>
+	<td style="text-align:center;">A trailing zero-pad byte that appears after the trailing null byte, if necessary, to align the next entry on an even boundary.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section	id="importaddresstable">
+<h3>Import Address Table</h3>
+
+<p>The structure and content of the import address table are identical to those of the import lookup table, until the file is bound. During binding, the entries in the import address table are overwritten with the 32-bit (for PE32) or 64-bit (for PE32+) addresses of the symbols that are being imported. <strong>These addresses are the actual memory addresses of the symbols, although technically they are still called &#8220;virtual addresses&#8221;</strong>. The loader typically processes the binding.</p>
+
+</section>
+<section	id="relationship">
+<h3>Relationship</h3>
+
+<p>After introducing each table, how they are related to each other?</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/ImportTableRelationship.png' %}" alt="Relationship among Tables" />
+<figcaption>Relationship among Tables</figcaption>
+</figure>
+
+<ul>
+<li>Import Lookup Table: is an array of IMAGE_THUNK_DATA, which is a union of ordinal or name RVA.</li>
+<li>Hint in IMAGE_THUNK_DATA: is just an index of that function in name pointer table. we have to look for ordinal in name ordinal table, which has the same index.</li>
+</ul>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/relationship.png' %}" alt="Index Function Address" />
+<figcaption>Index Function Address</figcaption>
+</figure>
+
+<ul>
+<li>IAT: is bound by loader when loading program into memory.</li>
+</ul>
+
+</section>
+<section	id="traverseimporttables">
+<h3>Traverse Import Tables</h3>
+
+<p>Now let&#8217;s print information of import tables in C:</p>
+<pre><code class="c">// Global.h: define table structs
+///////////////////////////////
+// Import Table - Begin
+
+typedef struct image_import_descriptor {				
+    union {				
+        DWORD   Characteristics;           				
+        DWORD   OriginalFirstThunk;         				
+    };				
+    DWORD   TimeDateStamp;               				
+    DWORD   ForwarderChain;              				
+    DWORD   Name;				
+    DWORD   FirstThunk;                 				
+} IMAGE_IMPORT_DESCRIPTOR;
+IMAGE_IMPORT_DESCRIPTOR* pImportDirectory;
+
+typedef struct image_thunk_data32 {				
+    union {				
+        BYTE*  ForwarderString;				
+        DWORD* Function;				
+        DWORD Ordinal;				
+        struct IMAGE_IMPORT_BY_NAME*  AddressOfData;				
+    } u1;				
+} IMAGE_THUNK_DATA32;
+IMAGE_THUNK_DATA32* pImportLookupTable;
+IMAGE_THUNK_DATA32* pImportAddressTable;
+
+typedef struct image_import_by_name {			
+    WORD    Hint;			
+    BYTE    Name[1];			
+} IMAGE_IMPORT_BY_NAME;
+IMAGE_IMPORT_BY_NAME* pNameTable;
+
+// Import Table - End
+///////////////////////////////</code></pre>
+<pre><code class="c">// PEParser.h:
+// printImportDirectory:
+//     The function will print export directory, import lookup table, import address table, and name table.
+void printImportDirectory();
+
+// TEST_PrintImportDirectoryTable():
+//     This function will test the print of import directory table.
+void TEST_PrintImportDirectoryTable();</code></pre>
+<pre><code class="c">// PEParser.c:
+void printImportDirectory() {
+	size_t i, j;
+	WORD* pOrdinal = nullptr;
+	DWORD ordinal_mask = 0x8000;
+	IMAGE_IMPORT_BY_NAME* pName = nullptr;
+	IMAGE_IMPORT_DESCRIPTOR* pImportDirectoryTable = pImportDirectory;
+
+	printf(&quot;======Import Directory======\n&quot;);
+	for (i = 0; pImportDirectoryTable-&gt;OriginalFirstThunk != 0; i++) {
+		printf(&quot;Import Directory Table [%d]:\n&quot;, i);
+		printf(&quot;Import Lookup Table RVA: %x\n&quot;, pImportDirectory[i].OriginalFirstThunk);
+		printf(&quot;Time/Date Stamp: %x\n&quot;, pImportDirectory[i].TimeDateStamp);
+		printf(&quot;Forwarder Chain: %x\n&quot;, pImportDirectory[i].ForwarderChain);
+		printf(&quot;DLL RVA: %x, Name: %s\n&quot;, pImportDirectory[i].Name, RVAToFOA((BYTE*)pImportDirectory[i].Name, fileBuffer));
+		printf(&quot;Import Address Table RVA: %x\n&quot;, pImportDirectory[i].FirstThunk);
+		printf(&quot;\n&quot;);
+		
+		pImportLookupTable = (IMAGE_THUNK_DATA32*)RVAToFOA((BYTE*)pImportDirectory[i].OriginalFirstThunk, fileBuffer);
+		printf(&quot;Import Lookup Table [%d]:\n&quot;, i);
+		for (j = 0; pImportLookupTable[j].u1.Ordinal != 0; j++) {
+			if ((pImportLookupTable[j].u1.Ordinal | ordinal_mask) == ordinal_mask) {
+				// reference by ordinal
+				pOrdinal = (WORD*)((DWORD)&amp;pImportLookupTable[j].u1.Ordinal + 2); // get low 2 bytes
+				printf(&quot;#%d -&gt; ordinal: %d\n&quot;, j, *pOrdinal);
+			}
+			else {
+				// reference by name
+				pName = (IMAGE_IMPORT_BY_NAME*)RVAToFOA((BYTE*)pImportLookupTable[j].u1.AddressOfData, fileBuffer);
+				printf(&quot;#%d -&gt; hint: %d, name: %s\n&quot;, j, pName-&gt;Hint, &amp;pName-&gt;Name); // get name address
+			}
+		}
+		printf(&quot;\n&quot;);
+		
+		// Import Address Table is same as Import Lookup Table before loading
+		pImportAddressTable = (IMAGE_THUNK_DATA32*)RVAToFOA((BYTE*)pImportDirectory[i].FirstThunk, fileBuffer);
+		printf(&quot;Import Address Table [%d]:\n&quot;, i);
+		for (j = 0; pImportAddressTable[j].u1.Ordinal != 0; j++) {
+			printf(&quot;#%d -&gt; addr: %x\n&quot;, j, pImportAddressTable[j].u1.Ordinal);
+		}
+		printf(&quot;===========================\n&quot;);
+		printf(&quot;\n&quot;);
+	
+		// do NOT forget to update table pointer
+		pImportDirectoryTable++;
+	}
+}
+
+STATUS PEParser(IN PMEMORYBASE filebase) {
+    ...
+    // Update import directory
+	if (pDirectory[1].VirtualAddress != 0) {
+		pImportDirectory = (IMAGE_IMPORT_DESCRIPTOR*)RVAToFOA((BYTE*)pDirectory[1].VirtualAddress, fileBuffer);
+	}
+    ...
+}
+
+void TEST_PrintImportDirectoryTable() {
+	STATUS ret;
+	// Initialize global pointers
+	fileBuffer = nullptr;
+	imageBuffer = nullptr;
+	pDosHeader = nullptr;
+	pFileHeader = nullptr;
+	pOptionalHeader = nullptr;
+
+	ret = PEReader(&quot;notepad.exe&quot;, &amp;fileBuffer);
+	ret = PEParser(fileBuffer);
+	printHeaders();
+	printImportDirectory();
+
+	free(fileBuffer);
+}</code></pre>
+
+<p>Notice that the assignment of pointers to import lookup table and import address table should be in the loop body of each import directory table.</p>
+
+</section>
+</section>
+<section	id="iat">
+<h2>IAT</h2>
+
+<p>From notes above, we know that import address table is a part of import data section. Now we will discuss it from a designer why IAT is so important.</p>
+<pre><code class="cpp">#include &lt;stdio.h&gt;
+
+#pragma comment (lib, &quot;myDLL.lib&quot;)
+
+extern &quot;C&quot; _declspec(dllimport) int __stdcall Plus(int x, int y);
+
+int PlusBuiltin(int x, int y) {
+	return x + y;
+}
+
+int main(int argc, char* argv[]) {
+	
+	printf(&quot;DLL Plus: %d\n&quot;, Plus(2, 3));
+	printf(&quot;Builtin Plus: %d\n&quot;, PlusBuiltin(2, 3));
+
+	return 0;
+}</code></pre>
+
+<p>Dive into assembly language, there are differences in function calling between builtin function and imported function.</p>
+<pre><code class="c">// dll plus:
+00401068 8B F4                mov         esi,esp
+0040106A 6A 03                push        3
+0040106C 6A 02                push        2
+0040106E FF 15 AC A2 42 00    call        dword ptr [__imp__Plus@8 (0042a2ac)]
+// balance check
+00401074 3B F4                cmp         esi,esp
+...
+
+// the value of 0043a2ac in memory is 0A 10 00 10
+1000100A E9 21 00 00 00       jmp         10001030
+...
+// notice that dll function is resident in high memory address
+10001030 55                   push        ebp
+10001031 8B EC                mov         ebp,esp
+10001033 83 EC 40             sub         esp,40h
+10001036 53                   push        ebx
+10001037 56                   push        esi
+10001038 57                   push        edi
+10001039 8D 7D C0             lea         edi,[ebp-40h]
+1000103C B9 10 00 00 00       mov         ecx,10h
+10001041 B8 CC CC CC CC       mov         eax,0CCCCCCCCh
+10001046 F3 AB                rep stos    dword ptr [edi]
+10001048 8B 45 08             mov         eax,dword ptr [ebp+8]
+1000104B 03 45 0C             add         eax,dword ptr [ebp+0Ch]
+1000104E 5F                   pop         edi
+1000104F 5E                   pop         esi
+10001050 5B                   pop         ebx
+10001051 8B E5                mov         esp,ebp
+10001053 5D                   pop         ebp
+...</code></pre>
+<pre><code class="c">// builtin plus:
+00401089 6A 03                push        3
+0040108B 6A 02                push        2
+0040108D E8 73 FF FF FF       call        @ILT+0(PlusBuiltin) (00401005)
+00401092 83 C4 08             add         esp,8
+
+// the value of 00401005 in memory is E9 16 00 00 which is calculated by hard code equation mentioned in previous notes
+00401005 E9 16 00 00 00       jmp         PlusBuiltin (00401020)
+... 
+// the function body is in the memory scope of the executable file
+00401020 55                   push        ebp
+00401021 8B EC                mov         ebp,esp
+00401023 83 EC 40             sub         esp,40h
+00401026 53                   push        ebx
+00401027 56                   push        esi
+00401028 57                   push        edi
+00401029 8D 7D C0             lea         edi,[ebp-40h]
+0040102C B9 10 00 00 00       mov         ecx,10h
+00401031 B8 CC CC CC CC       mov         eax,0CCCCCCCCh
+00401036 F3 AB                rep stos    dword ptr [edi]
+00401038 8B 45 08             mov         eax,dword ptr [ebp+8]
+0040103B 03 45 0C             add         eax,dword ptr [ebp+0Ch]
+0040103E 5F                   pop         edi
+0040103F 5E                   pop         esi
+00401040 5B                   pop         ebx
+00401041 8B E5                mov         esp,ebp
+00401043 5D                   pop         ebp
+00401044 C3                   ret</code></pre>
+
+<p>Therefore, <code>0043a2ac</code> serves as a box reserved for saving the real memory address of imported function. If we open the program above with a hex-notepad, we will find <code>0043a2ac</code> just save a meaningless value. After loading all dlls, the loader will fix the value of these addresses according to IAT, which saves the addresses that need to be fixed.</p>
+
+<p>BTW, the BIG difference between IAT and base relocation table is that IAT is used to fix the address of imported function, while base relocation table is for updating its own pre-compiled function addresses since the file is not loaded at preferred image base.</p>
+
+<p>Take an example, if pad.exe relies on three dlls, assuming dll1, dll2, dll3. And preferred <code>ImageBase</code> of dlls are <code>0x100000</code>. The diagram below describes how a loader works.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/DLLExample.png' %}" alt="How Loader Works" />
+<figcaption>How Loader Works</figcaption>
+</figure>
+
+<ul>
+<li>Memory allocation for the Executable.</li>
+<li>Memory allocation for dll1. Image base is equal to <code>ImageBase</code>, thereby there is no need to fix function addresses within dll1, and the loader will update address in IAT for dll1.</li>
+<li>Memory allocation for dll2. Image base is not same with preferred <code>ImageBase</code>, thereby fix function addresses within dll2 according to base relocation of dll2, and the loader will update address in IAT for dll2.</li>
+<li>Memory allocation for dll3. Operations is same as dll2.</li>
+<li>Fix memory addresses of the executable according to IAT.</li>
+</ul>
+
+</section>
+<section	id="boundimport">
+<h2>Bound Import</h2>
+
+<section	id="introduction">
+<h3>Introduction</h3>
+
+<p>After discussing import directory, the other table which has something to do with import directory is bound import table.</p>
+
+<p>See two import tables of different applications.</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/myAppImportTable.png' %}" alt="Import Table of MyApp.exe" />
+<figcaption>Import Table of MyApp.exe</figcaption>
+</figure>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/notepadImportTable.png' %}" alt="Import Table of Notepad.exe" />
+<figcaption>Import Table of Notepad.exe</figcaption>
+</figure>
+
+<p>Notice that there are two main differences between import tables above:</p>
+
+<ul>
+<li>Time/Date Stamp: is set to 0 for MyApp.exe, while &#8211;1(<code>0xffffffff</code>) for notepad.exe.</li>
+<li>IAT: for MyApp.exe, each entry in IAT is a block of memory where the real function address will be written after loading dlls, while entries in IAT of notepad.exe are already bound to real function addresses before loading dlls.</li>
+</ul>
+
+<p>That&#8217;s significant distinction between import table and bound import table. <strong>Bound Import Table</strong>&#8217;s <code>Time/Date Stamp</code> is set to be <code>-1</code> and IAT has been set as &#8220;real function address&#8221;. But why to bind address before loading?</p>
+
+<p>PROS:</p>
+
+<ul>
+<li>Load program will get faster since we don&#8217;t have to wait until all dlls have been loaded.</li>
+</ul>
+
+<p>CONS:</p>
+
+<ul>
+<li>If the dll fails to occupy preferred image base, which means the addresses bound in IAT in advance is problematic, the IAT has to be updated according to real image base.</li>
+<li>If some functions of the dll are changed, which means the address of function will change, the IAT must be updated.</li>
+</ul>
+
+<p>BTW: the loader checks the uniformity of addresses in IAT and dll by <code>Time/Date Stamp</code> of dll and image bound import descriptor, a structure which we will talk about in next part. When it is 0, it means the IAT will be bound after loading dlls. When it is &#8211;1, it means the IAT has been bound in advance. Then the loader will check if <code>Time/Date Stamp</code> of import descriptor is equal to that of dlls. If so, the bound addresses are okay, otherwise, the IAT has to be updated.</p>
+<pre><code class="c">// pseudo code for updating IAT in case 1: preferred image base has been occupied
+...
+PEReader(&quot;name.dll&quot;, &amp;fileBuffer);
+PEParser(fileBuffer);
+preferredImageBase = pOptionalHeader-&gt;ImageBase;
+free(fileBuffer);
+fileBuffer = nullptr;
+
+PEReader(&quot;name.exe&quot;, &amp;fileBuffer);
+PEParser(fileBuffer);
+...
+for (int i = 0; pImportAddressTable[i].u1.Ordinal != 0; i++) {
+	// imageBase is the real image base where dll is located
+	pImportAddressTable[i].u1.Ordinal += imageBase - preferredImageBase;
+}</code></pre>
+
+<p>To sum up, the relationship between import directory and bound import table is that before the import directory fixes addresses in IAT for a dll, it will check in bound directory table if the dll is bound in advance and if the bound information is up-to-date by checking time/date stamp. </p>
+
+</section>
+<section	id="structure">
+<h3>Structure</h3>
+
+<p>Image bound import table has structures as follows,</p>
+<pre><code class="c">typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {		
+    DWORD   TimeDateStamp;		
+    WORD    OffsetModuleName;		
+    WORD    NumberOfModuleForwarderRefs;			
+} IMAGE_BOUND_IMPORT_DESCRIPTOR, *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
+
+typedef struct _IMAGE_BOUND_FORWARDER_REF {		
+    DWORD   TimeDateStamp;		
+    WORD    OffsetModuleName;		
+    WORD    Reserved;		
+} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;		</code></pre>
+
+<p>Which looks like this:</p>
+
+<figure>
+<img src="{% static 'codehome/src/img/backward/StructureOfBoundTable.png' %}" alt="Structure of Bound Import Table" />
+<figcaption>Structure of Bound Import Table</figcaption>
+</figure>
+
+<p>There are two tricks when traversing such structure,</p>
+
+<ul>
+<li><code>OffsetModuleName</code>: is a special &#8220;relative virtual address&#8221;, which is the offset to the start address of the first descriptor, or say the file offset address of <code>VirtualAddress</code> in <code>DATA_DIRECTORY[11]</code>.</li>
+<li><code>RVAToFOA</code>: in previous notes, we assumes that the data is in sections, however, in real condition, it can be in headers. Therefore we have to fix functions <code>RVAToFOA</code> and related functions.</li>
+</ul>
+<pre><code class="c">// for RVAToFOA() and VAToFOA(), add code segment as follows,
+BYTE* RVAToFOA(IN BYTE* relativeVirtualAddress, IN BYTE* fileBase) {	
+	...
+	// if data is in header
+	if (rva &lt; p_section_header[0].VirtualAddress) {
+		fileOffsetAddress = (BYTE*)((DWORD)fileBase + rva);
+		return fileOffsetAddress; 
+	}
+	...
+}
+
+BYTE* VAToFOA(IN BYTE* relativeVirtualAddress, IN BYTE* fileBase) {
+	...
+	// if data is in header
+	if (rva &lt; p_section_header[0].VirtualAddress) {
+		fileOffsetAddress = (BYTE*)((DWORD)fileBase + rva);
+		return fileOffsetAddress; 
+	}
+	...
+}
+
+// for FOAToVA() and FOAToRVA(), add code segment as follows,
+BYTE* FOAToRVA(IN BYTE* fileOffsetAddress, IN BYTE* fileBase) {
+	...
+	if (file_offset &lt; p_section_header[0].PointerToRawData) {
+		relativeVirtualAddress = (BYTE*)file_offset;
+		return relativeVirtualAddress;
+	}
+	...
+}
+
+BYTE* FOAToVA(IN BYTE* fileOffsetAddress, IN BYTE* fileBase) {
+	...
+	if (file_offset &lt; p_section_header[0].PointerToRawData) {
+		virtualAddress = (BYTE*)((DWORD)pOptionalHeader-&gt;ImageBase + file_offset);
+		return virtualAddress;
+	}
+	...
+}</code></pre>
+
+</section>
+<section	id="traverseboundimporttable">
+<h3>Traverse Bound Import Table</h3>
+<pre><code class="c">// PEParser.h
+// printBoundImportDirectory:
+//     The function will print bound import descriptors and forwarder references.
+void printBoundImportDirectory();
+
+// TEST_PrintBoundImportDirectory():
+//     This function will test the print of bound import directory table.
+void TEST_PrintBoundImportDirectory();</code></pre>
+<pre><code class="c">void printBoundImportDirectory() {
+	size_t i;
+	WORD j;
+	IMAGE_BOUND_FORWARDER_REF* pRef = nullptr;
+	IMAGE_BOUND_IMPORT_DESCRIPTOR* pBoundDescriptor = pBoundImportTable;
+	for (i = 0; pBoundDescriptor-&gt;TimeDateStamp != 0; i++) {
+		printf(&quot;=============================\n&quot;);
+		printf(&quot;Bound Import Descriptor [%d]\n&quot;, i);
+		printf(&quot;Time/Date Stamp: %x\n&quot;, pBoundDescriptor-&gt;TimeDateStamp);
+		printf(&quot;Module Name: %s\n&quot;, (char*)((DWORD)pBoundImportTable + pBoundDescriptor-&gt;OffsetModuleName));
+		printf(&quot;NumberOfModuleForwarderRefs: %d\n&quot;, pBoundDescriptor-&gt;NumberOfModuleForwarderRefs);
+		
+		pRef = (IMAGE_BOUND_FORWARDER_REF*)((DWORD)pBoundDescriptor + sizeof(IMAGE_BOUND_IMPORT_DESCRIPTOR));
+		for (j = 0; j &lt; pBoundDescriptor-&gt;NumberOfModuleForwarderRefs; j++) {
+			printf(&quot;\tRef [%d-%d]\n&quot;, i, j);
+			printf(&quot;\tTime/Date Stamp: %x\n&quot;, pRef[i].TimeDateStamp);
+			printf(&quot;\tModule Name: %s\n&quot;, (char*)((DWORD)pBoundImportTable + pRef[j].OffsetModuleName));
+		}
+		printf(&quot;============================\n&quot;);
+		
+		// update pointer: the length of a descriptor and n reference structure
+		pBoundDescriptor = (IMAGE_BOUND_IMPORT_DESCRIPTOR*)(&amp;pRef[j]);
+	}
+}
+
+void TEST_PrintBoundImportDirectory() {
+	STATUS ret;
+	// Initialize global pointers
+	fileBuffer = nullptr;
+	imageBuffer = nullptr;
+	pDosHeader = nullptr;
+	pFileHeader = nullptr;
+	pOptionalHeader = nullptr;
+
+	ret = PEReader(FILE_IN, &amp;fileBuffer);
+	ret = PEParser(fileBuffer);
+	printBoundImportDirectory();
+
+	free(fileBuffer);
+}</code></pre>
+
+</section>
+</section>
+<p><EndMarkdown></p>
+ 
+         <!-- pre and next --> 
+         <div class="row"> 
+             <div class="col-md-12 prenextstyle"> 
+                 <ul class="pagination justify-content-center"> 
+                     <li><a href="{% url 'notepage' 'backward' 'part17' %}" class="button primary icon solid fa-backward">Back: 17. PE Seg.8</a></li> 
+                     <li><span class="button">18. PE Seg.9</span></li> 
+                     <li><a href="{% url 'notepage' 'backward' 'part19' %}" class="button primary icon solid fa-forward">Next: 19. PE Seg.10</a></li> 
+                 </ul> 
+             </div> 
+         </div>
+ 
